@@ -82,6 +82,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.40`, what the owner's first sessions with it showed, train B's traps | [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md) |
 | `§beta.41`, what the owner's sessions on beta.40 and beta.41 showed, the plan of 2026-11-12 (D119–D122) | [`handoff/history/0.1.0-beta.41.md`](handoff/history/0.1.0-beta.41.md) |
 | `§beta.42`, what the owner's seven sessions on beta.42 showed (D121 answered, the guard's lost launches), beta.43's design as planned | [`handoff/history/0.1.0-beta.42.md`](handoff/history/0.1.0-beta.42.md) |
+| `§beta.43`, what the owner's nine sessions on beta.43 showed, session by session (item 41), the traps of that train | [`handoff/history/0.1.0-beta.43.md`](handoff/history/0.1.0-beta.43.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19, 38, 39) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -89,156 +90,105 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-12, 0.1.0-beta.43: two hooks installed only where asked for, the guard reads a moving list again, an UPSCALE counted once
+## **START HERE** — 2026-11-12, 0.1.0-beta.44: what the first real games on beta.43 found, fixed; Streamline's answers about a feature, hooked only where asked
 
-*Status is `docs/changelog/0.1.0-beta.43.md`; this is what no other file carries.* The owner ran beta.42 the morning
-it was released; seven sessions, a copy of the ledger and the logs answered D121 (Cyberpunk 2077's FSR is 2.1, built
-into the game), showed the guard losing launches to a module list that moved while it was read, and showed the
-FidelityFX 2.3 loader handing a call on to the leaf's export. The owner decided D123–D125 and approved the plan the
-same morning, Privacy Policy 2.17's wording with it. Five pull requests and this one: #413 (the guard reads again,
-D123), #414 (an UPSCALE is counted at the first source that saw one, D125; D124), #415 (`slSetConstants`), #416
-(`ffxConfigure` on the four ffx-api modules), #417 (the Agent, the App, Privacy Policy 2.17). **What the owner's
-sessions on beta.42 showed, and the design as planned, are
-[`handoff/history/0.1.0-beta.42.md`](handoff/history/0.1.0-beta.42.md)**; what each pull request built is
-[`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §Pre-injection checks,
-[`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory (the two rows, with their measured cost) and
+*Status is `docs/changelog/0.1.0-beta.44.md`; this is what no other file carries.* The owner ran nine sessions on
+beta.43 the afternoon it was released and said: read them, write down the result, go on if it passes. They were read
+from a copy of the ledger, the Agent's log, nine overlay logs and Windows' application log (#420); item 41 was judged
+passed, and the owner decided D126–D128 and approved the plan the same afternoon, Privacy Policy 2.18's wording with
+it. Four pull requests and this one: #421 (the fixes: a field of view in degrees, the count of early abnormal ends,
+`flags` of `none`; D126–D128), #422 (`slGetFeatureVersion` and `slGetFeatureRequirements` in the Overlay), #423
+(the Agent, the App, Privacy Policy 2.18). **What the nine sessions showed, session by session, is
+[`handoff/history/0.1.0-beta.43.md`](handoff/history/0.1.0-beta.43.md)**; what each pull request built is
+[`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §Crash & stability safety,
+[`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory (the row of the two calls, with their measured cost) and
 [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B.
 
-### What this release decided, beyond D123–D125
+### What this release decided, beyond D126–D128
 
-- **A hook that exists only for Advanced metrics is not put into a game that was never asked.** The two rows are
-  gated at the top of `InstallByFamily`, before the symbol is resolved (resolving holds the module). Once a
-  session with the option on has started in a process, the patch goes in on that watchdog tick and **stays for the
-  life of the process**: a later session with the option off finds the detour there, forwarding without looking.
-  Removing a patch between sessions would be a second patch event in a running game for nothing gained. So "off
-  means off" (D111) is, for these two: nothing read, nothing published — and, in a game no session ever asked,
-  nothing patched. Privacy Policy 2.17 §4 says it that way.
-- **Privacy Policy 2.17, not 2.16 stretched.** beta.40's plan had 2.16 stand "once for the three releases"; its
-  text then listed DLSS's and FSR's parameters by name, and neither list holds Streamline's constants or the
-  frame-generation configuration. The plan of beta.43 carried the new sentences and the owner approved them with it.
-  **beta.44 reads feature versions and requirements — check 2.17's lists the same way before assuming it covers
-  them.**
-- **For each of the two calls a session says which of three things happened** (`AdvancedInGameCall`): read; hooked
-  and the game never called; not hooked. "Not hooked" is three causes the session does not tell apart — the game
-  did not load the library, a Streamline 1.x interposer (refused), a patch the registry refused — and the Overlay's
-  log does: a `HOOK_INSTALLED` line naming the function, or a `PATCH_FAILED`.
-- **A count is not part of what makes a session's facts new.** `sl.constants.resets` grows all session; the
-  recorder's context would be rewritten each second. `InGameAdvancedSampler.Conclude` brings it up to date once, at
-  the end. A session recovered after a crash holds the count as of the last time some other field moved — a lower
-  bound.
-- **Streamline's summaries are the first viewport's**, and the configure count has an owner slot of its own (the
-  2.3 loader would otherwise bring one configure to two modules, as D125's dispatch).
-- **The accuracy statement no longer says nothing of what a game tells its upscaler was read from a real game.**
-  FSR's upscaling values were (beta.41, beta.42: Lies of P, Dying Light: The Beast, Kingdom Come: Deliverance II).
-  The DLSS options, Streamline's constants and the frame-generation configuration are still unconfirmed, and the
-  three copies say so.
+- **What is read of these two calls is the answer, and only a good one.** The detours call the original first and
+  read the struct the game passed when it returned `eOk`; a refusal leaves the struct as the game made it, and the
+  fixture's stub leaves 99s in it to prove nothing of a refused answer is kept. The pointers the answer carries —
+  the list of required buffer tags, the names of Vulkan extensions and features — are never followed; the stub's
+  are wild, and no fault is counted.
+- **The feature slots are the one group of region 5 a new request does not empty.** Every other group is a
+  session's — ranges, counts, switches seen. Which version a feature is and what it requires are facts about the
+  process, and a game asks once: a second session of a game that kept running would have nothing where the first
+  had the answer. `Reset` keeps the slots and their bit of the mask. They were read only while a session asked.
+- **The two rows are the first of the table, because rows are patched in the table's order.** Nothing in the
+  Overlay paces the installs: the 0.1–0.25 s between `HOOK_INSTALLED` lines in the owner's logs is MinHook stopping
+  every thread of the game for each patch. In a process that was asked, the two calls a game makes while starting
+  are the ones that cannot wait behind five others; in a process never asked, the two rows are passed over before
+  anything is resolved.
+- **"Hooked, and the game did not call" has words of its own for a call made while starting**
+  (`AdvInGameCall_NotAskedAgain`). For a call made every frame it is a finding about the game; for these two it is
+  what every late attach will say. One bit of the mask covers both questions, so which was answered is told by the
+  slots (`InGameAdvancedSampler.FeatureCall`).
+- **Privacy Policy 2.18, not 2.17 stretched**: 2.17 says "two further calls" and lists what they give. 2.18 also
+  says what of the answer is never read.
+- **The rows are the vendor's words**: `kFeatureDLSS_G · versionNGX`, the requirement flags by their enumerators,
+  an id this build has no name for as `feature <number>`. A version of all zeros has no row, except `versionSL`.
+- **The Agent's end-to-end tests run a Streamline target now** (until this release only an FSR one): the constants
+  and the two answers, through the shipped Agent and the real Overlay.
+- **A field of view over π is two rows** (D128): the number, and `cameraFOV unit` with the token `not_radians` —
+  a token replaces a row's value in the App, so a note beside a number is a row of its own.
+- **The count of early abnormal ends is set back by the consent grant and by nothing else** (D126) — the one
+  statement that turns hooking on. `hook_autodisabled_reason` and `_at` stay as the row's history; the App shows
+  them only while hooking is off.
 
 ### Traps this train left
 
-- **An unpatched export may already begin with a jump.** The loader stub's `ffxConfigure` starts with `E9` in the
-  file: "the first byte is not a jump" is not a test of "not patched". `ReadTargetExportBytes` compares the target's
-  bytes with the file's own (`inFile`).
-- **A branch stacked on a pull request that is then squashed**: `git rebase --onto origin/main <the old tip>`, and
-  `git diff <old tip> <squash>` empty says the gate that ran still stands.
-- **`mcp__ccd_pr__set_auto_merge` says "not bound" for a pull request opened from a script**: `gh pr merge <n>
-  --auto --squash`. A run's artifacts while it is still in progress: `gh api
-  repos/…/actions/artifacts/<id>/zip`.
-- **clang-format re-wraps what an edit script wrote**, so a second script's anchors must be read from the formatted
-  file; a multi-file script that fails part-way has already written the earlier files.
-- **One local gate printed 871 App tests where every other printed 872**, green. Not looked into.
-
-### What the owner's nine sessions on beta.43 showed (2026-11-12)
-
-Run 15:42–16:21 in the owner's time zone, read the same afternoon from a copy of the ledger (sessions 171–179), the
-Agent's log, the nine overlay logs and Windows' application log. Advanced metrics was on for the first eight and off
-for the last.
-
-| # | Game | What it showed |
-|---|---|---|
-| 171 | Phantom Blade Zero, 649 s, DLSS frame generation ×3.0 | Streamline 2.14.1: **read** — jitter ≤ 0.47, motion-vector scale 0.0009 / 0.0016, near 0.01 and far 75,000 with depth inverted, field of view 0.6545–1.3612 rad, aspect 1.7767, 1 reset. FSR frame generation: hooked on the loader and both leaves, the game never called |
-| 172 | Lies of P, 35 s, exit code 3 | 542 frames, nothing evaluated. **The owner: the game crashed after a shader failed to compile.** The crash policy counted it and turned the game's hooking off (below) |
-| 173 | Lies of P, 130 s | Tier 2 — hooking was off; the owner switched it on again at 16:02 |
-| 174 | Lies of P, 94 s, FSR 3 + FSR frame generation ×2.0 | **`ffxConfigure` read** on the one-module `amd_fidelityfx_dx12.dll`: frame generation on and off, not asynchronous, generated frames not presented alone, 2560 × 1440 at 0, 0; the log has `FFX_CONFIGURE` types `0x10007` and `0x20002`. Streamline: not hooked (the game has none) |
-| 175 | Cyberpunk 2077, 72 s, no upscaler named, no frame generation | Streamline 2.14.1: **read** — jitter ≤ 0.5, motion-vector scale 1 / 1, near 0.02 and far 16,000 inverted, aspect 1.7778, **field of view 51.0055–90**, 2,575 resets |
-| 176 | Cyberpunk 2077, 145 s, DLSS + DLSS frame generation ×2.0 | the same values; 1,821 resets. FSR frame generation: hooked on the loader and both leaves, never called |
-| 177 | Kingdom Come: Deliverance II, 135 s, FSR | Streamline: not hooked. `ffxConfigure` hooked on the loader and the upscaler, never called — the game ships no frame generation |
-| 178 | Hogwarts Legacy, 158 s, DLSS frame generation ×4.0 | Streamline 2.14.16: **read** — jitter ≤ 0.47, field of view 0.8872–2.0071 rad, aspect 1.7763, near 0.01 and far 75,000 inverted, 11 resets. `ffxConfigure` hooked on `amd_fidelityfx_dx12.dll`, never called |
-| 179 | Lies of P, 129 s, **Advanced metrics off**, a new Agent, the game started afresh | no Advanced row; bits 13 and 14 clear in `hooks_installed_mask`; the log has `ffxDispatch` and `ffxQuery` and **no `ffxConfigure` line** |
-
-- **The two hooks did what they were built to do on four real games**, three Streamline builds apart (2.14.1 twice,
-  2.14.16) and one FSR library. No `PATCH_FAILED`, no fault counted, in nine logs. `legal_acceptance` holds Privacy
-  Policy 2.17 accepted once, four seconds after the update; no session since the update ended with
-  `guard=ModuleScanFailed` (the day's one is beta.42's, at 10:05).
-- **Cyberpunk 2077 gives Streamline its field of view in degrees.** The vendor's header says radians; the game
-  passes 51–90. Every other field of the same struct is sane (the aspect ratio beside it is 1.7778), so the layout
-  is not in question — the game's unit is. The page prints `51.0055 – 90 rad (2922.4° – 5156.6°)`: **a defect of
-  the label, not of the reading**, and beta.44's first pull request. The two stored sessions keep the string they
-  were stored with.
-- **A resets count has no denominator.** 2,575 in a 72 s session that was mostly menus and 1,821 in 145 s on
-  Cyberpunk, beside 1 and 11 on the two Unreal games. It is what the game said (`reset == eTrue`, the first
-  viewport's calls); the page does not say out of how many calls.
-- **A frame-generation configuration with no flag set has no flags row**, where an upscale with none says `none`.
-- **Lies of P's 35 s end turned its hooking off, and one such end is now enough.** `hook_crash_count` is never set
-  back: the game's two ends of 2026-10-19/20 (`19_SAFETY` §Crash & stability safety, the hand-off to Steam) had
-  brought it to 2, the owner had switched hooking on again, and today's single early end made 3 — at or over
-  `CrashesToDisable`, so hooking went off at once, under a reason that says *twice*. Whether switching hooking back
-  on starts the count again is the owner's decision; it is asked with beta.44's plan.
-- **Hogwarts Legacy faults in the driver's `_nvngx.dll` as it exits, hooked or not.** Windows' application log has
-  the same fault (0xc0000005 at +0x6aa85, `_nvngx.dll` 32.0.16.2114) six times since 2026-11-06, each at the end
-  of one of the game's seven recorded sessions — the first of them session 131, which nothing was injected into.
-  That one reads `crashed`; the five hooked ones, today's 178 among them, read `normal` with exit code 0, the
-  fault logged in the second the session was saved. **Why a hooked session does not see the crash event that an
-  unhooked one does was not looked into.**
-- **Frame rates as before**, where the settings were: Lies of P 59 → 118 (beta.42: 58.9 → 118.0), Kingdom Come 59.3
-  (59.4), Hogwarts Legacy 58.8 → 235.8 at ×4 (alpha.3: 56.1 → 225.1). Phantom Blade Zero's factor moves between
-  sessions under the driver's dynamic mode (×2.9 to ×4.1 since 2026-11-05) and Cyberpunk was run with other settings.
-- **Not exercised**: a configure through the FidelityFX 2.3 loader (Cyberpunk 2077 with FSR frame generation) — the
-  configure count's owner slot has not met a real game; a game with neither library; Dying Light: The Beast.
-  Phantom Blade Zero and Hogwarts Legacy name no upscaler beside DLSS frame generation, as on every release before.
+- **`vswhere -latest` names SQL Server Management Studio on this PC.** Ask for the C++ tools as `build.ps1` does
+  (`-requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64`). The `x64-release` preset writes no
+  `compile_commands.json`: `ninja -C build/native/x64-release -t commands FrameLedger.Overlay` gives the Overlay's
+  flags for a bench.
+- **Run clang-format on the native files an edit script wrote before the gate** — the format check comes after the
+  native build and tests, and a miss costs the whole run.
+- **`tools/resx-gen.ps1` needs `-Resx src/FrameLedger.App/Strings.resx`**; started without it from a shell that
+  has no console it waits for the missing parameter until it is stopped.
+- **A Python script passed to a shell as a here-document loses its backslashes** before Python sees them: write
+  the script to a file.
+- **`gh pr checks --watch` returns at once when no check has started yet**; wait a moment before starting it.
+- **Qodana's native report is advisory, and auto-merge does not wait for it.** On #422 it reported three
+  `bugprone-implicit-widening-of-multiplication-result` in the test and the harness (an index into the feature
+  slots computed as a product of two 32-bit values: compute it in `size_t`) while the required checks were still
+  running; auto-merge was switched off until the fix was pushed. A finished job's log while its run is still going:
+  `gh api repos/…/actions/jobs/<id>/logs --allow-escape-sequences`; the report's SARIF is a zip inside the
+  artifact's zip.
+- **GPG's pinentry timed out once** (the cache had expired); the second attempt went through when the owner was
+  at the keyboard.
 
 ### NEXT
 
-1. ~~**The owner runs item 41**~~ **Run and read 2026-11-12** (§What the owner's nine sessions on beta.43 showed).
-   The owner's word was to go on if it passed, and it is judged passed: both hooks read real games, nothing
-   failed to patch, off meant off. What was not exercised is listed there and stays open.
-2. **0.1.0-beta.44** — first the field of view a game gives in degrees (and what else the nine sessions found),
-   then `slGetFeatureVersion` and `slGetFeatureRequirements`. Both are calls a game makes while starting, so most
-   sessions will have missed them: plan what "not seen" says. ~~**Planned with the owner before any code.**~~ **The
-   plan was approved 2026-11-12 with three decisions, D126–D128** (the count of early abnormal ends starts again
-   at a grant; the fault at exit is written down only; a field of view over π is shown as given), and with Privacy
-   Policy 2.18's wording. Four pull requests: the fixes; the two hooks in the Overlay; the Agent, the App and the
-   policy; the release.
-3. **Trains C and D** (beta.45, beta.46) each begin with a spike and end in the owner's go or no.
+1. **The owner runs item 42** — the first time the two new hooks are in a real game, and the first look at whether
+   any attach is early enough to see a game's start-up calls. Not first on a game under the user-mode exception's
+   trial (D38).
+2. **Train C (0.1.0-beta.45, Reflex latency per frame)** begins with a spike and ends in the owner's go or no — and
+   only when the owner says beta.44 passed. If item 42 shows the two calls are never seen in attach mode, whether
+   they keep their two patches is the owner's to say first.
+3. **Train D** (beta.46) the same way.
 
 ### Left open by this session
 
-- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said of #413–#417 (the
-  `sonarcloud` job on `main` is cancelled by the next merge, so it answers on the release's commit).~~ **Recorded
-  2026-11-12: 0.1.0-beta.43 was released 2026-11-12T06:57:57Z** (13:57 in the owner's time zone) from the signed
-  tag on `6c7ba74` (#418), by run 43169675460 — green at the first attempt, one run for the one tag push. Eight
-  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the four shipped natives carry
-  `FL_BUILD_ID v0.1.0-beta.43`. The delta from beta.42 is 1,934,264 bytes beside a full package of 110,736,398 —
-  "Delta processed 0452 files. 0025 patched, 0427 unchanged". The wiki was published by run 43171842051. The
-  rehearsal on the release branch (run 43167388933, the same tree before it was rebased onto #417's squash) had
-  made a delta of 1,944,086 bytes with the same file counts. **SonarCloud answered on `6c7ba74`: the quality gate
-  passed and no issue is open on `main`. Qodana's two reports are green on that commit**, and were on #417's.
-- ~~**No real game was run on this build.** Two new patch sites, tested with the harness and the stubs; their cost
-  measured on the headers. Whether a real `sl.interposer.dll` 2.x lays `sl::Constants` out as the vendored header
-  does is checked on every call by the struct's GUID and version, not by a real game yet.~~ **Nine sessions on five
-  games, 2026-11-12** (§What the owner's nine sessions on beta.43 showed): interposers 2.14.1 and 2.14.16 lay the
-  struct out as the header does. **The accuracy statement's three copies and `LIMITATIONS.md` still say Streamline's
-  constants and the frame-generation configuration "have not been confirmed" on a real game** — reworded with
-  beta.44's first pull request. **`docs/LIST_GAME_TESTED.md` is as of 2026-11-06**: refreshing it is a new copy and
-  the owner's review.
-- **Item 40 (d)** — a session that changes upscaler — was not exercised, and the owner has not said item 40 passed.
-  **Items 36 (d) and 37 are still open.**
-- **What an empty process snapshot does to the watcher's tick in a real session** was not looked into
-  (`ToolhelpProcessSnapshotSource.Take` returns an empty list and says nothing; seen once in a test on 2026-11-12).
+- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.
+- **No real game was run on this build.** Two new patch sites, tested with the harness and the stub; their cost
+  measured on the headers.
+- **What item 41 left unexercised**: a configure through the FidelityFX 2.3 loader (Cyberpunk 2077 with FSR frame
+  generation), a game with neither library.
+- **A fault while a game is closing is not seen by a hooked session** (D127: written down, not changed). Looking
+  again later would make every session of Hogwarts Legacy `crashed`, and under a user-mode exception would end the
+  exception for a fault no hook caused; the decision is the owner's, and is not taken.
+- **Phantom Blade Zero and Hogwarts Legacy name no upscaler beside DLSS frame generation**, as on every release
+  before; not looked into.
+- **`docs/LIST_GAME_TESTED.md` is as of 2026-11-06**: refreshing it is a new copy of the ledger and the owner's review.
+- **Item 40 (d)** was not exercised and the owner has not said item 40 passed. **Items 36 (d) and 37 are still open.**
+- **What an empty process snapshot does to the watcher's tick in a real session** was not looked into (seen once in
+  a test on 2026-11-12).
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** what item 41 left unexercised — (d) through the FidelityFX 2.3 loader, (e) a game with neither library; item 40 (d).
+**Owner-only:** item 42; what item 41 left unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
 
@@ -588,8 +538,8 @@ for the last.
    game reaches Streamline or FSR by a way that does not pass the export — beta.44's plan needs to know. A crash,
    or a game that will not start: say so at once; *Disable all hooking* (Settings ▸ Capture) and switching Advanced
    metrics off are the two ways to run without the hooks, and which of them cured it says which hook it was.
-   **Nine sessions were run on 2026-11-12 and read the same afternoon** (START HERE §What the owner's nine sessions
-   on beta.43 showed): (a) happened — Privacy Policy 2.17 accepted once, at the update; (b) held — no
+   **Nine sessions were run on 2026-11-12 and read the same afternoon** ([`handoff/history/0.1.0-beta.43.md`](handoff/history/0.1.0-beta.43.md) §What the owner's nine
+   sessions on beta.43 showed): (a) happened — Privacy Policy 2.17 accepted once, at the update; (b) held — no
    `guard=ModuleScanFailed` since the update; (c) read on Phantom Blade Zero, Cyberpunk 2077 and Hogwarts Legacy,
    every value sane but one: **Cyberpunk 2077 gives its field of view in degrees** (51–90), and the page labels it
    radians — the struct is laid out as expected, the label is wrong; (d) read on Lies of P, **not exercised through
@@ -598,6 +548,41 @@ for the last.
    before — Lies of P's 35 s end with exit code 3 is, by the owner, the game's own crash after a shader failed to
    compile, and Hogwarts Legacy's fault at exit is in Windows' log six times since 2026-11-06, hooked or not.
    **Judged passed 2026-11-12, on the owner's word to go on if it did**; the two parts in bold stay open.
+42. **beta.44 — the two questions about a feature in real games, and what the nine sessions found, fixed**
+   (D126–D128). **Not first on a game under the user-mode exception's trial** (D38): a crash there ends the
+   exception for good. (a) **The update from beta.43**: Help ▸ Check for updates, *Restart to update* with no game
+   running; **the terms window shows once, with Privacy Policy 2.18**. (b) **Cyberpunk 2077 with Advanced metrics
+   on**, a session of a minute or two: its Advanced page shows the field of view as the game gives it —
+   `51.0055 – 90`, or whatever the game's setting makes it — with a line under it that says *Not radians*, and no
+   "rad" beside the number. The two sessions of 2026-11-12 keep `51.0055 – 90 rad (2922.4° – 5156.6°)`: they were
+   stored that way. (c) **Any Streamline game with Advanced metrics on** (Phantom Blade Zero, Hogwarts Legacy,
+   Cyberpunk 2077): the line under the session has one more sentence — *Which version each Streamline feature is:
+   …. What each requires: ….* — and for each it says *read*, or *hooked - the game asks this while it starts, and
+   did not ask again after FrameLedger attached*. **The second is the expected answer** for a game that was already
+   past its start-up when FrameLedger attached; it is not a failure. If it says *read*: the page lists features by
+   NVIDIA's names (`kFeatureDLSS`, `kFeatureDLSS_G`) with versions and requirements — check that the driver version
+   it shows as *detected* is the installed driver's, and that Streamline's version is the game's `sl.*.dll` file
+   version. (d) **Which games, if any, say *read***: nothing to set up — FrameLedger attaches as soon as it sees the
+   game — but say, for each Streamline game run, which of the two answers each call got. Hogwarts Legacy loaded its
+   Streamline library some six seconds after FrameLedger attached on 2026-11-12, so it is the likeliest to say
+   *read*; Phantom Blade Zero and Cyberpunk 2077 had it loaded already. (e) **A game with no Streamline** (Lies of P, Kingdom Come:
+   Deliverance II): both say *not hooked*. (f) **Off means off**: with Advanced metrics off, **start a game
+   afresh** and record a session; its `logs\overlay-<pid>-….log` has no `HOOK_INSTALLED` line naming
+   `slGetFeatureVersion`, `slGetFeatureRequirements`, `slSetConstants` or `ffxConfigure`. (g) **Nothing else
+   moved**: no crash, no `PATCH_FAILED` in any overlay log, frame rates and the frame-generation factor as on
+   beta.43 for the same game and settings. With Advanced metrics on, a Streamline game's log has
+   `slGetFeatureVersion` and `slGetFeatureRequirements` as its **first two** Streamline `HOOK_INSTALLED` lines.
+   (h) **The count of early ends** (D126) is not something to provoke: if a game whose hooking you switched back
+   on ends once within a minute of starting, hooking stays on; a second such end switches it off, as before.
+   **What each outcome means, written before the run.** (c) *not hooked* on a Streamline game: the log says why —
+   no `HOOK_INSTALLED` for the function (a 1.x interposer, or the export is missing) or a `PATCH_FAILED`. (c) and
+   (d) both *did not ask again* on every game: the calls are made before any attach can be in — then these two
+   hooks give nothing in attach mode, and whether they are worth their two patches is the owner's to say before
+   train C. *Read* with numbers that make no sense (a driver version that is not the installed one, a feature
+   named `feature <number>`): say so with the numbers — an id with no name only means NVIDIA added a feature this
+   build does not know. A crash, or a game that will not start: say so at once; *Disable all hooking*
+   (Settings ▸ Capture) and switching Advanced metrics off are the two ways to run without the hooks, and which
+   of them cured it says which hook it was.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
