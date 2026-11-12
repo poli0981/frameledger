@@ -40,6 +40,9 @@ public sealed class InGameAdvancedSampler
 
     private const double _mebibyte = 1024.0 * 1024.0;
 
+    // What the second row of a field of view over pi says (owner decision D128).
+    private const string _notRadians = "not_radians";
+
     private static readonly string[] _presetModes = ["DLAA", "Quality", "Balanced", "Performance", "Ultra Performance", "Ultra Quality"];
 
     // FfxApiDispatchUpscaleFlags (ffx_upscale.h), by bit.
@@ -53,10 +56,10 @@ public sealed class InGameAdvancedSampler
 
     /// <summary>
     /// Every word a fact made here may carry for the App to translate (<c>AdvToken_*</c>): the three states of a
-    /// switch seen over a session, the flags of the dispatch that have a name, and "none". A flag bit nobody named
-    /// is <c>bit_N</c> and is shown as it is.
+    /// switch seen over a session, the flags of the dispatch that have a name, "none", and what a field of view
+    /// that cannot be radians is said to be (D128). A flag bit nobody named is <c>bit_N</c> and is shown as it is.
     /// </summary>
-    public static IReadOnlyList<string> Tokens { get; } = ["on", "off", "on_and_off", "none", .. _flagTokens];
+    public static IReadOnlyList<string> Tokens { get; } = ["on", "off", "on_and_off", "none", _notRadians, .. _flagTokens];
 
     private InGameAdvanced? _last;
     private uint _memoryQueries;
@@ -179,19 +182,18 @@ public sealed class InGameAdvancedSampler
         AddSwitch(rows, "frameGenerationEnabled", s.FfxFgEnabledSeen);
         AddSwitch(rows, "allowAsyncWorkloads", s.FfxFgAsyncSeen);
         AddSwitch(rows, "onlyPresentGenerated", s.FfxFgOnlyGeneratedSeen);
-        if (s.FfxFgFlagsSeen != 0)
+        var names = new List<string>(4);
+        for (int bit = 0; bit < 32; bit++)
         {
-            var names = new List<string>(4);
-            for (int bit = 0; bit < 32; bit++)
+            if ((s.FfxFgFlagsSeen & (1u << bit)) != 0)
             {
-                if ((s.FfxFgFlagsSeen & (1u << bit)) != 0)
-                {
-                    names.Add(bit < _frameGenerationFlags.Length ? _frameGenerationFlags[bit] : string.Create(CultureInfo.InvariantCulture, $"bit {bit}"));
-                }
+                names.Add(bit < _frameGenerationFlags.Length ? _frameGenerationFlags[bit] : string.Create(CultureInfo.InvariantCulture, $"bit {bit}"));
             }
-
-            rows.Add(new AdvancedRow("flags", string.Join(", ", names)));
         }
+
+        // This is reached only once a configure was read, so no flag seen is "the game set none" - said, as an
+        // upscale that set none says it (0.1.0-beta.44: Lies of P's session of 2026-11-12 had no row at all).
+        rows.Add(names.Count == 0 ? new AdvancedRow("flags", "none", "none") : new AdvancedRow("flags", string.Join(", ", names)));
 
         // left, top, width, height. A rectangle with no area is one the game did not give; four -1 is one the capture
         // side could not state (a side that is negative or past 32,767).
@@ -246,15 +248,8 @@ public sealed class InGameAdvancedSampler
             facts.Add(Fact("sl.constants.depth", AdvancedValue.OfRows(depth)));
         }
 
-        var projection = new List<AdvancedRow>(3);
-        // A range, lowest to highest - never a series, which would say when the player aimed (D114).
-        if (Number(s.SlFovMinBits) is double low && Number(s.SlFovMaxBits) is double high)
-        {
-            projection.Add(new AdvancedRow("cameraFOV", s.SlFovMinBits == s.SlFovMaxBits
-                ? string.Create(CultureInfo.InvariantCulture, $"{low:0.####} rad ({Degrees(low):0.#}°)")
-                : string.Create(CultureInfo.InvariantCulture, $"{low:0.####} – {high:0.####} rad ({Degrees(low):0.#}° – {Degrees(high):0.#}°)")));
-        }
-
+        var projection = new List<AdvancedRow>(4);
+        AddFieldOfView(projection, "cameraFOV", s.SlFovMinBits, s.SlFovMaxBits);
         AddNumber(projection, "cameraAspectRatio", s.SlAspectBits);
         AddSwitch(projection, "orthographicProjection", SwitchOf(s.SlFlagsSeenTrue, s.SlFlagsSeenFalse, 4));
         if (projection.Count > 0)
@@ -347,15 +342,7 @@ public sealed class InGameAdvancedSampler
         var depth = new List<AdvancedRow>(3);
         AddDepthPlane(depth, "cameraNear", s.FfxNearBits);
         AddDepthPlane(depth, "cameraFar", s.FfxFarBits);
-        // A range, lowest to highest - never a series, which would say when the player aimed (D114).
-        if (Number(s.FfxFovMinBits) is double low && Number(s.FfxFovMaxBits) is double high)
-        {
-            // One value or two: told by the bits, which is what "the same float" means (and what csharpsquid:S1244 asks).
-            depth.Add(new AdvancedRow("cameraFovAngleVertical", s.FfxFovMinBits == s.FfxFovMaxBits
-                ? string.Create(CultureInfo.InvariantCulture, $"{low:0.####} rad ({Degrees(low):0.#}°)")
-                : string.Create(CultureInfo.InvariantCulture, $"{low:0.####} – {high:0.####} rad ({Degrees(low):0.#}° – {Degrees(high):0.#}°)")));
-        }
-
+        AddFieldOfView(depth, "cameraFovAngleVertical", s.FfxFovMinBits, s.FfxFovMaxBits);
         if (depth.Count > 0)
         {
             facts.Add(Fact("ffx.upscale.depth", AdvancedValue.OfRows(depth)));
@@ -419,6 +406,32 @@ public sealed class InGameAdvancedSampler
         {
             rows.Add(new AdvancedRow(member, range));
         }
+    }
+
+    // A field of view as the game gave it: a range, lowest to highest - never a series, which would say when the
+    // player aimed (D114). Both vendors' headers say radians, and a value over pi cannot be one: Cyberpunk 2077 gives
+    // Streamline 51 to 90 (the owner's sessions of 2026-11-12, where this printed "51.0055 - 90 rad (2922.4 deg ...)").
+    // Such a value is said as it was given, and a second row says what it is not. It is never converted: which unit
+    // the game meant is this project's guess, and the row would then carry the guess as the game's word (D128).
+    private static void AddFieldOfView(List<AdvancedRow> rows, string member, uint minBits, uint maxBits)
+    {
+        if (Number(minBits) is not double low || Number(maxBits) is not double high)
+        {
+            return;
+        }
+
+        // One value or two: told by the bits, which is what "the same float" means (and what csharpsquid:S1244 asks).
+        bool one = minBits == maxBits;
+        if (high > Math.PI)
+        {
+            rows.Add(new AdvancedRow(member, one ? Text(low) : Text(low) + " – " + Text(high)));
+            rows.Add(new AdvancedRow(member + " unit", _notRadians, _notRadians));
+            return;
+        }
+
+        rows.Add(new AdvancedRow(member, one
+            ? string.Create(CultureInfo.InvariantCulture, $"{low:0.####} rad ({Degrees(low):0.#}°)")
+            : string.Create(CultureInfo.InvariantCulture, $"{low:0.####} – {high:0.####} rad ({Degrees(low):0.#}° – {Degrees(high):0.#}°)")));
     }
 
     private static string? Range(uint minBits, uint maxBits) =>

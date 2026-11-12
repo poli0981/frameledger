@@ -51,9 +51,14 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         + "VALUES (@name, @path, @size, @mtime, 1, @at, @provenance, @disclosure, @at, @at)";
 
     // The block columns are NOT in the SET list: that is the merge-forward, expressed as an omission.
+    // hook_crash_count = 0 IS (owner decision D126, 0.1.0-beta.44): the count of early abnormal ends was never set back,
+    // so a game switched off after two, and switched on again by its user, was switched off by the next single one -
+    // under a reason that says "twice" (Lies of P, 2026-11-12: two ends in October, one more today). A grant is the only
+    // statement that turns hooking on, and it is the user's act; the count starts again there. What the row says of the
+    // last time (hook_autodisabled_reason, hook_autodisabled_at) stays - the App shows it only while hooking is off.
     private const string _updateGrant =
         "UPDATE games SET exe_size_bytes = @size, exe_mtime_ms = @mtime, hook_enabled = 1, hook_consent_at = @at, "
-        + "hook_consent_provenance = @provenance, hook_consent_disclosure_version = @disclosure, updated_at = @at "
+        + "hook_consent_provenance = @provenance, hook_consent_disclosure_version = @disclosure, hook_crash_count = 0, updated_at = @at "
         + "WHERE exe_path = @path";
 
     private const string _revoke =

@@ -22,6 +22,11 @@ namespace FrameLedger.Application.Recording;
 /// (<c>19_SAFETY</c>: re-enabling silently would mean a rules feed or a policy can switch injection on
 /// for a game without anyone looking).
 /// </para>
+/// <para>
+/// <b>The count starts again when the user switches hooking on</b> (owner decision D126, 0.1.0-beta.44): the consent
+/// grant sets <c>hook_crash_count</c> to 0. Until then the count only ever grew, so once a game had been switched off,
+/// every single early abnormal end after its user switched it on again switched it off - the reason still saying "twice".
+/// </para>
 /// </remarks>
 public sealed class CrashAutoDisablePolicy
 {

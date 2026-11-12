@@ -203,7 +203,11 @@ for the last.
    failed to patch, off meant off. What was not exercised is listed there and stays open.
 2. **0.1.0-beta.44** — first the field of view a game gives in degrees (and what else the nine sessions found),
    then `slGetFeatureVersion` and `slGetFeatureRequirements`. Both are calls a game makes while starting, so most
-   sessions will have missed them: plan what "not seen" says. **Planned with the owner before any code.**
+   sessions will have missed them: plan what "not seen" says. ~~**Planned with the owner before any code.**~~ **The
+   plan was approved 2026-11-12 with three decisions, D126–D128** (the count of early abnormal ends starts again
+   at a grant; the fault at exit is written down only; a field of view over π is shown as given), and with Privacy
+   Policy 2.18's wording. Four pull requests: the fixes; the two hooks in the Overlay; the Agent, the App and the
+   policy; the release.
 3. **Trains C and D** (beta.45, beta.46) each begin with a spike and end in the owner's go or no.
 
 ### Left open by this session
@@ -733,6 +737,9 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D123 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §Pre-injection checks, check 1 | a module list that changed while the guard read it is read again, at most three times, before it refuses — five real sessions on one PC in a week had ended as a safety unhook with no frame recorded; a list that never settles still refuses, and nothing else about what refuses changed |
 | D124 | [`HANDOFF.md`](HANDOFF.md) §NEXT | the guard's re-read (D123) ships with 0.1.0-beta.43 and not as a release of its own — the train's numbers do not move a third time; until then a launch can still be lost that way on beta.42 |
 | D125 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory | an FSR UPSCALE is counted at the first source that saw one and at no other — a precaution for a loader that hands a dispatch on to the leaf's export (Cyberpunk 2077's 2.3.0 does, for frame generation); no title run so far upscales through one |
+| D126 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §Crash & stability safety | the count of early abnormal ends starts again when the user switches hooking on (the consent grant sets it to 0) — it was never set back, so a game once switched off was switched off again by every single such end, under a reason that says "twice" (Lies of P, 2026-11-12) |
+| D127 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §Crash & stability safety | a fault while a game is closing, which a hooked session does not see (Hogwarts Legacy, the driver's `_nvngx.dll`, hooked or not), is written down and not changed in 0.1.0-beta.44 — seeing it would end a user-mode exception for a fault no hook caused; a decision of its own |
+| D128 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | a field of view over π is shown as the game gave it, with a row that says it is not radians, and is never converted — Cyberpunk 2077 gives Streamline degrees; converting would store a guess at the unit as the game's word |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

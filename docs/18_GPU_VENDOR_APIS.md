@@ -770,6 +770,11 @@ planning, the design reviewed against the code before it was approved.
   them from members region 5 already had (layout 5 as it was; schema 23 as it was): a switch is `on`, `off` or
   `on_and_off` from the two words of what was seen, the flags are AMD's own names, the rectangle is the last one
   the game gave and is left out where the capture side could not state it, the field of view is a range (D114).
+  **A field of view over π is said as given (owner decision D128, 0.1.0-beta.44).** Both vendors' headers say
+  radians; Cyberpunk 2077 gives Streamline 51–90, and the row read `51.0055 – 90 rad (2922.4° – 5156.6°)`. Such a
+  value is now the number alone, with a second row (`cameraFOV unit`, token `not_radians`) that says what it is
+  not; it is never converted, which would store this project's guess at the unit as the game's word. A
+  frame-generation configure that set no flag has a `flags` row of `none`, as an upscale does.
   **A count is not part of what makes the facts new** — `sl.constants.resets` grows all session, and a context
   rewritten on each would be one a second — so `InGameAdvancedSampler.Conclude` brings it up to the last
   publication once, when the session ends. `AdvancedSources.StreamlineConstants` and `.FsrFrameGeneration`

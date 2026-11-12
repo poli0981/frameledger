@@ -1234,6 +1234,20 @@ outlives a rules change, a game update and *Change executable*; §What a finding
   hooked session's early abnormal end; the policy counted them, and two turned hooking off. It cannot tell either from
   the hang it exists for, so it stands as written; whether a witness — the same executable started again within
   seconds — may exempt a hand-off is the owner's decision, not taken. Users are told in `LIMITATIONS.md` §Play.
+- **The count starts again when the user switches hooking on (owner decision D126, 0.1.0-beta.44).** Until then
+  `hook_crash_count` only ever grew: Lies of P had two such ends on 2026-10-19/20 (the hand-off above), its user
+  switched hooking on again, and on 2026-11-12 one more early end — the game's own crash, by the owner, after a shader
+  failed to compile — switched it off at once, under a reason that says *twice*. The consent grant, the only
+  statement that turns hooking on, now sets the count to 0 (`SqliteGameConsentStore`). The policy still only
+  disables, a block is still never cleared, and the user-mode exception's trial (D38) keeps its own record, which
+  nothing sets back.
+- **A fault while the game is closing is not seen by a hooked session (owner decision D127: written down, not
+  changed in 0.1.0-beta.44).** Hogwarts Legacy faults in the driver's `_nvngx.dll` at exit — six times in Windows'
+  application log since 2026-11-06, hooked or not. The one unhooked session reads `crashed`; the five hooked ones
+  read `normal` with exit code 0: the witness is looked for when the session is saved, which for a hooked session
+  is before Windows has written the event. Looking again later would make every session of such a game `crashed`,
+  and under a user-mode exception that ends the exception for good for a fault no hook caused — so it is a decision
+  of its own, not a fix to slip in beside two new hooks.
 - **What reads as a crash changed in beta.14, in both directions** (`04_CAPTURE` §Crash & exit classification): a
   Windows report that is not a crash (a memory-leak or hang report) no longer makes one, and an engine's crash reporter
   started by a game that then left does — Unreal's crash ended with exit code 3 and read `normal`. Both feed this policy,

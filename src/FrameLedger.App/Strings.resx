@@ -762,6 +762,9 @@
   <data name="AdvToken_not_a_number" xml:space="preserve">
     <value>Not a number</value>
   </data>
+  <data name="AdvToken_not_radians" xml:space="preserve">
+    <value>Not radians: the value is larger than π. The game probably gives degrees.</value>
+  </data>
   <data name="AdvToken_not_supported" xml:space="preserve">
     <value>Not supported</value>
   </data>

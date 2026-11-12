@@ -224,6 +224,32 @@ public sealed class SqliteGameConsentStoreTests
     }
 
     [Fact]
+    public async Task AGrantStartsTheCountOfEarlyAbnormalEndsAgain()
+    {
+        // Owner decision D126 (2026-11-12). The count was never set back: Lies of P had two early ends in October, its
+        // user switched hooking on again, and one more - the game's own crash - switched it off at once, under a reason
+        // that says "twice". The grant is the user's act and the only statement that turns hooking on.
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var store = new SqliteGameConsentStore(f.Db);
+        var games = new SqliteGameRepository(f.Db);
+        ExecutableFingerprint fp = Fingerprint();
+        await store.RecordOperatorAcknowledgementAsync(Ack(fp), Ct);
+        GameRow row = (await games.FindAsync(fp.ExePath, Ct))!;
+        (await games.RecordCrashAsync(row.Id, Ct)).Should().Be(1);
+        (await games.RecordCrashAsync(row.Id, Ct)).Should().Be(2);
+        (await games.AutoDisableHookAsync(row.Id, "ended abnormally twice", DateTimeOffset.UnixEpoch.AddSeconds(9), Ct)).Should().BeTrue();
+        (await games.FindAsync(fp.ExePath, Ct))!.HookEnabled.Should().BeFalse();
+
+        (await store.RecordOperatorAcknowledgementAsync(Ack(fp), Ct)).Should().Be(ConsentWriteOutcome.Written);
+
+        GameRow again = (await games.FindAsync(fp.ExePath, Ct))!;
+        again.HookEnabled.Should().BeTrue();
+        again.HookCrashCount.Should().Be(0, "two more are needed before hooking goes off again");
+        again.HookAutoDisabledReason.Should().Be("ended abnormally twice", "what happened the last time stays on the row");
+        (await games.RecordCrashAsync(row.Id, Ct)).Should().Be(1, "one early end after the grant is one, not three");
+    }
+
+    [Fact]
     public async Task AStoreWhoseTableIsGoneRefusesEveryWriteAndConsentsToNothing()
     {
         // The file store's "unreadable store" cases, in SQLite's terms: a ledger this build cannot read

@@ -757,6 +757,9 @@
   <data name="AdvToken_not_a_number" xml:space="preserve">
     <value>Không phải số</value>
   </data>
+  <data name="AdvToken_not_radians" xml:space="preserve">
+    <value>Không phải radian: giá trị lớn hơn π. Có lẽ game đưa giá trị bằng độ.</value>
+  </data>
   <data name="AdvToken_not_supported" xml:space="preserve">
     <value>Không hỗ trợ</value>
   </data>
