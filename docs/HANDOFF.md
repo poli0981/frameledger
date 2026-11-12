@@ -147,12 +147,63 @@ sessions on beta.42 showed, and the design as planned, are
   file; a multi-file script that fails part-way has already written the earlier files.
 - **One local gate printed 871 App tests where every other printed 872**, green. Not looked into.
 
+### What the owner's nine sessions on beta.43 showed (2026-11-12)
+
+Run 15:42–16:21 in the owner's time zone, read the same afternoon from a copy of the ledger (sessions 171–179), the
+Agent's log, the nine overlay logs and Windows' application log. Advanced metrics was on for the first eight and off
+for the last.
+
+| # | Game | What it showed |
+|---|---|---|
+| 171 | Phantom Blade Zero, 649 s, DLSS frame generation ×3.0 | Streamline 2.14.1: **read** — jitter ≤ 0.47, motion-vector scale 0.0009 / 0.0016, near 0.01 and far 75,000 with depth inverted, field of view 0.6545–1.3612 rad, aspect 1.7767, 1 reset. FSR frame generation: hooked on the loader and both leaves, the game never called |
+| 172 | Lies of P, 35 s, exit code 3 | 542 frames, nothing evaluated. **The owner: the game crashed after a shader failed to compile.** The crash policy counted it and turned the game's hooking off (below) |
+| 173 | Lies of P, 130 s | Tier 2 — hooking was off; the owner switched it on again at 16:02 |
+| 174 | Lies of P, 94 s, FSR 3 + FSR frame generation ×2.0 | **`ffxConfigure` read** on the one-module `amd_fidelityfx_dx12.dll`: frame generation on and off, not asynchronous, generated frames not presented alone, 2560 × 1440 at 0, 0; the log has `FFX_CONFIGURE` types `0x10007` and `0x20002`. Streamline: not hooked (the game has none) |
+| 175 | Cyberpunk 2077, 72 s, no upscaler named, no frame generation | Streamline 2.14.1: **read** — jitter ≤ 0.5, motion-vector scale 1 / 1, near 0.02 and far 16,000 inverted, aspect 1.7778, **field of view 51.0055–90**, 2,575 resets |
+| 176 | Cyberpunk 2077, 145 s, DLSS + DLSS frame generation ×2.0 | the same values; 1,821 resets. FSR frame generation: hooked on the loader and both leaves, never called |
+| 177 | Kingdom Come: Deliverance II, 135 s, FSR | Streamline: not hooked. `ffxConfigure` hooked on the loader and the upscaler, never called — the game ships no frame generation |
+| 178 | Hogwarts Legacy, 158 s, DLSS frame generation ×4.0 | Streamline 2.14.16: **read** — jitter ≤ 0.47, field of view 0.8872–2.0071 rad, aspect 1.7763, near 0.01 and far 75,000 inverted, 11 resets. `ffxConfigure` hooked on `amd_fidelityfx_dx12.dll`, never called |
+| 179 | Lies of P, 129 s, **Advanced metrics off**, a new Agent, the game started afresh | no Advanced row; bits 13 and 14 clear in `hooks_installed_mask`; the log has `ffxDispatch` and `ffxQuery` and **no `ffxConfigure` line** |
+
+- **The two hooks did what they were built to do on four real games**, three Streamline builds apart (2.14.1 twice,
+  2.14.16) and one FSR library. No `PATCH_FAILED`, no fault counted, in nine logs. `legal_acceptance` holds Privacy
+  Policy 2.17 accepted once, four seconds after the update; no session since the update ended with
+  `guard=ModuleScanFailed` (the day's one is beta.42's, at 10:05).
+- **Cyberpunk 2077 gives Streamline its field of view in degrees.** The vendor's header says radians; the game
+  passes 51–90. Every other field of the same struct is sane (the aspect ratio beside it is 1.7778), so the layout
+  is not in question — the game's unit is. The page prints `51.0055 – 90 rad (2922.4° – 5156.6°)`: **a defect of
+  the label, not of the reading**, and beta.44's first pull request. The two stored sessions keep the string they
+  were stored with.
+- **A resets count has no denominator.** 2,575 in a 72 s session that was mostly menus and 1,821 in 145 s on
+  Cyberpunk, beside 1 and 11 on the two Unreal games. It is what the game said (`reset == eTrue`, the first
+  viewport's calls); the page does not say out of how many calls.
+- **A frame-generation configuration with no flag set has no flags row**, where an upscale with none says `none`.
+- **Lies of P's 35 s end turned its hooking off, and one such end is now enough.** `hook_crash_count` is never set
+  back: the game's two ends of 2026-10-19/20 (`19_SAFETY` §Crash & stability safety, the hand-off to Steam) had
+  brought it to 2, the owner had switched hooking on again, and today's single early end made 3 — at or over
+  `CrashesToDisable`, so hooking went off at once, under a reason that says *twice*. Whether switching hooking back
+  on starts the count again is the owner's decision; it is asked with beta.44's plan.
+- **Hogwarts Legacy faults in the driver's `_nvngx.dll` as it exits, hooked or not.** Windows' application log has
+  the same fault (0xc0000005 at +0x6aa85, `_nvngx.dll` 32.0.16.2114) six times since 2026-11-06, each at the end
+  of one of the game's seven recorded sessions — the first of them session 131, which nothing was injected into.
+  That one reads `crashed`; the five hooked ones, today's 178 among them, read `normal` with exit code 0, the
+  fault logged in the second the session was saved. **Why a hooked session does not see the crash event that an
+  unhooked one does was not looked into.**
+- **Frame rates as before**, where the settings were: Lies of P 59 → 118 (beta.42: 58.9 → 118.0), Kingdom Come 59.3
+  (59.4), Hogwarts Legacy 58.8 → 235.8 at ×4 (alpha.3: 56.1 → 225.1). Phantom Blade Zero's factor moves between
+  sessions under the driver's dynamic mode (×2.9 to ×4.1 since 2026-11-05) and Cyberpunk was run with other settings.
+- **Not exercised**: a configure through the FidelityFX 2.3 loader (Cyberpunk 2077 with FSR frame generation) — the
+  configure count's owner slot has not met a real game; a game with neither library; Dying Light: The Beast.
+  Phantom Blade Zero and Hogwarts Legacy name no upscaler beside DLSS frame generation, as on every release before.
+
 ### NEXT
 
-1. **The owner runs item 41** — the first time either new hook is in a real game. Not first on a game under the
-   user-mode exception's trial (D38: a crash there ends the exception for good).
-2. **0.1.0-beta.44** — `slGetFeatureVersion` and `slGetFeatureRequirements` — when the owner says beta.43 passed.
-   Both are calls a game makes while starting, so most sessions will have missed them: plan what "not seen" says.
+1. ~~**The owner runs item 41**~~ **Run and read 2026-11-12** (§What the owner's nine sessions on beta.43 showed).
+   The owner's word was to go on if it passed, and it is judged passed: both hooks read real games, nothing
+   failed to patch, off meant off. What was not exercised is listed there and stays open.
+2. **0.1.0-beta.44** — first the field of view a game gives in degrees (and what else the nine sessions found),
+   then `slGetFeatureVersion` and `slGetFeatureRequirements`. Both are calls a game makes while starting, so most
+   sessions will have missed them: plan what "not seen" says. **Planned with the owner before any code.**
 3. **Trains C and D** (beta.45, beta.46) each begin with a spike and end in the owner's go or no.
 
 ### Left open by this session
@@ -168,9 +219,14 @@ sessions on beta.42 showed, and the design as planned, are
   rehearsal on the release branch (run 43167388933, the same tree before it was rebased onto #417's squash) had
   made a delta of 1,944,086 bytes with the same file counts. **SonarCloud answered on `6c7ba74`: the quality gate
   passed and no issue is open on `main`. Qodana's two reports are green on that commit**, and were on #417's.
-- **No real game was run on this build.** Two new patch sites, tested with the harness and the stubs; their cost
+- ~~**No real game was run on this build.** Two new patch sites, tested with the harness and the stubs; their cost
   measured on the headers. Whether a real `sl.interposer.dll` 2.x lays `sl::Constants` out as the vendored header
-  does is checked on every call by the struct's GUID and version, not by a real game yet.
+  does is checked on every call by the struct's GUID and version, not by a real game yet.~~ **Nine sessions on five
+  games, 2026-11-12** (§What the owner's nine sessions on beta.43 showed): interposers 2.14.1 and 2.14.16 lay the
+  struct out as the header does. **The accuracy statement's three copies and `LIMITATIONS.md` still say Streamline's
+  constants and the frame-generation configuration "have not been confirmed" on a real game** — reworded with
+  beta.44's first pull request. **`docs/LIST_GAME_TESTED.md` is as of 2026-11-06**: refreshing it is a new copy and
+  the owner's review.
 - **Item 40 (d)** — a session that changes upscaler — was not exercised, and the owner has not said item 40 passed.
   **Items 36 (d) and 37 are still open.**
 - **What an empty process snapshot does to the watcher's tick in a real session** was not looked into
@@ -178,7 +234,7 @@ sessions on beta.42 showed, and the design as planned, are
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** item 41; item 40 (d).
+**Owner-only:** what item 41 left unexercised — (d) through the FidelityFX 2.3 loader, (e) a game with neither library; item 40 (d).
 
 ## Owner-only — no PR can close these
 
@@ -528,6 +584,16 @@ sessions on beta.42 showed, and the design as planned, are
    game reaches Streamline or FSR by a way that does not pass the export — beta.44's plan needs to know. A crash,
    or a game that will not start: say so at once; *Disable all hooking* (Settings ▸ Capture) and switching Advanced
    metrics off are the two ways to run without the hooks, and which of them cured it says which hook it was.
+   **Nine sessions were run on 2026-11-12 and read the same afternoon** (START HERE §What the owner's nine sessions
+   on beta.43 showed): (a) happened — Privacy Policy 2.17 accepted once, at the update; (b) held — no
+   `guard=ModuleScanFailed` since the update; (c) read on Phantom Blade Zero, Cyberpunk 2077 and Hogwarts Legacy,
+   every value sane but one: **Cyberpunk 2077 gives its field of view in degrees** (51–90), and the page labels it
+   radians — the struct is laid out as expected, the label is wrong; (d) read on Lies of P, **not exercised through
+   the FidelityFX 2.3 loader**; (e) the three answers were each seen and none is a finding, **a game with neither
+   library was not run**; (f) held on Lies of P started afresh; (g) no `PATCH_FAILED`, no fault, frame rates as
+   before — Lies of P's 35 s end with exit code 3 is, by the owner, the game's own crash after a shader failed to
+   compile, and Hogwarts Legacy's fault at exit is in Windows' log six times since 2026-11-06, hooked or not.
+   **Judged passed 2026-11-12, on the owner's word to go on if it did**; the two parts in bold stay open.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
