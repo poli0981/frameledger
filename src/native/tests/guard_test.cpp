@@ -3067,16 +3067,14 @@ TEST_CASE("D123 — the real module source says a churning list is unsettled, ne
     int             other = 0;
     const ULONGLONG until = GetTickCount64() + 3000;
     while (GetTickCount64() < until) {
-        switch (s.EnumerateModules(child.pi.dwProcessId, none, nullptr)) {
-        case Collected::kOk:
+        // An if-chain, not a switch: the two answers are named and every other one is "other" on purpose.
+        const Collected c = s.EnumerateModules(child.pi.dwProcessId, none, nullptr);
+        if (c == Collected::kOk) {
             ++ok;
-            break;
-        case Collected::kUnsettled:
+        } else if (c == Collected::kUnsettled) {
             ++unsettled;
-            break;
-        default:
+        } else {
             ++other;
-            break;
         }
     }
     WARN("a churning module list, read " << (ok + unsettled + other) << " times in 3 s: " << ok << " whole, "
