@@ -139,6 +139,12 @@ What the region is, as a contract between the two sides:
   jitter's largest magnitude, the motion-vector scale, the two depth planes, the field of view's range, the aspect
   ratio, and one bit per `Boolean` in each of two words — seen true, seen false. `FlHookFamily` gains
   `FL_HOOK_SL_CONSTANTS` (bit 13): the hook is in, which it is only in a process that was asked at least once.
+  **The `ffxFg*` group is filled since the same release** by the `ffxConfigure` hook, under
+  `FL_ADV_VALID_FFX_FG_CONFIG`: the frame-generation configures of the one module counted, three switches as "seen
+  off / seen on" bit pairs (enabled, asynchronous, generated frames only), every flag any configure carried, and
+  the last generation rectangle as left, top, width, height — **four `-1` for a rectangle with a negative side or
+  one past 32,767**, never a clipped one. `FL_HOOK_FFX_CONFIGURE` (bit 14) is published when every ffx-api module
+  the process loaded has its `ffxConfigure` patched.
 - The Vulkan layer never writes it. `ShmLayoutMirrorTests.TheAdvancedStateMirrorMatches` checks every member's
   offset against `fl-layout-dump`; `ShmRingReaderTests` the three reads and that the request is stored either way.
 

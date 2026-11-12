@@ -32,4 +32,7 @@ public enum HookFamilies
 
     /// <summary><c>slSetConstants</c> is hooked (0.1.0-beta.43) - only where Advanced metrics was ever asked for.</summary>
     SlConstants = 1 << 13,
+
+    /// <summary><c>ffxConfigure</c> is hooked (0.1.0-beta.43) - only where Advanced metrics was ever asked for.</summary>
+    FfxConfigure = 1 << 14,
 }

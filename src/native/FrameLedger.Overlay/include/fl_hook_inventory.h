@@ -124,7 +124,8 @@ inline constexpr uint32_t kFamiliesEvaluateFeatureDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_RT_AS_BUILD) | static_cast<uint32_t>(fl::FL_HOOK_RT_PSO) |
     static_cast<uint32_t>(fl::FL_HOOK_PSO) | static_cast<uint32_t>(fl::FL_HOOK_COLOR_SPACE) |
     static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
-    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS);
+    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS) |
+    static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE);
 
 static_assert((kFamilyEvaluateFeature & kFamiliesEvaluateFeatureDoesNotImplement) == 0u,
               "the slEvaluateFeature row claims a family its detour does not implement -- hookinventory-check "
@@ -208,7 +209,7 @@ inline constexpr uint32_t kFamiliesFfxDispatchDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_PSO) | static_cast<uint32_t>(fl::FL_HOOK_COLOR_SPACE) |
     static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
     static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_NEURAL_RENDERING) |
-    static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS);
+    static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS) | static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE);
 
 static_assert((kFamilyFfxDispatch & kFamiliesFfxDispatchDoesNotImplement) == 0u,
               "the ffxDispatch rows claim a family their detour does not implement -- hookinventory-check reads "
@@ -301,6 +302,27 @@ static_assert(kFamilySlConstants != kFamilyEvaluateFeature && kFamilySlConstants
                   kFamilySlConstants != static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS),
               "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand slSetConstants' "
               "detour to another export, or another's to it");
+
+// --- AMD FidelityFX: ffxConfigure on the same four modules (0.1.0-beta.43, Advanced metrics train B) ---
+//
+// HOW THE GAME CONFIGURES FRAME GENERATION: a title calls ffxConfigure with a frame-generation descriptor, usually
+// every frame, saying whether generation is on, whether it may run asynchronously, its flags, whether only generated
+// frames are presented, and the rectangle it generates in. Those five are read; the swapchain, the two callbacks
+// and their contexts, the HUD-less resource and the frame id in the same descriptor never are. Every other
+// configure type -- key-value pairs, the distortion field, the camera info -- is passed over with only its header's
+// type read. The rows are the four modules ffxDispatch is hooked on, for the reason those rows give.
+//
+// INSTALLED ONLY WHERE ASKED FOR, like slSetConstants above (D111), and published when whole, like the other two
+// ffx families. One call reaches two hooked modules behind a loader that forwards to the leaf's export (Cyberpunk
+// 2077's 2.3.0) and behind the fixture's loader, which has always forwarded ffxConfigure that way: the reads are
+// counted at the first module that saw a frame-generation configure (fl_adv_fields.h).
+inline constexpr uint32_t kFamilyFfxConfigure = static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE);
+static_assert(kFamilyFfxConfigure != kFamilyEvaluateFeature && kFamilyFfxConfigure != kFamilyFfxDispatch &&
+                  kFamilyFfxConfigure != kFamilyFfxQuery && kFamilyFfxConfigure != kFamilySlConstants &&
+                  kFamilyFfxConfigure != static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS) &&
+                  kFamilyFfxConfigure != static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS),
+              "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand ffxConfigure's detour "
+              "to a dispatch or a query export, whose descriptors it does not share");
 
 // The leaves, in the order dllmain's per-leaf trampoline and latch arrays are indexed.
 enum FfxLeaf : uint32_t {
@@ -406,6 +428,10 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
     X(L"amd_fidelityfx_upscaler_dx12.dll", "ffxQuery", fl::inventory::kFamilyFfxQuery)                                 \
     X(L"amd_fidelityfx_framegeneration_dx12.dll", "ffxQuery", fl::inventory::kFamilyFfxQuery)                          \
     X(L"amd_fidelityfx_loader_dx12.dll", "ffxQuery", fl::inventory::kFamilyFfxQuery)                                   \
+    X(L"amd_fidelityfx_dx12.dll", "ffxConfigure", fl::inventory::kFamilyFfxConfigure)                                  \
+    X(L"amd_fidelityfx_upscaler_dx12.dll", "ffxConfigure", fl::inventory::kFamilyFfxConfigure)                         \
+    X(L"amd_fidelityfx_framegeneration_dx12.dll", "ffxConfigure", fl::inventory::kFamilyFfxConfigure)                  \
+    X(L"amd_fidelityfx_loader_dx12.dll", "ffxConfigure", fl::inventory::kFamilyFfxConfigure)                           \
     X(L"ffx_fsr3_x64.dll", "ffxFsr3ContextDispatchUpscale", fl::inventory::kFamilyFsr3Host)
 
 // How many rows the table has: one inline patch each at most. dllmain's patch registry is sized against it, so a
@@ -413,7 +439,7 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
 #define FL_COUNT_ROW(mod, sym, family) +1u
 inline constexpr uint32_t kRowCount = 0u FL_HOOK_INVENTORY(FL_COUNT_ROW);
 #undef FL_COUNT_ROW
-static_assert(kRowCount == 14u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
+static_assert(kRowCount == 18u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
 
 // A row's "module!symbol", for the native log, built at compile time from the row's own two spellings -- so an
 // install line names the module it patched, and no second list of names exists to drift from the table
@@ -580,6 +606,38 @@ static_assert(EveryFfxQueryRowIsALeaf(),
               "an ffxQuery row names a module the leaf table does not know -- InstallByFamily would find no slot");
 static_assert(!FfxQueryRowExistsFor(kModuleFfxFsr3Host),
               "the FSR 3.0 host has its own query API, not ffxQuery; a row claiming one would resolve nothing");
+
+// The ffxConfigure rows, bound to the leaf table the same way (0.1.0-beta.43).
+inline constexpr const char* kSymbolFfxConfigure = "ffxConfigure";
+
+constexpr bool FfxConfigureRowExistsFor(const wchar_t* moduleName) noexcept {
+#define FL_FFX_CONFIGURE_ROW_FOR(mod, sym, family)                                                                     \
+    if (SameW(mod, moduleName) && SameA(sym, kSymbolFfxConfigure)) {                                                   \
+        return true;                                                                                                   \
+    }
+    FL_HOOK_INVENTORY(FL_FFX_CONFIGURE_ROW_FOR)
+#undef FL_FFX_CONFIGURE_ROW_FOR
+    return false;
+}
+constexpr bool EveryFfxConfigureRowIsALeaf() noexcept {
+#define FL_FFX_CONFIGURE_ROW_IS_LEAF(mod, sym, family)                                                                 \
+    if (SameA(sym, kSymbolFfxConfigure) && FfxLeafOfExact(mod) < 0) {                                                  \
+        return false;                                                                                                  \
+    }
+    FL_HOOK_INVENTORY(FL_FFX_CONFIGURE_ROW_IS_LEAF)
+#undef FL_FFX_CONFIGURE_ROW_IS_LEAF
+    return true;
+}
+static_assert(FfxConfigureRowExistsFor(kFfxLeafModules[kFfxLeafMonolith]) &&
+                  FfxConfigureRowExistsFor(kFfxLeafModules[kFfxLeafUpscaler]) &&
+                  FfxConfigureRowExistsFor(kFfxLeafModules[kFfxLeafFrameGeneration]) &&
+                  FfxConfigureRowExistsFor(kFfxLeafModules[kFfxLeafLoader]),
+              "every ffx leaf needs its ffxConfigure row, spelled identically -- the configure reaches whatever module "
+              "the game calls, as the dispatch does");
+static_assert(EveryFfxConfigureRowIsALeaf(),
+              "an ffxConfigure row names a module the leaf table does not know -- InstallByFamily would find no slot");
+static_assert(!FfxConfigureRowExistsFor(kModuleFfxFsr3Host),
+              "the FSR 3.0 host has its own configure API, not ffxConfigure; a row claiming one would resolve nothing");
 
 // Does this module speak the Streamline 2 ABI the vendored headers describe?
 //
