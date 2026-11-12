@@ -376,6 +376,13 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
     X(L"amd_fidelityfx_loader_dx12.dll", "ffxQuery", fl::inventory::kFamilyFfxQuery)                                   \
     X(L"ffx_fsr3_x64.dll", "ffxFsr3ContextDispatchUpscale", fl::inventory::kFamilyFsr3Host)
 
+// How many rows the table has: one inline patch each at most. dllmain's patch registry is sized against it, so a
+// row added here cannot outgrow the registry without a compile error (0.1.0-beta.42).
+#define FL_COUNT_ROW(mod, sym, family) +1u
+inline constexpr uint32_t kRowCount = 0u FL_HOOK_INVENTORY(FL_COUNT_ROW);
+#undef FL_COUNT_ROW
+static_assert(kRowCount == 13u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
+
 // The FSR 3.0 host module and the one symbol dllmain's ffx arm keys on for it. Named
 // constants HERE, for the reason kModuleSlInterposer gives below, and bound to the
 // table so the row and the arm cannot drift apart.

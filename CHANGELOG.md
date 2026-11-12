@@ -37,6 +37,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **The part inside the game can no longer leave a hook in after it has stopped.** Two gaps in how the Overlay keeps
+  track of its own patches, found by reading the code and not by a failure: a patch made while the table of patches
+  was full would have been made anyway and never taken out, and a stop that arrived at the exact moment a hook was
+  going in could miss it. A patch now takes its place in the table before it is made — no place, no patch — and is
+  recorded before it can run, so the stop either removes it or the installer does. A patch that could not be made
+  is written to the Overlay's log with the reason, where it used to be silent. No hook's own code changed.
+
 - **A session that saw two upscalers is named after the one it ran, with that one's quality and render size.** The
   session's upscaler used to be the first one FrameLedger saw named, while the quality mode and the render size
   came from whichever frames carried them. A game that evaluated DLSS briefly and then ran FSR was stored as "DLSS"
