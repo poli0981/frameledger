@@ -125,9 +125,13 @@ the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta
    - **`FLT_MAX` in an FSR depth plane.** Lies of P gave `cameraFar = 10` and no `cameraNear`; most likely the
      plane at infinity is `FLT_MAX`, which the Overlay refuses as "nobody set this". Decide whether it is stored as
      "infinite" — an Overlay change, with its overhead stated.
-   - **Valor Mortis.** One exit by access violation 51 seconds after injection under beta.40, none under an earlier
+   - ~~**Valor Mortis.** One exit by access violation 51 seconds after injection under beta.40, none under an earlier
      build, not attributed. Its crash count is 1; a second such end switches its hooking off. Before adding a hook
-     to that game's process, ask the owner whether it happened again.
+     to that game's process, ask the owner whether it happened again.~~ **Answered by the owner, 2026-11-12: it was
+     the game's own — a shader-compilation error on entering the game, shown in the game's own crash dialog.** Not
+     FrameLedger's. It ran normally under beta.41 afterwards. Its crash count still stands at 1, because the crash
+     policy counts an abnormal end within 60 seconds of injection whoever caused it: a second one, from any cause,
+     switches its hooking off, and the owner then switches it on again from the game's page.
    - **The release numbers in the comments** of `fl_shm.h`, `ShmLayout.cs`, `hook-harness` and `guard_test.cpp` for
      the members that release fills (D118).
 3. **0.1.0-beta.43 — the third — when the owner says the one before passed**: `slGetFeatureVersion` and
@@ -144,8 +148,39 @@ the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta
   from beta.40 is 807,692 bytes beside a full package of 110,708,416 — "Delta processed 0452 files. 0022 patched,
   0430 unchanged". The wiki was published by run 43113525941. The rehearsal on the release branch (run 43108189693)
   had made a delta of 841,038 bytes with the same file counts.
-- **The fix has not been seen to work.** It was written from the log's timing; the fault needs an elevated Agent with
-  PawnIO. Item 39 is the check, and `20_OPEN_QUESTIONS` §M13 stays open until then.
+- ~~**The fix has not been seen to work.** It was written from the log's timing; the fault needs an elevated Agent with
+  PawnIO. Item 39 is the check, and `20_OPEN_QUESTIONS` §M13 stays open until then.~~ **The owner's first seven
+  sessions on beta.41 show no fault** (2026-11-12, 06:38–07:01, read from the Agent's log and a copy of the ledger):
+  not one `advanced:` line, and every session with the option on stored its 212 or 213 series, the processor's 119
+  among them. On beta.40 the same morning the processor device faulted out after **each** of the six sessions
+  recorded between 04:34 and 05:07. The rarer fault — the reader failing to open — was one session in sixteen, so
+  seven clean ones do not yet say it is gone. Whether item 39 has passed is the owner's to say.
+- **What those sessions say of train B's first release** (the same log and ledger; the owner named which games are
+  first-person — Kingdom Come: Deliverance II, Cyberpunk 2077, Dying Light: The Beast, Valor Mortis — the rest
+  third-person, and Psycho-Sleuth 2D):
+  - **The first FSR 3.1 title read: Kingdom Come: Deliverance II** (FSR 3.1 chosen in the game;
+    `amd_fidelityfx_upscaler_dx12.dll` 4.0.2 behind the loader). Performance mode, 1280×720 to 2560×1440;
+    sharpening on at 0.5; `cameraNear` 0.05 and `cameraFar` 8000 — **both planes, the only title that gives both**;
+    one vertical field of view for the whole session, 63.1°; a reported frame time of 16.67 ms. A 41-second session
+    of the same game that never left its menu read nothing and says so.
+  - **Dying Light: The Beast** upscaling with FSR: sharpening off, 75.4°–78° vertical, 7.5 ms. **Clair Obscur**:
+    sharpening off, 5.7°–90.7° over four minutes. So far the two first-person titles hold a narrow range and the
+    two third-person ones a wide one (Lies of P 21.6°–73.7°) — what one would expect of cutscene and aiming
+    cameras, and no more than that: four titles.
+  - **Three engines give `cameraFar` alone, as a small number** — 10 (Lies of P), 1 (Clair Obscur), 0.1 (Dying
+    Light) — which is the near plane of an inverted, infinite depth with the other plane at `FLT_MAX`. That is the
+    case beta.42's plan has to decide.
+  - **Clair Obscur reports a frame time of 0.001 ms in some seconds.** It is what the game hands FSR, stored as it
+    was said; the lowest value of that series is not a frame time anyone saw.
+  - **Cyberpunk 2077 read nothing**, with FSR frame generation running and the render size known: its upscaling did
+    not come through an ffx-api upscale dispatch in those sessions. Which upscaler it was set to is the owner's to
+    say; `ffxConfigure` (beta.42) is where its frame generation would be read.
+  - **One session of Dying Light names DLSS as its upscaler and carries FSR's quality byte and render size** (81
+    seconds, both an FSR dispatch and a DLSS evaluation seen, "settings changed" not set). Not this train's code —
+    the session summary's choice between two upscalers seen in one session — and not looked into.
+  - **A session without consent says so**: two Cyberpunk sessions before its consent dialog was accepted are
+    Tier 2, and their Advanced row says *not measured inside the game*. **The option off stored nothing** again,
+    this time on a title that upscales with FSR 3.1 (Dying Light, beta.41).
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware".** They have been read on one PC and compared with nothing. The
   owner's to reword.
