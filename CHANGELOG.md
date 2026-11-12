@@ -35,6 +35,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **The limitations, the accuracy statement and the user guide no longer say that most sessions will show nothing
+  of what Streamline answers about a feature.** 0.1.0-beta.44's notes expected that, because a game asks while it
+  starts. The first real sessions (2026-11-12, five games) read both answers in every Streamline session: the
+  Unreal Engine games ask again later. The pages now say what was seen — and two things the readings showed: the
+  version Streamline gives for a feature can be newer than the file in the game's folder, and a game that does not
+  upscale through Streamline lists frame generation there and no upscaler. No code changes.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

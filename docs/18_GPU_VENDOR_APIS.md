@@ -792,8 +792,9 @@ planning, the design reviewed against the code before it was approved.
   requirement nobody stated — except `versionSL`; a count of 0 is a count. One bit of the mask covers both
   questions, so which was answered is told by the slots (`InGameAdvancedSampler.FeatureCall`), and
   `AdvancedSources.StreamlineFeatureVersion` and `.StreamlineFeatureRequirements` say for each: `Read`;
-  `NeverCalled` — hooked, and the game did not ask after that, **the usual case, because a game asks while it
-  starts**, and the page words it so; or `NotHooked`. The slots are not emptied by a new request, so a second
+  `NeverCalled` — hooked, and the game did not ask after that, ~~**the usual case, because a game asks while it
+  starts**~~ *(not the usual case: measured 2026-11-12, six of six Streamline sessions on five games read both, bar
+  Cyberpunk 2077's version question)*, and the page words it as "did not ask again"; or `NotHooked`. The slots are not emptied by a new request, so a second
   session of a game that kept running stores what the first one read. `sl.init.preferences` stays unread (D112).
 - **D113 — three releases, because a new patch site cannot be proven in CI.** A crash in a game under the user-mode
   anti-cheat exception's trial ends that exception for good (D38), and every release already means restarting the

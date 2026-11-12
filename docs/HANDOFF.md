@@ -158,15 +158,68 @@ it. Four pull requests and this one: #421 (the fixes: a field of view in degrees
 - **GPG's pinentry timed out once** (the cache had expired); the second attempt went through when the owner was
   at the keyboard.
 
+### What the owner's eight sessions on beta.44 showed (2026-11-12)
+
+Run 19:52–20:46 in the owner's time zone, read the same evening from a copy of the ledger (sessions 181–188), the
+Agent's log, eight overlay logs and Windows' application log. Advanced metrics was on throughout.
+
+| # | Game | What it showed |
+|---|---|---|
+| 181 | Phantom Blade Zero, 796 s, DLSS frame generation ×4.0 | Streamline 2.14.1. **Both questions read**: versions of `kFeatureReflex`, `kFeatureDLSS_G`, `kFeaturePCL`; requirements of those and `kFeatureDeepDVC`. The constants as on beta.43 |
+| 182 | Clair Obscur: Expedition 33, 107 s, FSR + DLSS frame generation ×3.0 | Streamline 2.7.30. **Both read** (`kFeatureDLSS_G`, `kFeatureReflex`, `kFeaturePCL`); the constants and FSR's upscale values read beside them |
+| 183 | Valor Mortis (Microsoft Store), 51 s, **crashed** — exit code `0xC0000005` | Streamline 2.14.1. Both read before it ended. The game's second early abnormal end, so hooking went off (below) |
+| 184 | Valor Mortis, 935 s, ×6.0 | hooking switched on again at 20:11; both read; ended normally |
+| 185 | Black Myth: Wukong, 167 s, ×4.0 | Streamline 2.7.4. Both read |
+| 186 | Cyberpunk 2077, 257 s, DLSS + DLSS frame generation ×2.0 | **The field of view reads `51.0055 – 90` with a row `cameraFOV unit` = *not radians*** (D128). Requirements **read** for `kFeatureDLSS`, `kFeatureDLSS_RR`, `kFeatureDLSS_G`, `kFeatureReflex`, `kFeatureNIS`; the version question *hooked, not asked again* |
+| 187, 188 | Kingdom Come: Deliverance II, 39 s and 289 s | no Streamline: the constants and both questions *not hooked*; `ffxConfigure` hooked and never called. Neither session reached an FSR dispatch (the upscaler's first query came 11 s before the second one ended) |
+
+- **The two questions were read in six of six Streamline sessions, on five games** — the plan, the release notes
+  and four documents said most sessions would show nothing, because a game asks while it starts. Unreal's
+  Streamline plugin (four of the five games) asks again after the attach, and Cyberpunk 2077 asks for requirements
+  again; only Cyberpunk's version question was *not asked again*. The three answers of the line were each seen.
+  The documents are corrected in the same pull request as this text.
+- **What was read agrees with the PC.** `driverVersionDetected` 621.14.0 is the snapshot's driver
+  (`32.0.16.2114`), `osVersionDetected` 10.0.29648 its Windows build, `versionNGX` of `kFeatureDLSS_G` the file
+  version of the game's `nvngx_dlssg.dll` (310.9.1, 310.6.0), `versionSL` of Reflex and PCL the interposer's.
+- **`kFeatureDLSS_G`'s `versionSL` is 2.14.16 on three games that ship 2.14.1 or 2.7.30** (Phantom Blade Zero,
+  Valor Mortis, Clair Obscur): Streamline answers for a newer frame-generation plugin than the game's own folder
+  holds. Which file that is was not looked into — an updated plugin delivered by NVIDIA's app is the likely one.
+  It is the first value of this kind that a file's version could not have given.
+- **No Unreal game asked about `kFeatureDLSS`.** Their DLSS upscaling does not go through Streamline (Cyberpunk's
+  does: it is asked about, and the session names DLSS). That is the likely reason Phantom Blade Zero, Hogwarts
+  Legacy, Valor Mortis and Black Myth: Wukong name no upscaler beside DLSS frame generation — the question left
+  open since beta.43. Naming it would take a hook on NGX, which this project does not have.
+- **Valor Mortis crashed 51 s into a hooked session, as it did on beta.40.** Session 141 (2026-11-12 02:44,
+  beta.40: `0xC0000005` after 51 s, 498 frames) and session 183 (20:09, beta.44: the same code after 51 s, 8,077
+  frames); the session after each ran normally under the same build. So it is not this release's hooks. Whether
+  FrameLedger has any part in it is not known: Windows logged no event for either (a Store package), and there is
+  no unhooked start to compare. **The crash policy did what D126 says**: today's was the game's second early end, so
+  hooking went off at 20:09:52; the owner switched it on at 20:11:03 and the count is 0.
+- **Black Myth: Wukong faults in Steam's `crashhandler64.dll` as it exits** (0xc0000409 at +0x39b49) — at each of
+  its three recorded exits, all hooked (beta.40 twice, beta.44 once); each session reads `normal`, the shape D127
+  wrote down for Hogwarts Legacy. **There is no unhooked exit to compare**: one session of it with hooking off
+  would say whether FrameLedger has a part.
+- **No `PATCH_FAILED`, no fault counted, in eight logs**; Privacy Policy 2.18 was accepted once, eight seconds
+  after the update. The two new rows are the first Streamline `HOOK_INSTALLED` lines of every log. Frame rates as
+  before where the settings were: Clair Obscur 106 → 323 (beta.41: 106 → 318), Valor Mortis 39.6 → 237 (37.7 →
+  228). Wukong's native rate was 90 where beta.40's two sessions had 124; nothing says whether the scene and
+  settings were the same.
+- **Not exercised: off means off** — every session had Advanced metrics on. And, from item 41: a configure through
+  the FidelityFX 2.3 loader.
+
 ### NEXT
 
-1. **The owner runs item 42** — the first time the two new hooks are in a real game, and the first look at whether
-   any attach is early enough to see a game's start-up calls. Not first on a game under the user-mode exception's
-   trial (D38).
-2. **Train C (0.1.0-beta.45, Reflex latency per frame)** begins with a spike and ends in the owner's go or no — and
-   only when the owner says beta.44 passed. If item 42 shows the two calls are never seen in attach mode, whether
-   they keep their two patches is the owner's to say first.
-3. **Train D** (beta.46) the same way.
+1. ~~**The owner runs item 42**~~ **Run and read 2026-11-12** (§What the owner's eight sessions on beta.44
+   showed): both hooks read real games — far more often than planned for — the degrees fix reads right on
+   Cyberpunk 2077, a game with no Streamline says *not hooked*. *Off means off* was not exercised.
+2. **The next version, by the owner's word of 2026-11-12: `slInit`, `slIsFeatureSupported` "and some other parts"**
+   — said the evening beta.44 came out, to be done if beta.44 passed, and then "update and go on" once these
+   sessions were in. It reopens D112 (`slInit` is not hooked in train B; if ever: never `applicationId`,
+   `projectId`, the paths), and `slIsFeatureSupported` is handed an `sl::AdapterInfo` whose `deviceLUID` and
+   `vkPhysicalDevice` are not to be read (D104). **Planned with the owner before any code**: which other parts,
+   what of each is read, the Privacy Policy's wording, and where train C goes.
+3. **Train C (Reflex latency per frame) and train D** each begin with a spike and end in the owner's go or no; their
+   release numbers follow from item 2's plan.
 
 ### Left open by this session
 
@@ -187,15 +240,21 @@ it. Four pull requests and this one: #421 (the fixes: a field of view in degrees
   (`LaunchModeStartsTheHarnessItselfAndReportsWhatRanUnhooked`) read 19.8 presented frames a second from the
   harness on a slow runner where it asks for more than 30; the job was run again and passed. A rate asserted
   against a wall clock on a shared runner — the one flake of this train, not looked into further.
-- **No real game was run on this build.** Two new patch sites, tested with the harness and the stub; their cost
-  measured on the headers.
+- ~~**No real game was run on this build.** Two new patch sites, tested with the harness and the stub; their cost
+  measured on the headers.~~ **Eight sessions on six games, 2026-11-12** (§What the owner's eight sessions on
+  beta.44 showed). **The release notes on GitHub still say "most sessions will show nothing of the two new
+  readings"** — a prediction the sessions did not bear out; `docs/changelog/0.1.0-beta.44.md` is a released file
+  and is not edited, and the published notes were left as they are.
+- **Valor Mortis's crash at 51 s** (twice, beta.40 and beta.44) **and Black Myth: Wukong's fault in Steam's crash
+  handler at every exit** are not explained. One session of each with hooking off is the comparison that is missing.
 - **What item 41 left unexercised**: a configure through the FidelityFX 2.3 loader (Cyberpunk 2077 with FSR frame
   generation), a game with neither library.
 - **A fault while a game is closing is not seen by a hooked session** (D127: written down, not changed). Looking
   again later would make every session of Hogwarts Legacy `crashed`, and under a user-mode exception would end the
   exception for a fault no hook caused; the decision is the owner's, and is not taken.
-- **Phantom Blade Zero and Hogwarts Legacy name no upscaler beside DLSS frame generation**, as on every release
-  before; not looked into.
+- ~~**Phantom Blade Zero and Hogwarts Legacy name no upscaler beside DLSS frame generation**, as on every release
+  before; not looked into.~~ **Likely answered 2026-11-12**: no Unreal game asks Streamline about `kFeatureDLSS`, so
+  their DLSS upscaling does not pass through the calls this project hooks.
 - **`docs/LIST_GAME_TESTED.md` is as of 2026-11-06**: refreshing it is a new copy of the ledger and the owner's review.
 - **Item 40 (d)** was not exercised and the owner has not said item 40 passed. **Items 36 (d) and 37 are still open.**
 - **What an empty process snapshot does to the watcher's tick in a real session** was not looked into (seen once in
@@ -203,7 +262,8 @@ it. Four pull requests and this one: #421 (the fixes: a field of view in degrees
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** item 42; what item 41 left unexercised; item 40 (d).
+**Owner-only:** item 42 (f), and one session each of Valor Mortis and Black Myth: Wukong with hooking off; what
+item 41 left unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
 
@@ -598,6 +658,17 @@ it. Four pull requests and this one: #421 (the fixes: a field of view in degrees
    build does not know. A crash, or a game that will not start: say so at once; *Disable all hooking*
    (Settings ▸ Capture) and switching Advanced metrics off are the two ways to run without the hooks, and which
    of them cured it says which hook it was.
+   **Eight sessions were run on 2026-11-12 and read the same evening** (START HERE §What the owner's eight sessions
+   on beta.44 showed): (a) happened — Privacy Policy 2.18 accepted once; (b) held — Cyberpunk 2077 reads
+   `51.0055 – 90` and *not radians*; (c), (d) **both questions read on five games, six sessions of six** — the
+   expected answer was the other one — with the driver, Windows and NGX versions agreeing with the PC, and one
+   reading no file could give: frame generation's Streamline plugin is 2.14.16 on three games that ship an older
+   one; Cyberpunk's version question was *not asked again*; (e) held on Kingdom Come: Deliverance II; (g) no
+   `PATCH_FAILED`, no fault, the two rows first; (h) seen for real — Valor Mortis's second early end switched
+   hooking off, the owner switched it on, the count is 0. **(f) was not exercised.** Valor Mortis crashed 51 s
+   into a hooked session exactly as on beta.40, and Black Myth: Wukong faults in Steam's crash handler at every
+   exit: neither is explained, and neither began with this release. **Taken as passed on the owner's "update and
+   go on", 2026-11-12**; (f) and the two comparisons stay open.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
