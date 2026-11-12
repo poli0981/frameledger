@@ -2577,7 +2577,7 @@ bool ProbeAdvFields() {
             Check(word1(1) == (fl::adv::kFeatureSupportAnswered | (32u << fl::adv::kFeatureSupportResultShift)),
                   "a refusal IS the answer to 'is it supported': the code is kept in bits 8..15");
             Check(word1(2) == (fl::adv::kFeatureSwitchedOn | fl::adv::kFeatureSwitchedOff) &&
-                      s.features[2u * FL_ADV_FEATURE_WORDS].load() == sl::kFeatureDLSS_G + 1u,
+                      s.features[size_t{2} * FL_ADV_FEATURE_WORDS].load() == sl::kFeatureDLSS_G + 1u,
                   "switched on and then off: both bits, in a slot the switch itself claimed");
 
             // The last answer replaces the one before, and leaves the neighbouring fields of the word alone.
@@ -2597,7 +2597,7 @@ bool ProbeAdvFields() {
             fl::adv::Reset(s);
             Check(word1(0) == (fl::adv::kFeatureVersionAnswered | fl::adv::kFeatureSupportAnswered |
                                (31u << fl::adv::kFeatureSupportResultShift) | fl::adv::kFeatureLoadedAnswered) &&
-                      word1(2) == 0u && s.features[2u * FL_ADV_FEATURE_WORDS].load() == sl::kFeatureDLSS_G + 1u,
+                      word1(2) == 0u && s.features[size_t{2} * FL_ADV_FEATURE_WORDS].load() == sl::kFeatureDLSS_G + 1u,
                   "a new request clears the switches seen and keeps the answers; the slot itself stays claimed");
         }
 
