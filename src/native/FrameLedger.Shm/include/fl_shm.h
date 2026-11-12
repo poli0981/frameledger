@@ -428,6 +428,10 @@ enum FlHookFamily : uint32_t {
     FL_HOOK_SL_FEATURE_SUPPORTED = 1u << 17,
     FL_HOOK_SL_FEATURE_LOADED = 1u << 18,
     FL_HOOK_SL_SET_FEATURE_LOADED = 1u << 19,
+    // And the last three of 0.1.0-beta.45: slAllocateResources, slFreeResources, slShutdown -- counted, nothing more.
+    FL_HOOK_SL_ALLOCATE_RESOURCES = 1u << 20,
+    FL_HOOK_SL_FREE_RESOURCES = 1u << 21,
+    FL_HOOK_SL_SHUTDOWN = 1u << 22,
 };
 
 // FlWriterState::runtimeCensus -- which vendor RUNTIME MODULES the loader reported
@@ -963,6 +967,7 @@ enum FlAdvancedValid : uint32_t {
     FL_ADV_VALID_FFX_FG_CONFIG = 1u << 3,    // (0.1.0-beta.43) ffxConfigure with a frame-generation descriptor seen
     FL_ADV_VALID_SL_CONSTANTS = 1u << 4,     // (0.1.0-beta.43) slSetConstants seen
     FL_ADV_VALID_SL_FEATURES = 1u << 5,      // (0.1.0-beta.44) at least one feature slot filled
+    FL_ADV_VALID_SL_SHUTDOWN = 1u << 6,      // (0.1.0-beta.45) slShutdown seen; slShutdowns counts
 };
 
 // A float nobody saw. An all-ones pattern is a NaN no detour stores: every value is checked finite first -- with the
@@ -987,7 +992,9 @@ enum FlAdvancedValid : uint32_t {
 //            (0.1.0-beta.45) bit 2: slIsFeatureSupported answered, and bits 8..15 the sl::Result it gave (0 = eOk;
 //            0xFF = a code a byte cannot carry); bit 3: slIsFeatureLoaded answered, bit 4 what it said;
 //            bit 5: the game was seen to switch the feature OFF (slSetFeatureLoaded), bit 6: ON -- these two are a
-//            session's and are cleared by a new request; the rest are the process's and stay
+//            session's and are cleared by a new request; the rest are the process's and stay.
+//            bits 16..19: slAllocateResources calls for the feature, bits 20..23: slFreeResources calls -- each
+//            stops at 15, and both are a session's
 //   [2..4]   versionSL  major, minor, build        [5..7]   versionNGX
 //   [8]      FeatureRequirementFlags                [9]      maxNumCPUThreads
 //   [10]     maxNumViewports                        [11]     numRequiredTags
@@ -1067,7 +1074,8 @@ struct alignas(64) FlAdvancedState {
     // reset, orthographicProjection, motionVectorsDilated, motionVectorsJittered.
     uint32_t slFlagsSeenTrue;     // @300
     uint32_t slFlagsSeenFalse;    // @304
-    uint32_t reservedSl[3];       // @308..319  must be zero
+    uint32_t slShutdowns;         // @308  (beta.45) slShutdown calls since the request (wraps)
+    uint32_t reservedSl[2];       // @312..319  must be zero
 
     // ---- lines 5..22: Streamline's features (beta.44) --------------------------------------------------------------
     uint32_t features[FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS];    // @320..1471
@@ -1342,7 +1350,8 @@ static_assert(offsetof(FlAdvancedState, ffxFgRect) == 232);
 static_assert(offsetof(FlAdvancedState, reservedFfx) == 248);
 static_assert(offsetof(FlAdvancedState, slConstantsCalls) == 256);
 static_assert(offsetof(FlAdvancedState, slFlagsSeenFalse) == 304);
-static_assert(offsetof(FlAdvancedState, reservedSl) == 308);
+static_assert(offsetof(FlAdvancedState, slShutdowns) == 308);
+static_assert(offsetof(FlAdvancedState, reservedSl) == 312);
 static_assert(offsetof(FlAdvancedState, features) == 320);
 static_assert(offsetof(FlAdvancedState, sampleQpc) % 8 == 0 && offsetof(FlAdvancedState, ffxMemoryTotalBytes) % 8 == 0);
 static_assert(FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS * sizeof(uint32_t) == 1152);

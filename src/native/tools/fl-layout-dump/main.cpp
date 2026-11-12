@@ -167,6 +167,7 @@ int main() {
     FL_ADV_FIELD(slAspectBits);
     FL_ADV_FIELD(slFlagsSeenTrue);
     FL_ADV_FIELD(slFlagsSeenFalse);
+    FL_ADV_FIELD(slShutdowns);
     FL_ADV_FIELD(reservedSl);
     Field("features", offsetof(FlAdvancedState, features), sizeof(FlAdvancedState::features), true);
 #undef FL_ADV_FIELD

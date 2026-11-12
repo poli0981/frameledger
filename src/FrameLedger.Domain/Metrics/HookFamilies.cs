@@ -50,4 +50,13 @@ public enum HookFamilies
 
     /// <summary><c>slSetFeatureLoaded</c> is hooked (0.1.0-beta.45) - only where Advanced metrics was ever asked for.</summary>
     SlSetFeatureLoaded = 1 << 19,
+
+    /// <summary><c>slAllocateResources</c> is hooked (0.1.0-beta.45) - only where Advanced metrics was ever asked for.</summary>
+    SlAllocateResources = 1 << 20,
+
+    /// <summary><c>slFreeResources</c> is hooked (0.1.0-beta.45) - only where Advanced metrics was ever asked for.</summary>
+    SlFreeResources = 1 << 21,
+
+    /// <summary><c>slShutdown</c> is hooked (0.1.0-beta.45) - only where Advanced metrics was ever asked for.</summary>
+    SlShutdown = 1 << 22,
 }

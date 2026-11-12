@@ -69,6 +69,10 @@ static_assert(fl::stub::InventoryHas("slIsFeatureSupported") && fl::stub::Invent
                   fl::stub::InventoryHas("slSetFeatureLoaded"),
               "fl_hook_inventory.h no longer contains one of the three feature-state rows of 0.1.0-beta.45, so the "
               "fixture would exercise a row the Overlay does not install.");
+static_assert(fl::stub::InventoryHas("slAllocateResources") && fl::stub::InventoryHas("slFreeResources") &&
+                  fl::stub::InventoryHas("slShutdown"),
+              "fl_hook_inventory.h no longer contains one of the three counted rows of 0.1.0-beta.45, so the fixture "
+              "would exercise a row the Overlay does not install.");
 static_assert(fl::stub::InventoryHas("slSetConstants"),
               "fl_hook_inventory.h no longer contains \"slSetConstants\", so the constants fixture would exercise a "
               "row the Overlay does not install.");
@@ -174,6 +178,26 @@ SL_API sl::Result slIsFeatureSupported(sl::Feature feature, const sl::AdapterInf
 SL_API sl::Result slSetFeatureLoaded(sl::Feature feature, bool loaded) {
     (void)feature;
     (void)loaded;
+    return sl::Result::eOk;
+}
+
+// The last three rows of 0.1.0-beta.45. They keep nothing and do nothing: the Overlay counts the calls, and the
+// harness goes on using the stub after slShutdown, as a game that starts Streamline again would.
+SL_API sl::Result slAllocateResources(sl::CommandBuffer* cmdBuffer, sl::Feature feature,
+                                      const sl::ViewportHandle& viewport) {
+    (void)cmdBuffer;
+    (void)feature;
+    (void)viewport;
+    return sl::Result::eOk;
+}
+
+SL_API sl::Result slFreeResources(sl::Feature feature, const sl::ViewportHandle& viewport) {
+    (void)feature;
+    (void)viewport;
+    return sl::Result::eOk;
+}
+
+SL_API sl::Result slShutdown() {
     return sl::Result::eOk;
 }
 

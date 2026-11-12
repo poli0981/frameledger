@@ -7073,10 +7073,21 @@ const uint32_t* FeatureSlotOf(const fl::FlAdvancedState& a, uint32_t feature) {
     return nullptr;
 }
 
-// Word 1 of the slot region 5 holds for `feature`; 0 where it holds none.
+// The ANSWERS in word 1 of the slot region 5 holds for `feature` -- its low sixteen bits; 0 where it holds none.
+// The two four-bit counts above them (allocations in bits 16..19, frees in 20..23) grow while the target runs.
 uint32_t FeatureWord1(const fl::FlAdvancedState& a, uint32_t feature) {
     const uint32_t* slot = FeatureSlotOf(a, feature);
-    return slot == nullptr ? 0u : slot[1];
+    return slot == nullptr ? 0u : slot[1] & 0xFFFFu;
+}
+
+uint32_t FeatureAllocations(const fl::FlAdvancedState& a, uint32_t feature) {
+    const uint32_t* slot = FeatureSlotOf(a, feature);
+    return slot == nullptr ? 0u : (slot[1] >> 16) & 0xFu;
+}
+
+uint32_t FeatureFrees(const fl::FlAdvancedState& a, uint32_t feature) {
+    const uint32_t* slot = FeatureSlotOf(a, feature);
+    return slot == nullptr ? 0u : (slot[1] >> 20) & 0xFu;
 }
 
 // A slot's words 1..23 against "both questions of beta.44 answered" and the stub's numbers.
@@ -7370,12 +7381,15 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     const auto        slFeatureState = static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_SUPPORTED) |
                                        static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_LOADED) |
                                        static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED);
-    constexpr int     kFeatureExports = 5;
-    const char* const featureExports[kFeatureExports] = {"slGetFeatureVersion", "slGetFeatureRequirements",
-                                                         "slIsFeatureSupported", "slIsFeatureLoaded",
-                                                         "slSetFeatureLoaded"};
-    unsigned char     featurePristine[kFeatureExports][16]{};
-    unsigned char     featureNow[16]{};
+    const auto        slCounted = static_cast<uint32_t>(fl::FL_HOOK_SL_ALLOCATE_RESOURCES) |
+                                  static_cast<uint32_t>(fl::FL_HOOK_SL_FREE_RESOURCES) |
+                                  static_cast<uint32_t>(fl::FL_HOOK_SL_SHUTDOWN);
+    constexpr int     kFeatureExports = 8;
+    const char* const featureExports[kFeatureExports] = {
+        "slGetFeatureVersion", "slGetFeatureRequirements", "slIsFeatureSupported", "slIsFeatureLoaded",
+        "slSetFeatureLoaded",  "slAllocateResources",      "slFreeResources",      "slShutdown"};
+    unsigned char featurePristine[kFeatureExports][16]{};
+    unsigned char featureNow[16]{};
 
     // ---- 1. NEVER ASKED (owner decision D111): the evaluation is hooked, the game calls slSetConstants every frame,
     // and that export is not patched -- its first bytes in the target are the file's -- nor is anything kept.
@@ -7391,6 +7405,7 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     CHECK((r.st->hooksInstalledMask & slConstants) == 0u);
     CHECK((r.st->hooksInstalledMask & slFeatures) == 0u);
     CHECK((r.st->hooksInstalledMask & slFeatureState) == 0u);
+    CHECK((r.st->hooksInstalledMask & slCounted) == 0u);
     REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
     CHECK(std::memcmp(pristine, now, sizeof(now)) == 0);
     for (int i = 0; i < kFeatureExports; ++i) {
@@ -7408,6 +7423,9 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_SUPPORTED)));
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_LOADED)));
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED)));
+    REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_ALLOCATE_RESOURCES)));
+    REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_FREE_RESOURCES)));
+    REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_SHUTDOWN)));
     REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
     CHECK(std::memcmp(pristine, now, sizeof(now)) != 0);    // patched now
     for (int i = 0; i < kFeatureExports; ++i) {
@@ -7425,14 +7443,15 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
                               !FeatureSlotIs(FeatureSlotOf(a, kFeatureIdDlssG), kAdvFeatureDlssG) ||
                               FeatureWord1(a, kFeatureIdDlssG) != kAdvFeatureWord1DlssG ||
                               FeatureWord1(a, kFeatureIdDlss) != kAdvFeatureWord1Dlss ||
-                              FeatureWord1(a, kFeatureIdPcl) != kAdvFeatureWord1Pcl);
+                              FeatureWord1(a, kFeatureIdPcl) != kAdvFeatureWord1Pcl || a.slShutdowns == 0u ||
+                              FeatureAllocations(a, kFeatureIdDlss) == 0u || FeatureFrees(a, kFeatureIdDlssG) == 0u);
          ++i) {
         REQUIRE(ReadAdvanced(r, 1u, a, a.samples, wanted));
     }
     INFO("mask 0x" << std::hex << a.validMask << " true 0x" << a.slFlagsSeenTrue << " false 0x" << a.slFlagsSeenFalse
                    << std::dec << " calls " << a.slConstantsCalls << " resets " << a.slResets << " version "
                    << a.dlssStructVersion << " output " << a.dlssOutputWidth << "x" << a.dlssOutputHeight);
-    CHECK(a.validMask == static_cast<uint32_t>(wanted));
+    CHECK(a.validMask == static_cast<uint32_t>(wanted | fl::FL_ADV_VALID_SL_SHUTDOWN));
 
     // What Streamline answered about a feature: a slot for each of the two it answered for, in the order asked, with
     // exactly the stub's numbers and both questions marked as answered. NOT the one it refused -- its struct came
@@ -7461,6 +7480,16 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
         CHECK(restIsZero);
     }
     CHECK(a.features[size_t{5} * FL_ADV_FEATURE_WORDS] == 0u);    // five features, five slots
+
+    // The counted three: DLSS's resources allocated and frame generation's freed on every sixteenth frame, Streamline
+    // shut down on every sixty-fourth -- and the target went on calling the stub after it, through every detour.
+    CHECK(FeatureAllocations(a, kFeatureIdDlss) >= 1u);
+    CHECK(FeatureFrees(a, kFeatureIdDlss) == 0u);
+    CHECK(FeatureFrees(a, kFeatureIdDlssG) >= 1u);
+    CHECK(FeatureAllocations(a, kFeatureIdDlssG) == 0u);
+    CHECK(a.slShutdowns >= 1u);
+    CHECK(a.reservedSl[0] == 0u);
+    CHECK(a.reservedSl[1] == 0u);
 
     // The options chained into the evaluation, as before.
     CHECK(a.dlssStructVersion == 3u);    // the version these headers declare, which is what entitles the tail
@@ -7517,6 +7546,7 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     CHECK((r.st->hooksInstalledMask & slConstants) != 0u);
     CHECK((r.st->hooksInstalledMask & slFeatures) == slFeatures);
     CHECK((r.st->hooksInstalledMask & slFeatureState) == slFeatureState);
+    CHECK((r.st->hooksInstalledMask & slCounted) == slCounted);
     REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
     CHECK(std::memcmp(pristine, now, sizeof(now)) != 0);
 

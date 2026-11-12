@@ -45,6 +45,11 @@ numeric core and does not move; the heading is the full version — corrected 20
   refuses code that names what identifies it. As with the four hooks before them, none of the three patches is made
   in a game no session has asked. Nothing is shown of them yet: the Agent and the App read them in a later pull
   request. No layout change (5), no schema change (23).
+- **And three more, counted only**: `slAllocateResources`, `slFreeResources` and `slShutdown` — how many times a
+  game allocated and freed a feature's resources (up to fifteen each) and how many times it shut Streamline down.
+  The feature's id is the only argument looked at; the two that sit on a game's way out note the call and then
+  call the original, and run nothing after it. Six new calls in all in this release, each patched only where a
+  session asked.
 - **`slInit` is not hooked, and will not be** (D129). A game starts Streamline once, before FrameLedger can be in
   it — also when FrameLedger starts the game itself — so a hook there would be a patch that reads nothing.
 

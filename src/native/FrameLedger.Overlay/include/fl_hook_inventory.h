@@ -128,7 +128,9 @@ inline constexpr uint32_t kFamiliesEvaluateFeatureDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION) |
     static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS) |
     static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_SUPPORTED) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_LOADED) |
-    static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED);
+    static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_ALLOCATE_RESOURCES) | static_cast<uint32_t>(fl::FL_HOOK_SL_FREE_RESOURCES) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_SHUTDOWN);
 
 static_assert((kFamilyEvaluateFeature & kFamiliesEvaluateFeatureDoesNotImplement) == 0u,
               "the slEvaluateFeature row claims a family its detour does not implement -- hookinventory-check "
@@ -215,7 +217,9 @@ inline constexpr uint32_t kFamiliesFfxDispatchDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS) | static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE) |
     static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS) |
     static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_SUPPORTED) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_LOADED) |
-    static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED);
+    static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_ALLOCATE_RESOURCES) | static_cast<uint32_t>(fl::FL_HOOK_SL_FREE_RESOURCES) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_SHUTDOWN);
 
 static_assert((kFamilyFfxDispatch & kFamiliesFfxDispatchDoesNotImplement) == 0u,
               "the ffxDispatch rows claim a family their detour does not implement -- hookinventory-check reads "
@@ -358,18 +362,31 @@ inline constexpr uint32_t kFamilySlFeatureLoaded = static_cast<uint32_t>(fl::FL_
 inline constexpr uint32_t kFamilySlSetFeatureLoaded = static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED);
 // One bit each, and no earlier family holds any of them: InstallByFamily binds a row by EQUALITY on its family, so
 // a value shared with another row would hand one export's detour to another.
-inline constexpr uint32_t kFamiliesOfBeta45FeatureState =
-    kFamilySlFeatureSupported | kFamilySlFeatureLoaded | kFamilySlSetFeatureLoaded;
+//
+// slAllocateResources, slFreeResources, slShutdown (the same release): COUNTED, AND NOTHING ELSE. The feature's id
+// is the only argument looked at -- never the command buffer, never the viewport. slFreeResources and slShutdown
+// are on a game's way out: their detours note the call and then call the original, exactly once, and touch nothing
+// after it returns.
+inline constexpr uint32_t kFamilySlAllocateResources = static_cast<uint32_t>(fl::FL_HOOK_SL_ALLOCATE_RESOURCES);
+inline constexpr uint32_t kFamilySlFreeResources = static_cast<uint32_t>(fl::FL_HOOK_SL_FREE_RESOURCES);
+inline constexpr uint32_t kFamilySlShutdown = static_cast<uint32_t>(fl::FL_HOOK_SL_SHUTDOWN);
+inline constexpr uint32_t kFamiliesOfBeta45FeatureState = kFamilySlFeatureSupported | kFamilySlFeatureLoaded |
+                                                          kFamilySlSetFeatureLoaded | kFamilySlAllocateResources |
+                                                          kFamilySlFreeResources | kFamilySlShutdown;
 static_assert(kFamilySlFeatureSupported != kFamilySlFeatureLoaded &&
                   kFamilySlFeatureSupported != kFamilySlSetFeatureLoaded &&
-                  kFamilySlFeatureLoaded != kFamilySlSetFeatureLoaded,
-              "three rows, three detours, three different families");
+                  kFamilySlFeatureLoaded != kFamilySlSetFeatureLoaded &&
+                  kFamilySlAllocateResources != kFamilySlFreeResources &&
+                  kFamilySlAllocateResources != kFamilySlShutdown && kFamilySlFreeResources != kFamilySlShutdown &&
+                  ((kFamilySlFeatureSupported | kFamilySlFeatureLoaded | kFamilySlSetFeatureLoaded) &
+                   (kFamilySlAllocateResources | kFamilySlFreeResources | kFamilySlShutdown)) == 0u,
+              "six rows, six detours, six different families");
 static_assert(((kFamilyEvaluateFeature | kFamilyFfxDispatch | kFamilyFfxQuery | kFamilySlConstants |
                 kFamilySlFeatureVersion | kFamilySlFeatureRequirements |
                 static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS) |
                 static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS)) &
                kFamiliesOfBeta45FeatureState) == 0u,
-              "an earlier family claims a bit of slIsFeatureSupported, slIsFeatureLoaded or slSetFeatureLoaded");
+              "an earlier family claims a bit of one of the six rows of 0.1.0-beta.45");
 
 // --- AMD FidelityFX: ffxConfigure on the same four modules (0.1.0-beta.43, Advanced metrics train B) ---
 //
@@ -496,6 +513,9 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
     X(L"sl.interposer.dll", "slGetNewFrameToken", fl::FL_HOOK_FG_EVALUATIONS)                                          \
     X(L"sl.interposer.dll", "slSetConstants", fl::inventory::kFamilySlConstants)                                       \
     X(L"sl.interposer.dll", "slSetFeatureLoaded", fl::inventory::kFamilySlSetFeatureLoaded)                            \
+    X(L"sl.interposer.dll", "slAllocateResources", fl::inventory::kFamilySlAllocateResources)                          \
+    X(L"sl.interposer.dll", "slFreeResources", fl::inventory::kFamilySlFreeResources)                                  \
+    X(L"sl.interposer.dll", "slShutdown", fl::inventory::kFamilySlShutdown)                                            \
     X(L"amd_fidelityfx_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                                    \
     X(L"amd_fidelityfx_upscaler_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                           \
     X(L"amd_fidelityfx_framegeneration_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                    \
@@ -515,7 +535,7 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
 #define FL_COUNT_ROW(mod, sym, family) +1u
 inline constexpr uint32_t kRowCount = 0u FL_HOOK_INVENTORY(FL_COUNT_ROW);
 #undef FL_COUNT_ROW
-static_assert(kRowCount == 23u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
+static_assert(kRowCount == 26u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
 
 // A row's "module!symbol", for the native log, built at compile time from the row's own two spellings -- so an
 // install line names the module it patched, and no second list of names exists to drift from the table
