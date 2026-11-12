@@ -60,9 +60,10 @@ also keeps what the game itself handed to DLSS and FSR:
   with, whether V-Sync must be off, whether hardware-accelerated GPU scheduling must be on, how many threads,
   viewports and buffers, and the Windows and driver versions Streamline found beside the ones the feature needs.
   The features carry NVIDIA's own names: `kFeatureDLSS` is DLSS, `kFeatureDLSS_G` DLSS frame generation,
-  `kFeatureDLSS_RR` ray reconstruction, `kFeatureReflex` Reflex. **A game asks these while it starts**, usually
-  before FrameLedger is in it, so most sessions show none and the line under the session says *hooked — the game
-  asks this while it starts, and did not ask again*.
+  `kFeatureDLSS_RR` ray reconstruction, `kFeatureReflex` Reflex. A game asks these while it starts; many ask
+  again later, and then they are read. Where a game asks only at its start, the line under the session says
+  *hooked — the game asks this while it starts, and did not ask again*. The version shown is the one Streamline
+  reports, which can be newer than the file in the game's folder.
 
 These are the game's own words to the upscaler, shown in the vendor's notation (`preExposure`, preset `K`).
 FrameLedger does not check what the upscaler did with them.
