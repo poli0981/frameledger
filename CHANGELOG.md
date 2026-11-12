@@ -35,6 +35,16 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **A session that saw two upscalers is named after the one it ran, with that one's quality and render size.** The
+  session's upscaler used to be the first one FrameLedger saw named, while the quality mode and the render size
+  came from whichever frames carried them. A game that evaluated DLSS briefly and then ran FSR was stored as "DLSS"
+  with FSR's quality and FSR's render size. The name is now the technology named on the most frames, the quality
+  and the size are read from that technology's frames only, and such a session is marked "settings changed during
+  session". What that technology did not say reads N/A rather than borrowing the other's value. Sessions already
+  stored are not rewritten.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

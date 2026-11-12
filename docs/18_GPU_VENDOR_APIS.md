@@ -715,9 +715,9 @@ every `nvapi.` row; nothing is estimated in its place (FR-4.9).
 | Train | Release | What | Its gate |
 |---|---|---|---|
 | A | 0.1.0-beta.39 | read by the Agent only — NVAPI and LibreHardwareMonitor — storage, the page. **Nothing changes in code loaded into a game** | this section |
-| B | 0.1.0-beta.40, ~~.41, .42~~ .42, .43 *(three releases since D113, 2026-11-11; one was planned. Renumbered 2026-11-12, D118: 0.1.0-beta.41 is a fix release for the sensor library, not part of the train)* | inside the game: more fields of the Streamline and FidelityFX calls already hooked, and new hooks on functions `sl.interposer.dll` **exports** (`17_HOOK_ENGINE` §Hook inventory's ⏳ rows); shared-memory layout 5 — §Train B below | a plan of its own; overhead measured; each release after the first waits for the owner's run of the one before |
-| C | ~~0.1.0-beta.41~~ ~~0.1.0-beta.43~~ 0.1.0-beta.44 *(D118)* | Reflex latency per frame | a spike, then the owner's go or no |
-| D | ~~0.1.0-beta.42~~ ~~0.1.0-beta.44~~ 0.1.0-beta.45 *(D118)* | the Streamline feature state behind `slGetFeatureFunction` — DLSS frame generation's, DLSS's, Reflex's | a spike, then the owner's go or no |
+| B | 0.1.0-beta.40, ~~.41, .42~~ ~~.42, .43~~ .42, .43, .44 *(three releases since D113, 2026-11-11; one was planned. Renumbered 2026-11-12, D118: 0.1.0-beta.41 is a fix release for the sensor library, not part of the train. **Four since D122, the same day**: the second step is beta.42 — no new patch site — and beta.43, the two new hooks; the third step is beta.44)* | inside the game: more fields of the Streamline and FidelityFX calls already hooked, and new hooks on functions `sl.interposer.dll` **exports** (`17_HOOK_ENGINE` §Hook inventory's ⏳ rows); shared-memory layout 5 — §Train B below | a plan of its own; overhead measured; each release after the first waits for the owner's run of the one before |
+| C | ~~0.1.0-beta.41~~ ~~0.1.0-beta.43~~ ~~0.1.0-beta.44~~ 0.1.0-beta.45 *(D118, D122)* | Reflex latency per frame | a spike, then the owner's go or no |
+| D | ~~0.1.0-beta.42~~ ~~0.1.0-beta.44~~ ~~0.1.0-beta.45~~ 0.1.0-beta.46 *(D118, D122)* | the Streamline feature state behind `slGetFeatureFunction` — DLSS frame generation's, DLSS's, Reflex's | a spike, then the owner's go or no |
 
 Rules 4 and 5, the hook inventory, the measured overhead and the anti-cheat guard bind B, C and D exactly as they bind
 every hook. `sl::Constants` is read without its camera position, axes and matrices: where the camera is, is where the
@@ -771,6 +771,13 @@ planning, the design reviewed against the code before it was approved.
   page; **no new patch site**. **~~beta.41~~ beta.42**: `slSetConstants` and `ffxConfigure`. **~~beta.42~~
   beta.43**: `slGetFeatureVersion` and `slGetFeatureRequirements` — the owner's words: a release of their own, still
   hooked. Each starts when the owner says the one before passed its owner-only item.
+- **D122 — the second step is two releases** (owner decision 2026-11-12, after the owner's sessions on beta.40
+  and beta.41 and a review of the draft against the code). **0.1.0-beta.42 adds no patch site**: the session's
+  upscaler label (D120, `03_METRICS` §Upscaling), a patch registry that refuses what it cannot register, a native
+  log that survives the game's exit and says which descriptor types each ffx module saw — because Cyberpunk 2077,
+  set to FSR upscaling, was named "unknown" and nothing in the field could say why (D121) — and FSR's infinite depth
+  plane (D119). **0.1.0-beta.43 is `slSetConstants` and `ffxConfigure`**, begun only when that log was read. The
+  third step (`slGetFeatureVersion`, `slGetFeatureRequirements`) is beta.44, train C beta.45, train D beta.46.
 - **D118 — 0.1.0-beta.41 is a fix release, and the train's numbers move by one** (owner decision 2026-11-12). The
   owner's first evening with beta.40 showed the sensor library being closed under its other users (the paragraph on
   `LhmLibrary` below; `20_OPEN_QUESTIONS` §M13); told that the fix would take the number D113 had given the train's

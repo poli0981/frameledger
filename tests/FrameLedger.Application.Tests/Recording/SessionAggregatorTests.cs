@@ -239,6 +239,78 @@ public sealed class SessionAggregatorTests
         r.Segments[0].OutputW.Should().Be(2560);
     }
 
+    [Fact]
+    public void ASessionThatSawDlssFirstAndThenRanFsrIsFsrWithFsrsQualityAndSize()
+    {
+        // D120. The name used to be the FIRST technology any record carried: this session was "dlss" with the quality
+        // byte and the render size of the FSR that ran for four fifths of it.
+        FlMeasured claims = _presentOnly | FlMeasured.Upscaler | FlMeasured.UpscalerParams;
+        var writer = new FlWriterState { Status = 1, HooksInstalledMask = 0x7 };
+        List<FlFrameRecord> records =
+        [
+            .. SessionFixtures.Stream(500, claims, upscaler: FlUpscaler.Dlss).Select(static (r, i) => i < 100
+                ? r with { UpscalerQuality = 0xFF, RenderW = 1485, RenderH = 835 }
+                : r with { Upscaler = (byte)FlUpscaler.FsrUnversioned, UpscalerQuality = 0x12, RenderW = 1505, RenderH = 847 }),
+        ];
+
+        AggregationResult r = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(records, writer));
+
+        r.Row.Upscaler.Should().Be("fsr", "named on four hundred records, against a hundred");
+        r.Row.UpscalerQuality.Should().Be("18");
+        r.Row.RenderW.Should().Be(1505);
+        r.Row.RenderH.Should().Be(847);
+        r.Row.SettingsChangedMidSession.Should().BeTrue("a second technology named in one session is a setting changed mid-session");
+        r.Segments.Should().ContainSingle("the output size never changed").Which.Upscaler.Should().Be("fsr");
+        r.Segments[0].UpscalerQuality.Should().Be("18");
+        r.Segments[0].RenderW.Should().Be(1505);
+    }
+
+    [Fact]
+    public void ASessionThatRanDlssAndSawFsrBrieflyKeepsNothingOfFsrUnderDlssName()
+    {
+        // The real one (Dying Light: The Beast, 81 s): DLSS for most of it, which does not tell its mode; FSR for a few
+        // seconds, which does. Stored as "dlss" with FSR's Balanced byte and FSR's render size - three true readings of
+        // two technologies under one name. What DLSS did not say is N/A, never the neighbour's value (rule 7).
+        FlMeasured claims = _presentOnly | FlMeasured.Upscaler | FlMeasured.UpscalerParams;
+        var writer = new FlWriterState { Status = 1, HooksInstalledMask = 0x7 };
+        List<FlFrameRecord> records =
+        [
+            .. SessionFixtures.Stream(500, claims, upscaler: FlUpscaler.Dlss).Select(static (r, i) => i is >= 200 and < 260
+                ? r with { Upscaler = (byte)FlUpscaler.FsrUnversioned, UpscalerQuality = 0x12, RenderW = 1505, RenderH = 847 }
+                : r with { UpscalerQuality = 0xFF, RenderW = 1485, RenderH = 835 }),
+        ];
+
+        AggregationResult r = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(records, writer));
+
+        r.Row.Upscaler.Should().Be("dlss");
+        r.Row.UpscalerQuality.Should().BeNull("DLSS did not tell its mode, and FSR's byte is not DLSS's");
+        r.Row.RenderW.Should().Be(1485, "the size DLSS rendered at, not the one FSR did for sixty frames");
+        r.Row.RenderH.Should().Be(835);
+        r.Row.SettingsChangedMidSession.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ANameOnOnePresentInFourStillNamesTheSessionAndChangesNothingElse()
+    {
+        // Under frame generation the writer names the upscaler only on the presents that drained an evaluation. One
+        // technology, named rarely: the whole stream still counts, and nothing is "changed mid-session".
+        FlMeasured claims = _presentOnly | FlMeasured.Upscaler | FlMeasured.UpscalerParams;
+        var writer = new FlWriterState { Status = 1, HooksInstalledMask = 0x7 };
+        List<FlFrameRecord> records =
+        [
+            .. SessionFixtures.Stream(500, claims, upscaler: FlUpscaler.Unknown).Select(static (r, i) => i % 4 == 0
+                ? r with { Upscaler = (byte)FlUpscaler.Fsr3, UpscalerQuality = 0x11, RenderW = 1707, RenderH = 960 }
+                : r with { UpscalerQuality = 0xFF, RenderW = 1707, RenderH = 960 }),
+        ];
+
+        AggregationResult r = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(records, writer));
+
+        r.Row.Upscaler.Should().Be("fsr3");
+        r.Row.UpscalerQuality.Should().Be("17");
+        r.Row.RenderW.Should().Be(1707);
+        r.Row.SettingsChangedMidSession.Should().BeFalse();
+    }
+
     /// <summary>
     /// <c>0xFF</c> is the Overlay's "a hook ran and could not tell" for the quality byte, and every AMD dispatch carries it.
     /// Aggregated as a number it became the text "255", which the game page appends to the upscaler's name ("FSR 255").

@@ -120,7 +120,21 @@ the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta
    **Both passed on 2026-11-12, on the owner's word** ("Bạn có thể đánh dấu là pass và tiếp tục") after the thirteen
    sessions below; [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) says what those sessions covered and
    what they did not.
-2. **0.1.0-beta.42 — train B's second release — ~~when the owner says item 38 passed~~ begins now, with its plan**: `slSetConstants` and
+2. **Planned and approved 2026-11-12 (D119–D122): the second step is two releases.** **0.1.0-beta.42 has no new
+   patch site** — five pull requests: (1) the session's upscaler label (D120); (2) the Overlay's patch registry
+   refuses a patch it cannot register, and registers before it enables; (3) the native log is flushed whenever
+   something new was logged, every inventory row's install line names its module and symbol, a failed patch says
+   why, and the first sight of each ffx descriptor type on each module is logged — so that one Cyberpunk session on
+   beta.42 says where its upscale goes (D121); (4) FSR's infinite depth plane (D119); (5) the release, owner-only
+   item 40. **0.1.0-beta.43 is the two new hooks** and begins only when that log was read; its design — reviewed
+   against the code, which changed it — is in the plan of that day and below. What the review found that the first
+   draft had wrong: there is no "dominant segment" (segments split on output size only), so the label is the modal
+   name over the dominant stream; the patch table drops a patch silently when full; the init thread's flush runs
+   after the watchdog starts; a second NaN pattern for "infinite" would have been dropped by the Agent — real
+   +infinity is stored instead; the new rows must be gated before `ResolveScoped`, which takes a module reference a
+   call; `slSetConstants` needs the struct's GUID checked on every call; `ffxConfigure` needs an owner slot of its
+   own; summaries across viewports must come from the first viewport seen.
+   ~~**0.1.0-beta.42 — train B's second release — when the owner says item 38 passed begins now, with its plan**~~: `slSetConstants` and
    `ffxConfigure`. A plan of its own first. What it must settle, beside what
    [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md) §NEXT lists (`kMaxPatches = 48`, the window
    of `sl::Constants` pinned outside the camera members, the per-call overhead, the gate's list for the two new
@@ -631,6 +645,10 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D115 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Which struct version carries which field | a tail member of a vendor struct is read only where the upstream tags prove it is there |
 | D116 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | "never the camera" is a build gate: `tools/overlay-fields-check.ps1` |
 | D118 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | told that the sensor-library fix would take the number D113 gave train B's second release, the owner chose to release it at once as 0.1.0-beta.41: the train's second and third releases are beta.42 and beta.43, train C beta.44, train D beta.45 |
+| D119 | [`07_IPC.md`](07_IPC.md) §Region 5 | `FLT_MAX` (or +infinity) in an FSR depth plane is stored and shown as "infinite" — three engines pass it for the plane at infinity; for FSR only: for Streamline `FLT_MAX` is the "not set" sentinel and stays absent |
+| D120 | [`03_METRICS.md`](03_METRICS.md) §Upscaling | a session's upscaler is the technology named on the most samples, and its quality and render size are read from that technology's samples — not the first one named, with the others' values beside it |
+| D121 | [`HANDOFF.md`](HANDOFF.md) §NEXT | Cyberpunk 2077 was set to FSR upscaling and FrameLedger named none: a detection gap, to be investigated — which first needs a native log that survives the game's exit |
+| D122 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | train B's second step is split: **beta.42** has no new patch site (D119–D121 and the patch registry's hardening); **beta.43** is the two new hooks, begun only after the owner has run Cyberpunk on beta.42 and its log was read. The third release is beta.44, train C beta.45, train D beta.46 |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

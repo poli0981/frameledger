@@ -179,14 +179,22 @@ public static class SessionAggregator
 
     private static SessionRow ApplyUpscaler(SessionRow row, Context c)
     {
-        UpscaleExtent? extent = UpscaleExtent.From(c.Dominant);
-        FlUpscaler? identity = FgLadder.UpscalerIdentity(c.Input.Records);
+        // ONE TECHNOLOGY'S NAME, QUALITY AND SIZE (D120, 2026-11-12): the technology named on the most samples of
+        // the dominant stream, and - when the session names more than one - only the samples that name it. The name
+        // used to be the first one any record carried, beside a quality byte and a render size taken from whichever
+        // records had them: a session that saw DLSS briefly and then ran FSR was "DLSS" with FSR's byte and size.
+        UpscalerChoice choice = UpscalerChoice.From(c.Dominant);
+        UpscaleExtent? extent = UpscaleExtent.From(choice.Samples);
+        // A dominant stream that names nothing leaves the name to any other stream that does, as before.
+        string? named = choice.Kind is { } kind
+            ? Vocabulary.Upscaler(kind)
+            : FgLadder.UpscalerIdentity(c.Input.Records) is { } elsewhere ? Vocabulary.Upscaler(elsewhere) : null;
         bool hookRan = FgLadder.UpscalerHookRan(c.Input.Records);
-        IReadOnlyList<FrameSample> withParams = [.. c.Dominant.Where(static s => s.Claims(MeasuredFields.UpscalerParams))];
+        IReadOnlyList<FrameSample> withParams = [.. choice.Samples.Where(static s => s.Claims(MeasuredFields.UpscalerParams))];
         return row with
         {
-            Upscaler = identity is { } u ? Vocabulary.Upscaler(u) : hookRan ? "unknown" : null,
-            UpscalerQuality = QualityByte.Of(withParams)?.ToString(CultureInfo.InvariantCulture),
+            Upscaler = named ?? (hookRan ? "unknown" : null),
+            UpscalerQuality = choice.QualityFor(QualityByte.Of(withParams))?.ToString(CultureInfo.InvariantCulture),
             UpscalerSharpness = Modal(withParams, static s => s.UpscalerSharpness),
             UpscalerDriverReported = c.Input.Ngx.SrCreatedAndEvaluated ? "dlss" : null,
             RenderW = extent?.RenderW,
@@ -194,7 +202,9 @@ public static class SessionAggregator
             OutputW = extent?.OutputW,
             OutputH = extent?.OutputH,
             UpscaleRatio = extent?.Ratio,
-            SettingsChangedMidSession = c.Segments.Count(s => s.Samples.Count > 0) > c.All.Select(static s => s.SwapchainId).Distinct().Count(),
+            // A second technology named in one session is a setting changed mid-session, as a changed output size is.
+            SettingsChangedMidSession = choice.Named > 1
+                || c.Segments.Count(s => s.Samples.Count > 0) > c.All.Select(static s => s.SwapchainId).Distinct().Count(),
             HdrFlag = Vocabulary.Tri(c.Hdr),
             HdrSource = c.Hdr == Tri.NotApplicable ? null : Vocabulary.Measured,
         };
@@ -408,10 +418,9 @@ public static class SessionAggregator
             FrameStatistics stats = c.Generating
                 ? FrameStatistics.From(FrameTimeSeries.ApplicationFrames(seg.Samples, null, c.Input.QpcFrequency).FrameTimesMs, presented: false)
                 : FrameStatistics.From(series.FrameTimesMs, presented: true);
-            UpscaleExtent? extent = UpscaleExtent.From(seg.Samples);
-            UpscalerKind? upscaler = seg.Samples.Where(static s => s.Claims(MeasuredFields.Upscaler))
-                .Select(static s => s.Upscaler)
-                .FirstOrDefault(static u => u is not UpscalerKind.NotReported and not UpscalerKind.Unknown and not UpscalerKind.RetiredRayReconstruction, UpscalerKind.NotReported);
+            // The segment's upscaler is chosen as the session's is (D120): one technology's name, quality and size.
+            UpscalerChoice choice = UpscalerChoice.From(seg.Samples);
+            UpscaleExtent? extent = UpscaleExtent.From(choice.Samples);
             rows.Add(new SegmentRow
             {
                 SwapchainId = seg.SwapchainId,
@@ -421,8 +430,8 @@ public static class SessionAggregator
                 RenderH = extent?.RenderH,
                 OutputW = seg.OutputW == 0 ? null : seg.OutputW,
                 OutputH = seg.OutputH == 0 ? null : seg.OutputH,
-                Upscaler = upscaler is { } u && u != UpscalerKind.NotReported ? Vocabulary.Upscaler(u) : null,
-                UpscalerQuality = QualityByte.Of([.. seg.Samples.Where(static s => s.Claims(MeasuredFields.UpscalerParams))])?.ToString(CultureInfo.InvariantCulture),
+                Upscaler = choice.Kind is { } u ? Vocabulary.Upscaler(u) : null,
+                UpscalerQuality = choice.QualityFor(QualityByte.Of([.. choice.Samples.Where(static s => s.Claims(MeasuredFields.UpscalerParams))]))?.ToString(CultureInfo.InvariantCulture),
                 FgMode = null,
                 NativeFps = null,
                 DisplayedFps = series.AverageFps,
