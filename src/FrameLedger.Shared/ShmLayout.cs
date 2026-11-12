@@ -286,6 +286,12 @@ public enum FlHookFamily : uint
     /// Advanced metrics at least once; it tells "hooked, never called" from "not hooked", and entitles no frame field.
     /// </summary>
     SlConstants = 1u << 13,
+
+    /// <summary>
+    /// <c>ffxConfigure</c> is hooked on every ffx-api module the process loaded (0.1.0-beta.43). Only in a process that
+    /// was asked for Advanced metrics at least once; it entitles no frame field.
+    /// </summary>
+    FfxConfigure = 1u << 14,
 }
 
 /// <summary>

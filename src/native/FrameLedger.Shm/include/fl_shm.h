@@ -410,6 +410,11 @@ enum FlHookFamily : uint32_t {
     // so its absence beside FL_ADV_VALID_* bits says "the hook was not installed", and its presence beside a zero
     // slConstantsCalls says "hooked, and the game never called it". It entitles no measured field of a frame record.
     FL_HOOK_SL_CONSTANTS = 1u << 13,
+    // The same for ffxConfigure on the ffx-api modules (0.1.0-beta.43): hooked, in a process that was asked for
+    // Advanced metrics at least once. Published when every ffx-api module the process has loaded is patched, as the
+    // dispatch and query families are. Beside a zero ffxFgConfigures it says "hooked, and the game never configured
+    // frame generation"; it entitles no measured field of a frame record.
+    FL_HOOK_FFX_CONFIGURE = 1u << 14,
 };
 
 // FlWriterState::runtimeCensus -- which vendor RUNTIME MODULES the loader reported

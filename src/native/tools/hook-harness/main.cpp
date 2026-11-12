@@ -118,7 +118,10 @@
 //                    The values are the kAdv* constants below; the injected fl_guard cases assert them.
 //                    Since 0.1.0-beta.43 the upscaled hold also calls slSetConstants every frame, for viewport 0
 //                    (kAdvSl*) and for a second viewport whose numbers must never be shown, with the matrices and
-//                    the camera's position and axes - which the Overlay never reads - set to loud, changing values
+//                    the camera's position and axes - which the Overlay never reads - set to loud, changing values;
+//                    and the ffx hold calls ffxConfigure every frame with a frame-generation configuration
+//                    (kAdvFfxFg*) and with a key-value one, the swapchain, the contexts, the HUD-less resource and
+//                    the frame id - never read either - loud and changing
 //   --churn-module <dll>
 //                    load and free the module in a loop on a thread of its own, for the life of the process: a
 //                    module list that keeps changing under whoever reads it (the guard's D123, 2026-11-12)
@@ -2459,6 +2462,94 @@ bool ProbeAdvFields() {
             VirtualFree(pages, 0, MEM_RELEASE);
         }
     }
+
+    // --- ffxConfigure with a frame-generation descriptor (0.1.0-beta.43) -------------------------------------------
+    {
+        fl::adv::Accumulators           a;
+        ffxConfigureDescFrameGeneration c{};
+        c.header.type = FFX_API_CONFIGURE_DESC_TYPE_FRAMEGENERATION;
+        c.frameGenerationEnabled = true;
+        c.allowAsyncWorkloads = false;
+        c.onlyPresentGenerated = false;
+        c.flags = FFX_FRAMEGENERATION_FLAG_DRAW_DEBUG_VIEW;
+        c.generationRect = {10, 20, 2560, 1440};
+        fl::adv::ObserveFfxConfigure(3u, &c.header, a);
+        c.frameGenerationEnabled = false;    // the player switched it off in the menu
+        c.flags = FFX_FRAMEGENERATION_FLAG_DRAW_DEBUG_TEAR_LINES;
+        c.generationRect = {0, 0, 1920, 1080};
+        fl::adv::ObserveFfxConfigure(3u, &c.header, a);
+
+        Check(a.validMask.load() == fl::FL_ADV_VALID_FFX_FG_CONFIG && a.ffxFgConfigures.load() == 2u,
+              "two frame-generation configures, counted, and the group marked read");
+        Check(a.ffxFgEnabledSeen.load() == 3u, "generation seen on and seen off: both bits");
+        Check(a.ffxFgAsyncSeen.load() == 1u && a.ffxFgOnlyGeneratedSeen.load() == 1u,
+              "a switch only ever seen off sets the 'off' bit alone");
+        Check(a.ffxFgFlagsSeen.load() ==
+                  (FFX_FRAMEGENERATION_FLAG_DRAW_DEBUG_VIEW | FFX_FRAMEGENERATION_FLAG_DRAW_DEBUG_TEAR_LINES),
+              "the flags are every bit any configure carried");
+        Check(a.ffxFgRect.load() == fl::adv::PackRect(0, 0, 1920, 1080), "the rectangle is the last one, whole");
+
+        // The same call arriving at a second hooked module - the leaf behind the loader - is passed over.
+        fl::adv::ObserveFfxConfigure(2u, &c.header, a);
+        Check(a.ffxFgConfigures.load() == 2u, "one module's configures are counted, not one per hook");
+
+        // ANOTHER CONFIGURE TYPE through the same call is not a frame-generation configuration: only its type is
+        // looked at. A key-value descriptor is shorter than the one above, so reading it as one would run past it.
+        fl::adv::Accumulators                   other;
+        ffxConfigureDescFrameGenerationKeyValue kv{};
+        kv.header.type = FFX_API_CONFIGURE_DESC_TYPE_FRAMEGENERATION_KEYVALUE;
+        kv.key = 0xFFFFFFFFFFFFFFFFull;
+        kv.u64 = 0xFFFFFFFFFFFFFFFFull;
+        fl::adv::ObserveFfxConfigure(0u, &kv.header, other);
+        fl::adv::ObserveFfxConfigure(0u, nullptr, other);
+        Check(other.validMask.load() == 0u && other.ffxFgConfigures.load() == 0u && other.ffxFgOwner.load() == 0u,
+              "a configure of another type, and no descriptor at all, read nothing and own nothing");
+
+        // WHAT IS NEVER READ CHANGES NOTHING: two descriptors alike in the five members read and different in the
+        // swapchain, the callbacks' contexts, the HUD-less resource and the frame id publish the same bytes.
+        ffxConfigureDescFrameGeneration p = c;
+        ffxConfigureDescFrameGeneration q = c;
+        p.swapChain = reinterpret_cast<void*>(static_cast<uintptr_t>(0x1111));
+        p.presentCallbackUserContext = reinterpret_cast<void*>(static_cast<uintptr_t>(0x2222));
+        p.frameGenerationCallbackUserContext = reinterpret_cast<void*>(static_cast<uintptr_t>(0x3333));
+        p.HUDLessColor.resource = reinterpret_cast<void*>(static_cast<uintptr_t>(0x4444));
+        p.frameID = 5u;
+        q.swapChain = reinterpret_cast<void*>(static_cast<uintptr_t>(0xEEEE));
+        q.presentCallbackUserContext = reinterpret_cast<void*>(static_cast<uintptr_t>(0xDDDD));
+        q.frameGenerationCallbackUserContext = reinterpret_cast<void*>(static_cast<uintptr_t>(0xCCCC));
+        q.HUDLessColor.resource = reinterpret_cast<void*>(static_cast<uintptr_t>(0xBBBB));
+        q.frameID = 0xFFFFFFFFFFFFull;
+        auto*                 regionP = new fl::FlAdvancedState{};
+        auto*                 regionQ = new fl::FlAdvancedState{};
+        fl::adv::Accumulators ap;
+        fl::adv::Accumulators aq;
+        fl::adv::ObserveFfxConfigure(1u, &p.header, ap);
+        fl::adv::ObserveFfxConfigure(1u, &q.header, aq);
+        fl::adv::Publish(ap, regionP, 9u, 1u);
+        fl::adv::Publish(aq, regionQ, 9u, 1u);
+        Check(std::memcmp(regionP, regionQ, sizeof(fl::FlAdvancedState)) == 0 && regionP->ffxFgConfigures == 1u,
+              "two configurations that differ only in what is never read publish the same bytes");
+        Check(regionP->ffxFgRect[0] == 0 && regionP->ffxFgRect[1] == 0 && regionP->ffxFgRect[2] == 1920 &&
+                  regionP->ffxFgRect[3] == 1080 && regionP->ffxFgEnabledSeen == 1u,
+              "the rectangle lands as left, top, width, height; the switches as their two bits");
+        delete regionP;
+        delete regionQ;
+
+        // A RECTANGLE THAT DOES NOT FIT IS NOBODY'S, never a clipped one.
+        Check(fl::adv::PackRect(-1, 0, 100, 100) == fl::adv::kRectUnfit &&
+                  fl::adv::PackRect(0, 0, 0x8000, 100) == fl::adv::kRectUnfit &&
+                  fl::adv::PackRect(0, 0, 0x7FFF, 0x7FFF) != fl::adv::kRectUnfit,
+              "a negative side or one past fifteen bits makes the rectangle 'unfit'; the largest that fits is kept");
+        fl::adv::Accumulators big;
+        c.generationRect = {0, 0, 100000, 1080};
+        fl::adv::ObserveFfxConfigure(0u, &c.header, big);
+        auto* regionBig = new fl::FlAdvancedState{};
+        fl::adv::Publish(big, regionBig, 9u, 1u);
+        Check(regionBig->ffxFgRect[0] == -1 && regionBig->ffxFgRect[1] == -1 && regionBig->ffxFgRect[2] == -1 &&
+                  regionBig->ffxFgRect[3] == -1,
+              "and is published as four -1, which no rectangle is");
+        delete regionBig;
+    }
     return g_failures == 0;
 }
 
@@ -2924,6 +3015,10 @@ constexpr float    kAdvSlFovLow = 0.8f;
 constexpr float    kAdvSlFovHigh = 1.2f;
 constexpr float    kAdvSlAspect = 1.75f;
 constexpr uint32_t kAdvSlOtherViewport = 7u;
+// What --advanced hands ffxConfigure before each frame's frame-generation dispatches (0.1.0-beta.43).
+constexpr uint32_t kAdvFfxFgFlags = FFX_FRAMEGENERATION_FLAG_DRAW_DEBUG_PACING_LINES;
+constexpr int32_t  kAdvFfxFgRectWidth = 1920;
+constexpr int32_t  kAdvFfxFgRectHeight = 1080;
 using StubTokenFn = sl::Result(STDMETHODCALLTYPE*)(sl::FrameToken*&, const uint32_t*);
 
 alignas(16) unsigned char g_dummyFrameToken[64]{};
@@ -3464,6 +3559,28 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
     hostUp.renderSize.width = kTaggedRenderW;
     hostUp.renderSize.height = kTaggedRenderH;
 
+    // --advanced, 0.1.0-beta.43: the frame-generation configuration a title sends every frame, and beside it a
+    // configure of another type, which the Overlay passes over. What may be read is a known value; WHAT MAY NOT --
+    // the swapchain, the callbacks' contexts, the HUD-less resource, the frame id -- is loud and changes every frame.
+    // Nothing is dereferenced: the stub looks at none of it.
+    const PfnFfxConfigure configureFg =
+        advanced && prepare && fgEntry != nullptr
+            ? reinterpret_cast<PfnFfxConfigure>(reinterpret_cast<void*>(GetProcAddress(fgEntry, "ffxConfigure")))
+            : nullptr;
+    ffxConfigureDescFrameGeneration cfg{};
+    cfg.header.type = FFX_API_CONFIGURE_DESC_TYPE_FRAMEGENERATION;
+    cfg.frameGenerationEnabled = true;
+    cfg.allowAsyncWorkloads = false;
+    cfg.onlyPresentGenerated = false;
+    cfg.flags = kAdvFfxFgFlags;
+    cfg.generationRect = {0, 0, kAdvFfxFgRectWidth, kAdvFfxFgRectHeight};
+    ffxConfigureDescFrameGenerationKeyValue otherCfg{};
+    otherCfg.header.type = FFX_API_CONFIGURE_DESC_TYPE_FRAMEGENERATION_KEYVALUE;
+    if (advanced && prepare && fgEntry != nullptr && configureFg == nullptr) {
+        Check(false, "the frame-generation entry exports ffxConfigure");
+        return 1;
+    }
+
     const ULONGLONG until = GetTickCount64() + static_cast<ULONGLONG>(seconds) * 1000ULL;
     long long       presented = 0;
     long long       frames = 0;
@@ -3488,6 +3605,16 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
             dispatchHost(nullptr, &hostUp);
         } else {
             dispatchUp(nullptr, &up.header);
+        }
+        if (configureFg != nullptr) {
+            const uintptr_t loud = 0x1000u + static_cast<uintptr_t>(frameId % 977u) * 0x10u;
+            cfg.swapChain = reinterpret_cast<void*>(loud);
+            cfg.presentCallbackUserContext = reinterpret_cast<void*>(loud + 1u);
+            cfg.frameGenerationCallbackUserContext = reinterpret_cast<void*>(loud + 2u);
+            cfg.HUDLessColor.resource = reinterpret_cast<void*>(loud + 3u);
+            cfg.frameID = frameId;
+            configureFg(nullptr, &cfg.header);
+            configureFg(nullptr, &otherCfg.header);
         }
         if (prepare && dispatchFg != nullptr) {
             // TWICE, SAME frameID: the SDK's own sample re-issues the prepare when its

@@ -6960,15 +6960,19 @@ constexpr float    kAdvFfxFovLow = 0.9f;
 constexpr float    kAdvFfxFovHigh = 1.1f;
 constexpr uint32_t kAdvFfxFrameTimeUs = 16000u;
 // ...and hands slSetConstants for viewport 0 (0.1.0-beta.43); a second viewport gets other numbers every frame.
-constexpr float    kAdvSlJitterX = 0.3125f;
-constexpr float    kAdvSlJitterY = 0.4375f;
-constexpr float    kAdvSlMvecScaleX = 0.5f;
-constexpr float    kAdvSlMvecScaleY = 0.25f;
-constexpr float    kAdvSlNear = 0.25f;
-constexpr float    kAdvSlFar = 4000.0f;
-constexpr float    kAdvSlFovLow = 0.8f;
-constexpr float    kAdvSlFovHigh = 1.2f;
-constexpr float    kAdvSlAspect = 1.75f;
+constexpr float kAdvSlJitterX = 0.3125f;
+constexpr float kAdvSlJitterY = 0.4375f;
+constexpr float kAdvSlMvecScaleX = 0.5f;
+constexpr float kAdvSlMvecScaleY = 0.25f;
+constexpr float kAdvSlNear = 0.25f;
+constexpr float kAdvSlFar = 4000.0f;
+constexpr float kAdvSlFovLow = 0.8f;
+constexpr float kAdvSlFovHigh = 1.2f;
+constexpr float kAdvSlAspect = 1.75f;
+// ...and hands ffxConfigure a frame-generation configuration before each frame's dispatches (0.1.0-beta.43).
+constexpr uint32_t kAdvFfxFgFlags = 1u << 4;    // FFX_FRAMEGENERATION_FLAG_DRAW_DEBUG_PACING_LINES
+constexpr int32_t  kAdvFfxFgRectWidth = 1920;
+constexpr int32_t  kAdvFfxFgRectHeight = 1080;
 constexpr uint64_t kAdvMemoryTotal = 123456789ull;
 constexpr uint64_t kAdvMemoryAliasable = 23456789ull;
 
@@ -7027,14 +7031,20 @@ uint32_t BitsOf(float v) {
     return std::bit_cast<uint32_t>(v);
 }
 
-// What later releases fill: declared, written by nothing yet. (The sl::Constants group left this list with
-// 0.1.0-beta.43, which fills it; SlConstantsAreUnread below is for a target that never calls slSetConstants.)
+// What later releases fill: declared, written by nothing yet. (The sl::Constants and the ffxConfigure groups left
+// this list with 0.1.0-beta.43, which fills them; the two helpers below are for a target that makes neither call.)
 bool LaterGroupsAreZero(const fl::FlAdvancedState& a) {
-    bool zero = a.ffxFgConfigures == 0u && a.ffxFgEnabledSeen == 0u && a.ffxFgFlagsSeen == 0u;
+    bool zero = true;
     for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS; ++i) {
         zero = zero && a.features[i] == 0u;
     }
     return zero;
+}
+
+bool FfxFgConfigIsUnread(const fl::FlAdvancedState& a) {
+    return a.ffxFgConfigures == 0u && a.ffxFgEnabledSeen == 0u && a.ffxFgAsyncSeen == 0u &&
+           a.ffxFgOnlyGeneratedSeen == 0u && a.ffxFgFlagsSeen == 0u && a.ffxFgRect[2] == 0 && a.ffxFgRect[3] == 0 &&
+           (a.validMask & fl::FL_ADV_VALID_FFX_FG_CONFIG) == 0u;
 }
 
 bool SlConstantsAreUnread(const fl::FlAdvancedState& a) {
@@ -7045,7 +7055,12 @@ bool SlConstantsAreUnread(const fl::FlAdvancedState& a) {
 // The first 16 bytes of one export of a module AS THEY ARE IN ANOTHER PROCESS: the export's offset from this
 // process's own mapping of the same file (mapped as an image, nothing run), the module's base from the target's
 // module list. What a patch changes, and what a restore puts back.
-bool ReadTargetExportBytes(DWORD pid, const wchar_t* dllPath, const char* symbol, unsigned char out[16]) {
+//
+// `inFile`, when given, receives the same 16 bytes as this process's own mapping of the file has them -- nothing has
+// patched that copy, so an export whose bytes in the target equal them is unpatched. (Not "does it start with a
+// jump": a stub export may be a jump to begin with -- the loader stub's ffxConfigure is.)
+bool ReadTargetExportBytes(DWORD pid, const wchar_t* dllPath, const char* symbol, unsigned char out[16],
+                           unsigned char* inFile = nullptr) {
     const HMODULE mine = LoadLibraryExW(dllPath, nullptr, DONT_RESOLVE_DLL_REFERENCES);
     if (mine == nullptr) {
         return false;
@@ -7053,6 +7068,9 @@ bool ReadTargetExportBytes(DWORD pid, const wchar_t* dllPath, const char* symbol
     const auto*  entry = reinterpret_cast<const unsigned char*>(GetProcAddress(mine, symbol));
     const size_t rva =
         entry != nullptr ? static_cast<size_t>(entry - reinterpret_cast<const unsigned char*>(mine)) : 0u;
+    if (entry != nullptr && inFile != nullptr) {
+        std::memcpy(inFile, entry, 16);
+    }
     FreeLibrary(mine);
     const wchar_t* slash = wcsrchr(dllPath, L'\\');
     const wchar_t* slash2 = wcsrchr(dllPath, L'/');
@@ -7115,14 +7133,35 @@ TEST_CASE("region 5 stays empty until the Agent asks, then carries what an FSR t
     REQUIRE(r.st->writeIndex > atHooks + 30u);    // the hooks ran: this is not a target that sent nothing
     CHECK(r.ctl->advancedRequested == 0u);
     CHECK(RegionFiveIsZero(r));
+    // ...and ffxConfigure, which the target calls twice a frame, is not patched: never asked (D111). Its first bytes
+    // in the target's loader are the file's.
+    const auto    ffxConfigure = static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE);
+    unsigned char pristine[16]{};
+    unsigned char inFile[16]{};
+    unsigned char now[16]{};
+    CHECK((r.st->hooksInstalledMask & ffxConfigure) == 0u);
+    REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_FFX_LOADER, "ffxConfigure", pristine, inFile));
+    CHECK(std::memcmp(pristine, inFile, sizeof(inFile)) == 0);
+    {
+        // The dispatch export beside it IS patched, since the module appeared: the same read tells the two apart.
+        unsigned char dispatch[16]{};
+        unsigned char dispatchInFile[16]{};
+        REQUIRE(
+            ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_FFX_LOADER, "ffxDispatch", dispatch, dispatchInFile));
+        CHECK(std::memcmp(dispatch, dispatchInFile, sizeof(dispatch)) != 0);
+    }
 
     // ---- 2. ASKED. Within a tick or two the region answers THIS request with what the descriptor carried.
     SetAdvancedRequest(r, 7u);
+    REQUIRE(WaitForHookFamily(r.st, ffxConfigure));
+    REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_FFX_LOADER, "ffxConfigure", now));
+    CHECK(std::memcmp(pristine, now, sizeof(now)) != 0);    // patched now
+    const uint32_t want = fl::FL_ADV_VALID_FFX_UPSCALE | fl::FL_ADV_VALID_FFX_MEMORY | fl::FL_ADV_VALID_FFX_FG_CONFIG;
     fl::FlAdvancedState a{};
-    REQUIRE(ReadAdvanced(r, 7u, a, 0u, fl::FL_ADV_VALID_FFX_UPSCALE | fl::FL_ADV_VALID_FFX_MEMORY));
+    REQUIRE(ReadAdvanced(r, 7u, a, 0u, want));
     // A few seconds of it, so the count is one a restart can be told from.
     for (int i = 0; i < 20 && a.ffxDispatches < 300u; ++i) {
-        REQUIRE(ReadAdvanced(r, 7u, a, a.samples, fl::FL_ADV_VALID_FFX_UPSCALE | fl::FL_ADV_VALID_FFX_MEMORY));
+        REQUIRE(ReadAdvanced(r, 7u, a, a.samples, want));
     }
     INFO("mask 0x" << std::hex << a.validMask << std::dec << " dispatches " << a.ffxDispatches << " queries "
                    << a.ffxMemoryQueries << " frameTime " << a.ffxFrameTimeCount << "/" << a.ffxFrameTimeSumUs
@@ -7155,6 +7194,22 @@ TEST_CASE("region 5 stays empty until the Agent asks, then carries what an FSR t
     CHECK(a.ffxMemoryQueries != 0u);
     CHECK(a.ffxMemoryQueries <= a.ffxDispatches + 2u);
     CHECK(LaterGroupsAreZero(a));
+    // How the target configures frame generation: one configure a frame, counted ONCE though the loader hands it on
+    // to the leaf's export and both are hooked (twice would be past the dispatches), and the key-value configure
+    // beside it not at all. On, never asynchronous, never generated-only, one flag, the whole 1920x1080.
+    INFO("fg configures " << a.ffxFgConfigures << " enabled " << a.ffxFgEnabledSeen << " async " << a.ffxFgAsyncSeen
+                          << " flags 0x" << std::hex << a.ffxFgFlagsSeen << std::dec);
+    CHECK(a.ffxFgConfigures != 0u);
+    CHECK(a.ffxFgConfigures <= a.ffxDispatches + 2u);
+    CHECK(a.ffxFgConfigures * 2u > a.ffxDispatches);
+    CHECK(a.ffxFgEnabledSeen == 2u);
+    CHECK(a.ffxFgAsyncSeen == 1u);
+    CHECK(a.ffxFgOnlyGeneratedSeen == 1u);
+    CHECK(a.ffxFgFlagsSeen == kAdvFfxFgFlags);
+    CHECK(a.ffxFgRect[0] == 0);
+    CHECK(a.ffxFgRect[1] == 0);
+    CHECK(a.ffxFgRect[2] == kAdvFfxFgRectWidth);
+    CHECK(a.ffxFgRect[3] == kAdvFfxFgRectHeight);
 
     // ---- 3. NOT ASKED AGAIN. Nothing more is read, and nothing more is written: the region is what it was.
     SetAdvancedRequest(r, 0u);
@@ -7180,6 +7235,30 @@ TEST_CASE("region 5 stays empty until the Agent asks, then carries what an FSR t
 
     CHECK(r.st->faultCount == 0u);
     CHECK(r.st->status == fl::FL_STATUS_READY);
+
+    // The log, written by the watchdog unasked: the two configure patches by module and symbol, and each configure
+    // type each module was handed -- the frame-generation one (0x20002) and the key-value one (0x20006).
+    std::wstring log;
+    std::string  text;
+    for (int i = 0; i < 60; ++i) {
+        ++r.ctl->guardTicks;
+        if (log.empty() && !FindOverlayLog(child.pi.dwProcessId, child.pi.hProcess, log)) {
+            Sleep(100);
+            continue;
+        }
+        text = ReadWholeFile(log);
+        if (LogHasLine(text, "FFX_CONFIGURE", "amd_fidelityfx_loader_dx12.dll", " b=0x20006")) {
+            break;
+        }
+        Sleep(100);
+    }
+    INFO("log:\n" << text);
+    CHECK(LogHasLine(text, "HOOK_INSTALLED", "amd_fidelityfx_loader_dx12.dll!ffxConfigure", ""));
+    CHECK(LogHasLine(text, "HOOK_INSTALLED", "amd_fidelityfx_framegeneration_dx12.dll!ffxConfigure", ""));
+    CHECK(LogHasLine(text, "FFX_CONFIGURE", "amd_fidelityfx_loader_dx12.dll", " b=0x20002"));
+    CHECK(LogHasLine(text, "FFX_CONFIGURE", "amd_fidelityfx_loader_dx12.dll", " b=0x20006"));
+    CHECK(LogHasLine(text, "FFX_CONFIGURE", "amd_fidelityfx_framegeneration_dx12.dll", " b=0x20002"));
+    CHECK(text.find("PATCH_FAILED") == std::string::npos);
 }
 
 TEST_CASE("FSR's plane at infinity (beta.42, D119): a far plane of FLT_MAX reaches region 5 as +infinity, beside "
@@ -7243,8 +7322,10 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation a
     // ---- 1. NEVER ASKED (owner decision D111): the evaluation is hooked, the game calls slSetConstants every frame,
     // and that export is not patched -- its first bytes in the target are the file's -- nor is anything kept.
     unsigned char pristine[16]{};
+    unsigned char inFile[16]{};
     unsigned char now[16]{};
-    REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", pristine));
+    REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", pristine, inFile));
+    CHECK(std::memcmp(pristine, inFile, sizeof(inFile)) == 0);    // the file's bytes: nothing has patched it
     const std::uint64_t atHooks = r.st->writeIndex;
     TickFor(r, 2500);    // two watchdog ticks and more: every row that installs unasked has had its chance
     REQUIRE(r.st->writeIndex > atHooks + 30u);
@@ -7313,6 +7394,7 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation a
     CHECK(a.ffxDispatches == 0u);                         // no ffx call in this target
     CHECK(a.ffxSharpnessMinBits == FL_ADV_FLOAT_NONE);    // a float nobody saw is "none", never 0.0
     CHECK(a.ffxMemoryQueries == 0u);
+    CHECK(FfxFgConfigIsUnread(a));    // a Streamline title with no FidelityFX: nothing calls ffxConfigure
     CHECK(LaterGroupsAreZero(a));
 
     // ---- 3. NO LONGER ASKED: the detour forwards without looking, the region is as it was left, and the patch stays

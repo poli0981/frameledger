@@ -61,6 +61,15 @@ sl::Constants::orthographicProjection
 sl::Constants::motionVectorsDilated
 sl::Constants::motionVectorsJittered
 
+# ffxConfigureDescFrameGeneration, how the game configures FSR frame generation (parameter `g`; 0.1.0-beta.43):
+# on or off, asynchronous or not, the flags, generated frames only or not, the rectangle generated in. The swapchain,
+# the two callbacks and their contexts, the HUD-less resource and the frame id in the same descriptor are not read.
+ffxConfigureDescFrameGeneration::frameGenerationEnabled
+ffxConfigureDescFrameGeneration::allowAsyncWorkloads
+ffxConfigureDescFrameGeneration::flags
+ffxConfigureDescFrameGeneration::onlyPresentGenerated
+ffxConfigureDescFrameGeneration::generationRect
+
 # The upscaler's memory query: the header's type, the game's out-pointer in either version of the descriptor
 # (parameter `q`), and what ffxQuery wrote through it after answering OK (parameter `m`)
 ffxQueryDescHeader::type

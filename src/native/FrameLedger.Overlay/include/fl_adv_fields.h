@@ -45,6 +45,7 @@
 #include <sl.h>
 // After sl.h, as fl_sl_inputs.h explains: sl_dlss.h has no includes of its own.
 #include <ffx_api.h>
+#include <ffx_framegeneration.h>
 #include <ffx_upscale.h>
 #include <sl_dlss.h>
 
@@ -162,6 +163,15 @@ struct Accumulators {
     std::atomic<uint64_t> ffxMemoryAliasableBytes{0u};
     std::atomic<uint32_t> ffxMemoryQueries{0u};
     std::atomic<uint32_t> ffxMemoryOwner{0u};    // leaf + 1 of the module whose answered queries are counted
+
+    // ffxConfigure with a frame-generation descriptor (0.1.0-beta.43)
+    std::atomic<uint32_t> ffxFgOwner{0u};    // leaf + 1 of the module whose configures are counted
+    std::atomic<uint32_t> ffxFgConfigures{0u};
+    std::atomic<uint32_t> ffxFgEnabledSeen{0u};          // bit 0: seen off; bit 1: seen on
+    std::atomic<uint32_t> ffxFgAsyncSeen{0u};            // the same two bits
+    std::atomic<uint32_t> ffxFgOnlyGeneratedSeen{0u};    // the same two bits
+    std::atomic<uint32_t> ffxFgFlagsSeen{0u};
+    std::atomic<uint64_t> ffxFgRect{0u};    // PackRect: the last rectangle, in ONE word so it is never half of two
 
     // sl::Constants (0.1.0-beta.43), summarised - from the first viewport seen; the calls count every viewport
     std::atomic<uint64_t> slViewport{0u};    // that viewport's id + 1; 0 = none yet
@@ -323,6 +333,54 @@ inline void ObserveFfxMemoryQuery(uint32_t leaf, const ffxQueryDescHeader* desc,
     }
 }
 
+// A rectangle in one 64-bit word, sixteen bits a side: left, top, width, height from the lowest. The detour stores
+// it with one store and the watchdog reads it with one load, so a publication never carries the left edge of one
+// rectangle beside the width of the next. A side that is negative or does not fit in fifteen bits makes the whole
+// word kRectUnfit, which Publish writes as four -1: a rectangle nobody can state rather than a clipped one.
+inline constexpr uint64_t kRectUnfit = 0xFFFFFFFFFFFFFFFFull;
+
+inline uint64_t PackRect(int32_t left, int32_t top, int32_t width, int32_t height) noexcept {
+    const auto fits = [](int32_t v) noexcept { return v >= 0 && v <= 0x7FFF; };
+    if (!fits(left) || !fits(top) || !fits(width) || !fits(height)) {
+        return kRectUnfit;
+    }
+    return static_cast<uint64_t>(left) | (static_cast<uint64_t>(top) << 16) | (static_cast<uint64_t>(width) << 32) |
+           (static_cast<uint64_t>(height) << 48);
+}
+
+// How the game configures FSR frame generation (ffxConfigure, 0.1.0-beta.43). Read only when the header's type is
+// the frame-generation configuration -- a key-value pair, a distortion field or the camera info arriving through the
+// same call is passed over with nothing but its type looked at.
+//
+// WHAT IS READ: whether generation is on, whether it may run asynchronously, the flags, whether only generated
+// frames are presented, and the rectangle generated in. WHAT IS NOT, EVER: the swapchain, the two callbacks and
+// their contexts, the HUD-less resource and the frame id that sit in the same descriptor.
+//
+// ONE MODULE'S CONFIGURES ARE COUNTED (Owns), with a slot of its own: behind a loader the same call reaches the
+// loader and the leaf, and a title's upscale may be owned by another module than its frame generation.
+inline void ObserveFfxConfigure(uint32_t leaf, const ffxConfigureDescHeader* desc, Accumulators& a) noexcept {
+    if (desc == nullptr || desc->type != FFX_API_CONFIGURE_DESC_TYPE_FRAMEGENERATION) {
+        return;
+    }
+    if (!Owns(a.ffxFgOwner, leaf)) {
+        return;
+    }
+    const auto& g = *reinterpret_cast<const ffxConfigureDescFrameGeneration*>(desc);
+
+    a.ffxFgConfigures.fetch_add(1u, std::memory_order_relaxed);
+    NoteBits(a.ffxFgEnabledSeen, ByteIsSet(g.frameGenerationEnabled) ? 2u : 1u);
+    NoteBits(a.ffxFgAsyncSeen, ByteIsSet(g.allowAsyncWorkloads) ? 2u : 1u);
+    NoteBits(a.ffxFgOnlyGeneratedSeen, ByteIsSet(g.onlyPresentGenerated) ? 2u : 1u);
+    if (g.flags != 0u) {
+        NoteBits(a.ffxFgFlagsSeen, g.flags);
+    }
+    a.ffxFgRect.store(
+        PackRect(g.generationRect.left, g.generationRect.top, g.generationRect.width, g.generationRect.height),
+        std::memory_order_relaxed);
+
+    NoteBits(a.validMask, FL_ADV_VALID_FFX_FG_CONFIG);
+}
+
 // One sl::Boolean of sl::Constants into the two "seen" words: true sets its bit in `seenTrue`, false in `seenFalse`,
 // the third state ("invalid": the game set nothing) in neither.
 inline void NoteSlBoolean(sl::Boolean value, uint32_t bit, uint32_t& seenTrue, uint32_t& seenFalse) noexcept {
@@ -439,7 +497,13 @@ inline void Reset(Accumulators& a) noexcept {
     a.ffxMemoryTotalBytes.store(0u, relaxed);
     a.ffxMemoryAliasableBytes.store(0u, relaxed);
     a.ffxMemoryQueries.store(0u, relaxed);
-    // Which viewport is summarised stays, as the two owners do: a fact about the process.
+    a.ffxFgConfigures.store(0u, relaxed);
+    a.ffxFgEnabledSeen.store(0u, relaxed);
+    a.ffxFgAsyncSeen.store(0u, relaxed);
+    a.ffxFgOnlyGeneratedSeen.store(0u, relaxed);
+    a.ffxFgFlagsSeen.store(0u, relaxed);
+    a.ffxFgRect.store(0u, relaxed);
+    // Which viewport is summarised stays, as the owners do: a fact about the process.
     a.slConstantsCalls.store(0u, relaxed);
     a.slResets.store(0u, relaxed);
     a.slJitterMaxXBits.store(FL_ADV_FLOAT_NONE, relaxed);
@@ -519,6 +583,17 @@ inline void Publish(Accumulators& a, FlAdvancedState* region, uint32_t request, 
     put64(region->ffxMemoryTotalBytes, a.ffxMemoryTotalBytes.load(relaxed));
     put64(region->ffxMemoryAliasableBytes, a.ffxMemoryAliasableBytes.load(relaxed));
     put32(region->ffxMemoryQueries, a.ffxMemoryQueries.load(relaxed));
+
+    put32(region->ffxFgConfigures, a.ffxFgConfigures.load(relaxed));
+    put32(region->ffxFgEnabledSeen, a.ffxFgEnabledSeen.load(relaxed));
+    put32(region->ffxFgAsyncSeen, a.ffxFgAsyncSeen.load(relaxed));
+    put32(region->ffxFgOnlyGeneratedSeen, a.ffxFgOnlyGeneratedSeen.load(relaxed));
+    put32(region->ffxFgFlagsSeen, a.ffxFgFlagsSeen.load(relaxed));
+    const uint64_t rect = a.ffxFgRect.load(relaxed);
+    for (uint32_t i = 0; i < 4u; ++i) {
+        const auto side = rect == kRectUnfit ? int32_t{-1} : static_cast<int32_t>((rect >> (16u * i)) & 0xFFFFu);
+        std::atomic_ref<int32_t>{region->ffxFgRect[i]}.store(side, relaxed);
+    }
 
     put32(region->slConstantsCalls, a.slConstantsCalls.load(relaxed));
     put32(region->slResets, a.slResets.load(relaxed));

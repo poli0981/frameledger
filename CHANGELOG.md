@@ -37,6 +37,14 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Added
 
+- **Advanced metrics, inside the game: how the game configures FSR frame generation** (the part inside the game;
+  what a session shows of it comes with the same release). With **Advanced metrics** on, FrameLedger now also
+  reads, from the call a game makes to configure AMD's frame generation, whether generation is on, whether it may
+  run asynchronously, its flags, whether only generated frames are presented, and the part of the picture it
+  generates in. Nothing else of that call is read. Like the Streamline hook, this one is put into a game only once
+  Advanced metrics has been asked for. Measured cost: about 15 billionths of a second per call while the option is
+  on, under 2 while it is off.
+
 - **Advanced metrics, inside the game: what the game tells NVIDIA Streamline about each frame** (the part inside the
   game; what a session shows of it comes with the same release). With **Advanced metrics** on, FrameLedger now also
   reads, from a call a Streamline game makes every frame, the size of the jitter, the motion-vector scale, the depth

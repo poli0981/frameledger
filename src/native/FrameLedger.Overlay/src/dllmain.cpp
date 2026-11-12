@@ -163,6 +163,7 @@ enum FlLogCode : uint32_t {
     kLogFfxQueryType,
     kLogUpscaleRoute,
     kLogRuntimeCensus,
+    kLogFfxConfigureType,
 };
 
 const char* LogCodeName(uint32_t code) noexcept {
@@ -201,6 +202,8 @@ const char* LogCodeName(uint32_t code) noexcept {
         return "UPSCALE_ROUTE";
     case kLogRuntimeCensus:
         return "RUNTIME_CENSUS";
+    case kLogFfxConfigureType:
+        return "FFX_CONFIGURE";
     default:
         return "?";
     }
@@ -1326,6 +1329,13 @@ PFN_FfxQuery g_origFfxQuery[fl::inventory::kFfxLeafCount] = {};
 std::atomic<uint32_t> g_ffxQueryPatched[fl::inventory::kFfxLeafCount] = {};
 std::atomic<uint32_t> g_ffxQueryLive{0};
 
+// ffxConfigure on the same four modules (0.1.0-beta.43, Advanced metrics): patched only in a process that was asked
+// for Advanced metrics at least once (InstallByFamily); one trampoline and one latch a leaf, as the query's.
+using PFN_FfxConfigure = ::PfnFfxConfigure;
+PFN_FfxConfigure      g_origFfxConfigure[fl::inventory::kFfxLeafCount] = {};
+std::atomic<uint32_t> g_ffxConfigurePatched[fl::inventory::kFfxLeafCount] = {};
+std::atomic<uint32_t> g_ffxConfigureLive{0};
+
 // THE VALUES AND LAYOUTS THE QUERY ARM READS, PINNED TO LITERALS. Identical at FidelityFX SDK v1.1.4 (the monolith's
 // generation) and v2.3.0 (the vendored headers), checked against both on 2026-10-19: the two type ids, the mode enum,
 // and both query descriptors -- a re-vendoring that moved a field fails here, not on a title's own descriptor.
@@ -1961,8 +1971,10 @@ void NoteFfxExtent(const FfxApiDimensions2D& size) noexcept {
 // a record or the shared memory.
 fl::ffxtypes::Seen     g_ffxDispatchTypes[fl::inventory::kFfxLeafCount];
 fl::ffxtypes::Seen     g_ffxQueryTypes[fl::inventory::kFfxLeafCount];
-fl::ffxtypes::Reported g_ffxDispatchTypesLogged[fl::inventory::kFfxLeafCount];    // watchdog only
-fl::ffxtypes::Reported g_ffxQueryTypesLogged[fl::inventory::kFfxLeafCount];       // watchdog only
+fl::ffxtypes::Reported g_ffxDispatchTypesLogged[fl::inventory::kFfxLeafCount];     // watchdog only
+fl::ffxtypes::Reported g_ffxQueryTypesLogged[fl::inventory::kFfxLeafCount];        // watchdog only
+fl::ffxtypes::Seen     g_ffxConfigureTypes[fl::inventory::kFfxLeafCount];          // only where ffxConfigure is hooked
+fl::ffxtypes::Reported g_ffxConfigureTypesLogged[fl::inventory::kFfxLeafCount];    // watchdog only
 
 // The answer one query returned, kept for the dispatch arm. Read only after the vendor answered OK; a mode, a size or a
 // ratio the byte or the match cannot carry is not kept.
@@ -2172,6 +2184,39 @@ ffxReturnCode_t Hook_FfxQueryT(ffxContext* context, ffxQueryDescHeader* desc) {
     return rc;
 }
 
+// ffxConfigure's trampolines (0.1.0-beta.43), one per leaf. The descriptor's type is kept for the log whatever it
+// is; the frame-generation configuration is read further only while the Agent asks, in fl_adv_fields.h, which never
+// touches the swapchain, the callbacks, the HUD-less resource or the frame id. MayObserve first: after a stop nobody
+// clears the request word. Every argument forwarded untouched, the original called exactly once on every path.
+template <uint32_t Leaf>
+ffxReturnCode_t Hook_FfxConfigureT(ffxContext* context, const ffxConfigureDescHeader* desc) {
+    static_assert(Leaf < fl::inventory::kFfxLeafCount, "a trampoline per leaf, and no more");
+    FL_HOOK_GUARD({
+        if (MayObserve() && desc != nullptr) {
+            fl::ffxtypes::Note(g_ffxConfigureTypes[Leaf], desc->type);
+            if (g_advancedRequested.load(std::memory_order_relaxed) != 0u) {
+                fl::adv::ObserveFfxConfigure(Leaf, desc, g_adv);
+            }
+        }
+    })
+    return g_origFfxConfigure[Leaf](context, desc);
+}
+
+void* FfxConfigureDetour(uint32_t leaf) noexcept {
+    switch (leaf) {
+    case fl::inventory::kFfxLeafMonolith:
+        return reinterpret_cast<void*>(&Hook_FfxConfigureT<fl::inventory::kFfxLeafMonolith>);
+    case fl::inventory::kFfxLeafUpscaler:
+        return reinterpret_cast<void*>(&Hook_FfxConfigureT<fl::inventory::kFfxLeafUpscaler>);
+    case fl::inventory::kFfxLeafFrameGeneration:
+        return reinterpret_cast<void*>(&Hook_FfxConfigureT<fl::inventory::kFfxLeafFrameGeneration>);
+    case fl::inventory::kFfxLeafLoader:
+        return reinterpret_cast<void*>(&Hook_FfxConfigureT<fl::inventory::kFfxLeafLoader>);
+    default:
+        return nullptr;
+    }
+}
+
 void* FfxQueryDetour(uint32_t leaf) noexcept {
     switch (leaf) {
     case fl::inventory::kFfxLeafMonolith:
@@ -2354,6 +2399,10 @@ void LogFfxObservations() noexcept {
             g_ffxQueryTypes[leaf], g_ffxQueryTypesLogged[leaf],
             [moduleName](uint64_t type) noexcept { LogNoteW(kLogFfxQueryType, moduleName, 0u, type); },
             [moduleName](uint32_t more) noexcept { LogNoteW(kLogFfxQueryType, moduleName, more, 0u); });
+        fl::ffxtypes::ReportNew(
+            g_ffxConfigureTypes[leaf], g_ffxConfigureTypesLogged[leaf],
+            [moduleName](uint64_t type) noexcept { LogNoteW(kLogFfxConfigureType, moduleName, 0u, type); },
+            [moduleName](uint32_t more) noexcept { LogNoteW(kLogFfxConfigureType, moduleName, more, 0u); });
     }
     // g_ffxUpscaleLeaf: leaf + 1 for an ffx-api leaf, kFfxUpscaleSourceFsr3Host for the 3.0 host's own export, 0 for
     // none yet. The host has no descriptor type, so this is the only line that says its export was called.
@@ -2464,6 +2513,30 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         }
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlSetConstants),
                           reinterpret_cast<void**>(&g_origSlSetConstants), g_slConstantsLive, name);
+    }
+    if (family == fl::inventory::kFamilyFfxConfigure) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        // FOUR ROWS, ONE ARM, the query arm's shape: the row's MODULE picks the trampoline and the latch slot.
+        // Published in PublishFfxConfigureFamilyIfWhole, once every loaded leaf is in.
+        const int leaf = fl::inventory::FfxLeafOf(moduleName);
+        if (leaf < 0) {
+            return false;    // the static_asserts make this unreachable for the rows as written
+        }
+        const auto slot = static_cast<uint32_t>(leaf);
+        if (g_ffxConfigurePatched[slot].load(std::memory_order_acquire) != 0) {
+            return true;
+        }
+        void* target = fl::inventory::ResolveScoped(moduleName, symbol);
+        if (target == nullptr) {
+            return false;    // not loaded, or a module of the name that does not speak ffx-api
+        }
+        if (!PatchTarget(target, FfxConfigureDetour(slot), reinterpret_cast<void**>(&g_origFfxConfigure[slot]), name)) {
+            return false;
+        }
+        g_ffxConfigurePatched[slot].store(1, std::memory_order_release);
+        return true;
     }
     if (family == fl::inventory::kFamilyEvaluateFeature) {
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlEvaluateFeature),
@@ -2635,6 +2708,27 @@ void PublishFfxQueryFamilyIfWhole() noexcept {
     }
 }
 
+// Publish kFamilyFfxConfigure once every ffx leaf the process has loaded has its configure patched, and at least one
+// does -- the query family's rule. Nothing is patched in a process never asked, so nothing is published there.
+void PublishFfxConfigureFamilyIfWhole() noexcept {
+    if (g_advancedSeen == 0u || g_ffxConfigureLive.load(std::memory_order_acquire) != 0) {
+        return;
+    }
+    bool anyPatched = false;
+    for (uint32_t i = 0; i < fl::inventory::kFfxLeafCount; ++i) {
+        if (g_ffxConfigurePatched[i].load(std::memory_order_acquire) != 0) {
+            anyPatched = true;
+            continue;
+        }
+        if (fl::inventory::IsModuleLoaded(fl::inventory::kFfxLeafModules[i])) {
+            return;    // loaded and not yet patched: the family is not whole
+        }
+    }
+    if (anyPatched) {
+        PublishHookFamily(fl::inventory::kFamilyFfxConfigure, g_ffxConfigureLive);
+    }
+}
+
 // Publish FL_HOOK_UPSCALER_PARAMS once EVERY TAG EXPORT THE LOADED INTERPOSER HAS is
 // patched, and at least one is. "Has" is the export table, not the module list: a
 // 2.7 interposer exports slSetTag alone and is whole with that one row patched; a
@@ -2678,6 +2772,7 @@ bool InstallUpscalerHooks() noexcept {
     PublishParamsFamilyIfWhole();
     PublishFfxFamilyIfWhole();
     PublishFfxQueryFamilyIfWhole();
+    PublishFfxConfigureFamilyIfWhole();
     return any;
 }
 
