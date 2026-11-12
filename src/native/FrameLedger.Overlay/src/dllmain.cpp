@@ -1166,7 +1166,13 @@ std::atomic<uint32_t> g_slSetTagForFramePatched{0};
 using PFN_SlGetNewFrameToken = ::PFun_slGetNewFrameToken*;
 PFN_SlGetNewFrameToken g_origSlGetNewFrameToken = nullptr;
 std::atomic<uint32_t>  g_frameTokensLive{0};
-std::atomic<uint32_t>  g_frameTokens{0};
+
+// slSetConstants (0.1.0-beta.43, Advanced metrics): patched only in a process that was asked for Advanced metrics at
+// least once (InstallByFamily), and its detour forwards without looking while the request is off.
+using PFN_SlSetConstants = ::PFun_slSetConstants*;
+PFN_SlSetConstants    g_origSlSetConstants = nullptr;
+std::atomic<uint32_t> g_slConstantsLive{0};
+std::atomic<uint32_t> g_frameTokens{0};
 // The HIGHEST frame index seen so far, tagged in bit 32 so that index 0 is
 // distinct from "no frame yet". Measured 2026-09-03 on Cyberpunk 2077
 // (20_OPEN_QUESTIONS §S31, row P4): the title asks for a token 3 to 4.6 times per
@@ -1722,6 +1728,26 @@ sl::Result STDMETHODCALLTYPE Hook_SlSetTag(const sl::ViewportHandle& viewport, c
     // ALWAYS exactly once, on every path including the fault path, with every
     // argument forwarded untouched.
     return g_origSlSetTag(viewport, tags, numTags, cmdBuffer);
+}
+
+// What the game tells Streamline about a frame (0.1.0-beta.43). THREE CONDITIONS BEFORE ANYTHING IS READ, in the
+// order that costs least: the Agent is asking for Advanced metrics; observing has not stopped (after a stop nobody
+// clears the request word, so the first test alone would keep reading); and the struct is the one these headers
+// describe -- its GUID and a version of at least 1, checked on THIS call, because the game owns the struct and a
+// Streamline generation that lays it out differently keeps the export's name. The struct is read in
+// fl_adv_fields.h, which never touches its matrices or the camera's position and axes (rule 4). The viewport's id
+// is the handle's own conversion to an integer, taken only from a handle that is one (the same GUID check).
+sl::Result STDMETHODCALLTYPE Hook_SlSetConstants(const sl::Constants& values, const sl::FrameToken& frame,
+                                                 const sl::ViewportHandle& viewport) {
+    FL_HOOK_GUARD({
+        if (g_advancedRequested.load(std::memory_order_relaxed) != 0u && MayObserve() &&
+            fl::slinputs::IsReadable<sl::Constants>(&values) &&
+            fl::slinputs::IsReadable<sl::ViewportHandle>(&viewport)) {
+            fl::adv::ObserveSlConstants(values, static_cast<uint32_t>(viewport), g_adv);
+        }
+    })
+    // ALWAYS exactly once, on every path including the fault path, with every argument forwarded untouched.
+    return g_origSlSetConstants(values, frame, viewport);
 }
 
 // slSetTagForFrame: the FrameToken first, then the same list slSetTag takes. The
@@ -2426,6 +2452,19 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
     // bit test would bind any future row that happens to include identity to THIS
     // detour -- which is the neighbour's-body defect this function exists to stop,
     // and it would arrive silently because the row would still install.
+    //
+    // THE ROWS THAT ARE INSTALLED ONLY WHERE ADVANCED METRICS WAS EVER ASKED FOR (owner decision D111), FIRST -- before
+    // anything is resolved, because ResolveScoped takes a reference on the module at every call: in a process never
+    // asked, these rows must change nothing, not even a reference count. g_advancedSeen is the watchdog's, and this
+    // runs on the watchdog, after the block that sets it. Once the patch is in it stays; the detour forwards without
+    // looking while the request is off.
+    if (family == fl::inventory::kFamilySlConstants) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlSetConstants),
+                          reinterpret_cast<void**>(&g_origSlSetConstants), g_slConstantsLive, name);
+    }
     if (family == fl::inventory::kFamilyEvaluateFeature) {
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlEvaluateFeature),
                           reinterpret_cast<void**>(&g_origSlEvaluateFeature), g_upscalerIdentityLive, name);

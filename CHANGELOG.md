@@ -35,6 +35,18 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Advanced metrics, inside the game: what the game tells NVIDIA Streamline about each frame** (the part inside the
+  game; what a session shows of it comes with the same release). With **Advanced metrics** on, FrameLedger now also
+  reads, from a call a Streamline game makes every frame, the size of the jitter, the motion-vector scale, the depth
+  range, the range of the field of view, the aspect ratio and seven on/off settings (inverted depth, how motion
+  vectors are stored, whether the upscaler's history was reset). It never reads where the game's camera is, which
+  way it looks, or its matrices, which sit in the same data — a check in the build refuses any code that names
+  them. This is the first reading that needs a hook of its own, and that hook is put into a game only once
+  Advanced metrics has been asked for: with the option off, nothing in the game is touched for it. Measured cost:
+  about 20 billionths of a second per frame while the option is on, under one billionth while it is off.
+
 ### Fixed
 
 - **FSR upscaling is counted once per frame whichever way the game's FidelityFX loader passes it on.** Newer

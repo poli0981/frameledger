@@ -405,6 +405,11 @@ enum FlHookFamily : uint32_t {
     // FL_FEAT_RAY_RECONSTRUCTION_OBSERVED and never bit 7, and without this family its silence would read as a
     // measured "not running" -- a fabricated negative of the kind 03_METRICS §RT/PT/RR forbids for ray reconstruction.
     FL_HOOK_SL_NEURAL_RENDERING = 1u << 12,
+    // Advanced metrics, train B's second step (0.1.0-beta.43): slSetConstants is hooked. Published only in a process
+    // that was asked for Advanced metrics at least once -- the patch is not made otherwise (owner decision D111) --
+    // so its absence beside FL_ADV_VALID_* bits says "the hook was not installed", and its presence beside a zero
+    // slConstantsCalls says "hooked, and the game never called it". It entitles no measured field of a frame record.
+    FL_HOOK_SL_CONSTANTS = 1u << 13,
 };
 
 // FlWriterState::runtimeCensus -- which vendor RUNTIME MODULES the loader reported

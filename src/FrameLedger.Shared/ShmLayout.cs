@@ -280,6 +280,12 @@ public enum FlHookFamily : uint
     /// writer that looked for neural rendering is told from one built before it could (<see cref="FlFeatureFlags.SlNeuralRendering"/>).
     /// </summary>
     SlNeuralRendering = 1u << 12,
+
+    /// <summary>
+    /// <c>slSetConstants</c> is hooked (0.1.0-beta.43, Advanced metrics train B). Only in a process that was asked for
+    /// Advanced metrics at least once; it tells "hooked, never called" from "not hooked", and entitles no frame field.
+    /// </summary>
+    SlConstants = 1u << 13,
 }
 
 /// <summary>

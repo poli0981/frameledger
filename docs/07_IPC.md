@@ -133,7 +133,12 @@ What the region is, as a contract between the two sides:
   beta.43~~ 0.1.0-beta.43 and beta.44 fill *(renumbered twice on 2026-11-12 — D118: a fix release took beta.41;
   D122: the second step became two releases, and beta.42 fills none of them. The comments in `fl_shm.h` and
   `ShmLayout.cs` carry the new numbers since beta.42)* (`ffxFg*`,
-  `sl*`, `features`) are declared now and stay zero until then, so those releases bump no layout.
+  `sl*`, `features`) are declared now and stay zero until then, so those releases bump no layout. **The `sl*` group
+  is filled since 0.1.0-beta.43** by the `slSetConstants` hook (`17_HOOK_ENGINE` §Hook inventory), under
+  `FL_ADV_VALID_SL_CONSTANTS`: the call count of every viewport, and for the first viewport seen the resets, the
+  jitter's largest magnitude, the motion-vector scale, the two depth planes, the field of view's range, the aspect
+  ratio, and one bit per `Boolean` in each of two words — seen true, seen false. `FlHookFamily` gains
+  `FL_HOOK_SL_CONSTANTS` (bit 13): the hook is in, which it is only in a process that was asked at least once.
 - The Vulkan layer never writes it. `ShmLayoutMirrorTests.TheAdvancedStateMirrorMatches` checks every member's
   offset against `fl-layout-dump`; `ShmRingReaderTests` the three reads and that the request is stored either way.
 

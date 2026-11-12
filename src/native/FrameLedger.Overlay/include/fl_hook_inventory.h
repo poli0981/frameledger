@@ -124,7 +124,7 @@ inline constexpr uint32_t kFamiliesEvaluateFeatureDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_RT_AS_BUILD) | static_cast<uint32_t>(fl::FL_HOOK_RT_PSO) |
     static_cast<uint32_t>(fl::FL_HOOK_PSO) | static_cast<uint32_t>(fl::FL_HOOK_COLOR_SPACE) |
     static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
-    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY);
+    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS);
 
 static_assert((kFamilyEvaluateFeature & kFamiliesEvaluateFeatureDoesNotImplement) == 0u,
               "the slEvaluateFeature row claims a family its detour does not implement -- hookinventory-check "
@@ -207,7 +207,8 @@ inline constexpr uint32_t kFamiliesFfxDispatchDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_RT_AS_BUILD) | static_cast<uint32_t>(fl::FL_HOOK_RT_PSO) |
     static_cast<uint32_t>(fl::FL_HOOK_PSO) | static_cast<uint32_t>(fl::FL_HOOK_COLOR_SPACE) |
     static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
-    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_NEURAL_RENDERING);
+    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_NEURAL_RENDERING) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS);
 
 static_assert((kFamilyFfxDispatch & kFamiliesFfxDispatchDoesNotImplement) == 0u,
               "the ffxDispatch rows claim a family their detour does not implement -- hookinventory-check reads "
@@ -277,6 +278,29 @@ static_assert(kFamilyFfxQuery != kFamilyFfxDispatch && kFamilyFfxQuery != kFamil
               "body to a dispatch export, whose signature it does not share");
 static_assert((kFamilyFfxDispatch & kFamilyFfxQuery) == 0u,
               "the dispatch rows must not claim the query's bit: they do not hook ffxQuery");
+
+// --- Streamline: slSetConstants (0.1.0-beta.43, Advanced metrics train B, owner decisions D111-D116) ---
+//
+// WHAT THE GAME TELLS STREAMLINE ABOUT A FRAME, once per frame and viewport: the jitter, the motion-vector scale,
+// the depth range, the field of view, the aspect ratio and seven Booleans -- beside five matrices and the camera's
+// position and axes, WHICH ARE NEVER READ (rule 4; tools/overlay-fields-check.ps1 refuses their names anywhere in
+// the code loaded into a game). One exporter, sl.interposer.dll, like the other Streamline rows.
+//
+// THE ONE ROW THAT IS NOT INSTALLED UNLESS ASKED FOR. Every other row is patched when its module appears; this one
+// only in a process the Agent has asked for Advanced metrics at least once (D111: with the option off, nothing more
+// is read -- and nothing more is patched). dllmain's installer checks that BEFORE it resolves the symbol, because
+// resolving takes a reference on the module. Once in, the patch stays for the life of the process and the detour
+// forwards without looking while the request is off.
+//
+// ITS OWN BIT. It entitles no measured field of a frame record; the bit says the hook is in, so that a session can
+// tell "hooked, and the game never called it" from "not hooked".
+inline constexpr uint32_t kFamilySlConstants = static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS);
+static_assert(kFamilySlConstants != kFamilyEvaluateFeature && kFamilySlConstants != kFamilyFfxDispatch &&
+                  kFamilySlConstants != kFamilyFfxQuery &&
+                  kFamilySlConstants != static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS) &&
+                  kFamilySlConstants != static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS),
+              "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand slSetConstants' "
+              "detour to another export, or another's to it");
 
 // The leaves, in the order dllmain's per-leaf trampoline and latch arrays are indexed.
 enum FfxLeaf : uint32_t {
@@ -373,6 +397,7 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
     X(L"sl.interposer.dll", "slSetTag", fl::FL_HOOK_UPSCALER_PARAMS)                                                   \
     X(L"sl.interposer.dll", "slSetTagForFrame", fl::FL_HOOK_UPSCALER_PARAMS)                                           \
     X(L"sl.interposer.dll", "slGetNewFrameToken", fl::FL_HOOK_FG_EVALUATIONS)                                          \
+    X(L"sl.interposer.dll", "slSetConstants", fl::inventory::kFamilySlConstants)                                       \
     X(L"amd_fidelityfx_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                                    \
     X(L"amd_fidelityfx_upscaler_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                           \
     X(L"amd_fidelityfx_framegeneration_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                    \
@@ -388,7 +413,7 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
 #define FL_COUNT_ROW(mod, sym, family) +1u
 inline constexpr uint32_t kRowCount = 0u FL_HOOK_INVENTORY(FL_COUNT_ROW);
 #undef FL_COUNT_ROW
-static_assert(kRowCount == 13u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
+static_assert(kRowCount == 14u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
 
 // A row's "module!symbol", for the native log, built at compile time from the row's own two spellings -- so an
 // install line names the module it patched, and no second list of names exists to drift from the table

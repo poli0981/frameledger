@@ -115,7 +115,10 @@
 //   --advanced       send what Advanced metrics reads (train B, 0.1.0-beta.40): --hold-presenting-upscaled chains an
 //                    sl::DLSSOptions into slEvaluateFeature's inputs, --hold-presenting-ffx fills the rest of the
 //                    UPSCALE descriptor (sharpening, jitter, exposure, depth range, field of view, flags, frame time).
-//                    The values are the kAdv* constants below; the injected fl_guard cases assert them
+//                    The values are the kAdv* constants below; the injected fl_guard cases assert them.
+//                    Since 0.1.0-beta.43 the upscaled hold also calls slSetConstants every frame, for viewport 0
+//                    (kAdvSl*) and for a second viewport whose numbers must never be shown, with the matrices and
+//                    the camera's position and axes - which the Overlay never reads - set to loud, changing values
 //   --churn-module <dll>
 //                    load and free the module in a loop on a thread of its own, for the life of the process: a
 //                    module list that keeps changing under whoever reads it (the guard's D123, 2026-11-12)
@@ -2002,6 +2005,17 @@ bool ProbeSlInputs() {
 // send. A UNIT PROBE, as --probe-sl-inputs is: what matters here is a struct of an OLDER VERSION than these headers
 // declare, whose tail must not be read (owner decision D115), and the vendors' own sentinels and zeros, which must
 // never leave the header as values. No fixture title can be made to send a version-1 DLSSOptions; this can.
+// A read of sl::Constants at an address chosen by the caller, in a function of its own so that the SEH frame holds no
+// object with a destructor. True when the read faulted.
+bool ObserveSlConstantsFaults(const void* constants, fl::adv::Accumulators& a) {
+    __try {
+        fl::adv::ObserveSlConstants(*static_cast<const sl::Constants*>(constants), 0u, a);
+        return false;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return true;
+    }
+}
+
 bool ProbeAdvFields() {
     g_failures = 0;
     const auto bitsOf = [](float v) { return std::bit_cast<uint32_t>(v); };
@@ -2310,6 +2324,140 @@ bool ProbeAdvFields() {
                   region->dlssOptionsSeen == 0u && region->dlssOutputWidth == 0u,
               "and nothing of the session before: no mask, no count, no range, no size");
         delete region;
+    }
+
+    // --- sl::Constants, what the game tells Streamline about a frame (0.1.0-beta.43) ------------------------------
+    {
+        fl::adv::Accumulators a;
+        sl::Constants         c;
+        c.jitterOffset = {-0.375f, 0.25f};
+        c.mvecScale = {0.5f, 0.25f};
+        c.cameraNear = 0.1f;
+        c.cameraFar = 5000.0f;
+        c.cameraFOV = 1.0f;
+        c.cameraAspectRatio = 1.6f;
+        c.depthInverted = sl::Boolean::eTrue;
+        c.cameraMotionIncluded = sl::Boolean::eFalse;
+        c.reset = sl::Boolean::eFalse;
+        c.motionVectorsJittered = sl::Boolean::eTrue;    // motionVectors3D is left in its third state
+        fl::adv::ObserveSlConstants(c, 3u, a);
+        c.jitterOffset = {0.125f, -0.4375f};
+        c.cameraFOV = 0.6f;
+        c.reset = sl::Boolean::eTrue;
+        fl::adv::ObserveSlConstants(c, 3u, a);
+
+        Check(a.validMask.load() == fl::FL_ADV_VALID_SL_CONSTANTS && a.slConstantsCalls.load() == 2u,
+              "two calls, counted, and the group marked read");
+        Check(a.slJitterMaxXBits.load() == bitsOf(0.375f) && a.slJitterMaxYBits.load() == bitsOf(0.4375f),
+              "the jitter is the largest magnitude on each axis");
+        Check(a.slMvecScaleXBits.load() == bitsOf(0.5f) && a.slMvecScaleYBits.load() == bitsOf(0.25f),
+              "the motion-vector scale is kept");
+        Check(a.slNearBits.load() == bitsOf(0.1f) && a.slFarBits.load() == bitsOf(5000.0f), "the depth range is kept");
+        Check(a.slFovMinBits.load() == bitsOf(0.6f) && a.slFovMaxBits.load() == bitsOf(1.0f),
+              "the field of view is a range, lowest and highest (D114)");
+        Check(a.slAspectBits.load() == bitsOf(1.6f), "the aspect ratio is kept");
+        // Bits in the header's order: depthInverted 0, cameraMotionIncluded 1, motionVectors3D 2, reset 3,
+        // orthographicProjection 4, motionVectorsDilated 5, motionVectorsJittered 6.
+        Check(a.slFlagsSeenTrue.load() == ((1u << 0) | (1u << 3) | (1u << 6)),
+              "a Boolean seen true sets its bit: depth inverted, reset, jittered");
+        Check(a.slFlagsSeenFalse.load() == ((1u << 1) | (1u << 3) | (1u << 4) | (1u << 5)),
+              "a Boolean seen false sets its bit in the other word; one in its third state sets neither");
+        Check(a.slResets.load() == 1u, "a reset is counted");
+
+        // A SECOND VIEWPORT is counted as a call and summarised nowhere.
+        sl::Constants other;
+        other.jitterOffset = {0.9f, 0.9f};
+        other.cameraNear = 9.0f;
+        other.cameraFar = 99.0f;
+        other.cameraFOV = 2.0f;
+        other.depthInverted = sl::Boolean::eFalse;
+        other.reset = sl::Boolean::eTrue;
+        fl::adv::ObserveSlConstants(other, 4u, a);
+        Check(a.slConstantsCalls.load() == 3u, "a call for another viewport is a call");
+        Check(a.slNearBits.load() == bitsOf(0.1f) && a.slFovMaxBits.load() == bitsOf(1.0f) &&
+                  a.slJitterMaxXBits.load() == bitsOf(0.375f) && a.slResets.load() == 1u &&
+                  (a.slFlagsSeenFalse.load() & 1u) == 0u,
+              "and the summaries stay the first viewport's: no value, range, flag or reset of the second");
+
+        // The handle's own "no viewport" value is a viewport like another.
+        fl::adv::Accumulators last;
+        fl::adv::ObserveSlConstants(c, 0xFFFFFFFFu, last);
+        fl::adv::ObserveSlConstants(other, 0u, last);
+        Check(last.slNearBits.load() == bitsOf(0.1f) && last.slConstantsCalls.load() == 2u,
+              "a first viewport of 0xFFFFFFFF owns the summaries; viewport 0 after it does not");
+
+        // SENTINELS: a struct the game set nothing in. FLT_MAX is Streamline's INVALID_FLOAT - on THIS route it is
+        // "not set", never the plane at infinity (D119 is the ffx route's).
+        fl::adv::Accumulators unset;
+        sl::Constants         blank;
+        fl::adv::ObserveSlConstants(blank, 0u, unset);
+        Check(unset.slNearBits.load() == FL_ADV_FLOAT_NONE && unset.slFarBits.load() == FL_ADV_FLOAT_NONE &&
+                  unset.slFovMinBits.load() == FL_ADV_FLOAT_NONE && unset.slAspectBits.load() == FL_ADV_FLOAT_NONE &&
+                  unset.slJitterMaxXBits.load() == FL_ADV_FLOAT_NONE &&
+                  unset.slMvecScaleXBits.load() == FL_ADV_FLOAT_NONE,
+              "INVALID_FLOAT - FLT_MAX - is 'no value' in every member, a depth plane included");
+        Check(unset.slFlagsSeenTrue.load() == 0u &&
+                  unset.slFlagsSeenFalse.load() == ((1u << 4) | (1u << 5) | (1u << 6)),
+              "the four Booleans in their third state are neither; the three the vendor defaults to false are false");
+        blank.cameraFOV = -1.0f;
+        blank.cameraAspectRatio = 0.0f;
+        blank.jitterOffset = {0.5f, std::bit_cast<float>(0x7FC00000u)};
+        fl::adv::ObserveSlConstants(blank, 0u, unset);
+        Check(unset.slFovMinBits.load() == FL_ADV_FLOAT_NONE && unset.slAspectBits.load() == FL_ADV_FLOAT_NONE &&
+                  unset.slJitterMaxXBits.load() == FL_ADV_FLOAT_NONE,
+              "a field of view or an aspect ratio that is not positive is not one; half a jitter is no jitter");
+
+        // WHERE THE MEMBERS ARE, by the addresses of this build's own struct: the two ranges never read are bytes
+        // 32..351 (five matrices) and 368..423 (the pinhole offset, the camera's position and its three axes).
+        const auto at = [&c](const void* member) {
+            return static_cast<size_t>(static_cast<const unsigned char*>(member) -
+                                       reinterpret_cast<const unsigned char*>(&c));
+        };
+        Check(at(&c.cameraViewToClip) == 32u && at(&c.jitterOffset) == 352u && at(&c.mvecScale) == 360u,
+              "the five matrices are bytes 32..351; the jitter and the scale follow at 352 and 360");
+        Check(at(&c.cameraPinholeOffset) == 368u && at(&c.cameraNear) == 424u,
+              "the pinhole offset, the camera's position and its axes are bytes 368..423; the near plane is at 424");
+
+        // NOTHING OF THOSE TWO RANGES REACHES WHAT IS PUBLISHED. Two structs alike in every member that is read and
+        // different in every byte that is not: the accumulators come out byte for byte the same.
+        sl::Constants p = c;
+        sl::Constants q = c;
+        std::memset(reinterpret_cast<unsigned char*>(&p) + 32u, 0x11, 352u - 32u);
+        std::memset(reinterpret_cast<unsigned char*>(&p) + 368u, 0x11, 424u - 368u);
+        std::memset(reinterpret_cast<unsigned char*>(&q) + 32u, 0xEE, 352u - 32u);
+        std::memset(reinterpret_cast<unsigned char*>(&q) + 368u, 0xEE, 424u - 368u);
+        auto*                 regionP = new fl::FlAdvancedState{};
+        auto*                 regionQ = new fl::FlAdvancedState{};
+        fl::adv::Accumulators ap;
+        fl::adv::Accumulators aq;
+        fl::adv::ObserveSlConstants(p, 0u, ap);
+        fl::adv::ObserveSlConstants(q, 0u, aq);
+        fl::adv::Publish(ap, regionP, 5u, 1u);
+        fl::adv::Publish(aq, regionQ, 5u, 1u);
+        Check(std::memcmp(regionP, regionQ, sizeof(fl::FlAdvancedState)) == 0 && regionP->slNearBits == bitsOf(0.1f) &&
+                  regionP->slConstantsCalls == 1u,
+              "two structs that differ only in the matrices and the camera publish the same bytes");
+        delete regionP;
+        delete regionQ;
+
+        // A VERSION-1 STRUCT ENDS WHERE VERSION 2's MEMBER BEGINS, and is read no further: laid against a page that
+        // cannot be read, it is read whole and nothing faults.
+        const size_t v1Size = at(&c.minRelativeLinearDepthObjectSeparation);
+        auto*        pages =
+            static_cast<unsigned char*>(VirtualAlloc(nullptr, 8192, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+        DWORD old = 0;
+        if (pages == nullptr || !VirtualProtect(pages + 4096, 4096, PAGE_NOACCESS, &old)) {
+            Check(false, "two pages, the second unreadable, for the version-1 struct");
+        } else {
+            unsigned char* v1 = pages + 4096 - v1Size;
+            std::memcpy(v1, &c, v1Size);
+            fl::adv::Accumulators edge;
+            Check(!ObserveSlConstantsFaults(v1, edge),
+                  "a version-1 struct at the end of readable memory is read without a fault");
+            Check(edge.slNearBits.load() == bitsOf(0.1f) && edge.slFlagsSeenTrue.load() != 0u,
+                  "and what it carries is read: the last member version 1 has is the last one read");
+            VirtualFree(pages, 0, MEM_RELEASE);
+        }
     }
     return g_failures == 0;
 }
@@ -2763,6 +2911,19 @@ constexpr float    kAdvFfxFar = 1000.0f;
 constexpr float    kAdvFfxFovLow = 0.9f;    // radians; the two alternate, frame by frame
 constexpr float    kAdvFfxFovHigh = 1.1f;
 constexpr float    kAdvFfxFrameTimeMs = 16.0f;
+// What --advanced hands slSetConstants (0.1.0-beta.43), for viewport 0. The jitter and the field of view alternate
+// frame by frame; `reset` is true on one frame in sixty-four. A SECOND viewport (7) is set every frame with
+// different numbers, which must never be the ones a session shows.
+constexpr float    kAdvSlJitterX = 0.3125f;    // the larger magnitude of the two that alternate
+constexpr float    kAdvSlJitterY = 0.4375f;
+constexpr float    kAdvSlMvecScaleX = 0.5f;
+constexpr float    kAdvSlMvecScaleY = 0.25f;
+constexpr float    kAdvSlNear = 0.25f;
+constexpr float    kAdvSlFar = 4000.0f;
+constexpr float    kAdvSlFovLow = 0.8f;
+constexpr float    kAdvSlFovHigh = 1.2f;
+constexpr float    kAdvSlAspect = 1.75f;
+constexpr uint32_t kAdvSlOtherViewport = 7u;
 using StubTokenFn = sl::Result(STDMETHODCALLTYPE*)(sl::FrameToken*&, const uint32_t*);
 
 alignas(16) unsigned char g_dummyFrameToken[64]{};
@@ -2863,6 +3024,41 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
     options.performancePreset = sl::DLSSPreset::ePresetM;
     options.ultraPerformancePreset = sl::DLSSPreset::ePresetL;
     const sl::BaseStructure* advancedInputs[] = {&options};
+
+    // --advanced, 0.1.0-beta.43: the per-frame constants, through the stub's slSetConstants. Everything the Overlay may
+    // read is a known value; EVERYTHING IT MAY NOT -- the five matrices, the pinhole offset, the camera's position and
+    // axes -- is filled with loud numbers that change every frame, so a read of them would show in what is published.
+    // The frame token by address, as the other stub entry points take it: a reference parameter is a pointer in
+    // the ABI, and the harness has no token object, only storage of the right size.
+    using StubSetConstantsFn =
+        sl::Result(STDMETHODCALLTYPE*)(const sl::Constants&, const void*, const sl::ViewportHandle&);
+    auto setConstants =
+        reinterpret_cast<StubSetConstantsFn>(reinterpret_cast<void*>(GetProcAddress(stub, "slSetConstants")));
+    if (advanced && setConstants == nullptr) {
+        Check(false, "the stub exports slSetConstants");
+        return 1;
+    }
+    sl::Constants      constants;
+    sl::Constants      otherConstants;
+    sl::ViewportHandle otherViewport{kAdvSlOtherViewport};
+    constants.mvecScale = {kAdvSlMvecScaleX, kAdvSlMvecScaleY};
+    constants.cameraNear = kAdvSlNear;
+    constants.cameraFar = kAdvSlFar;
+    constants.cameraAspectRatio = kAdvSlAspect;
+    constants.depthInverted = sl::Boolean::eTrue;
+    constants.cameraMotionIncluded = sl::Boolean::eTrue;
+    constants.motionVectors3D = sl::Boolean::eFalse;
+    constants.orthographicProjection = sl::Boolean::eFalse;
+    constants.motionVectorsDilated = sl::Boolean::eFalse;
+    constants.motionVectorsJittered = sl::Boolean::eTrue;
+    otherConstants.jitterOffset = {0.9f, 0.9f};
+    otherConstants.mvecScale = {9.0f, 9.0f};
+    otherConstants.cameraNear = 9.0f;
+    otherConstants.cameraFar = 99.0f;
+    otherConstants.cameraFOV = 2.0f;
+    otherConstants.cameraAspectRatio = 9.0f;
+    otherConstants.depthInverted = sl::Boolean::eFalse;
+    otherConstants.orthographicProjection = sl::Boolean::eTrue;
     if (advanced) {
         std::printf("  --advanced: an sl::DLSSOptions (version %zu, output %ux%u) chained into every evaluation\n",
                     options.structVersion, kAdvDlssOutputW, kAdvDlssOutputH);
@@ -2880,6 +3076,23 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
             setTagForFrame(g_dummyFrameToken, viewport, tags, numTags, nullptr);
         } else {
             setTag(viewport, tags, numTags, nullptr);
+        }
+        if (advanced) {
+            const bool  odd = (evaluated & 1) != 0;
+            const float loud = static_cast<float>(evaluated % 977) + 1000.0f;
+            constants.jitterOffset = {odd ? -kAdvSlJitterX : 0.125f, odd ? 0.0625f : -kAdvSlJitterY};
+            constants.cameraFOV = odd ? kAdvSlFovLow : kAdvSlFovHigh;
+            constants.reset = (evaluated % 64) == 5 ? sl::Boolean::eTrue : sl::Boolean::eFalse;
+            // What must never be read: a different loud value in each, every frame.
+            constants.cameraViewToClip.row[0] = {loud, loud + 1.0f, loud + 2.0f, loud + 3.0f};
+            constants.clipToPrevClip.row[3] = {loud + 4.0f, loud + 5.0f, loud + 6.0f, loud + 7.0f};
+            constants.cameraPinholeOffset = {loud + 8.0f, loud + 9.0f};
+            constants.cameraPos = {loud + 10.0f, loud + 11.0f, loud + 12.0f};
+            constants.cameraUp = {loud + 13.0f, loud + 14.0f, loud + 15.0f};
+            constants.cameraRight = {loud + 16.0f, loud + 17.0f, loud + 18.0f};
+            constants.cameraFwd = {loud + 19.0f, loud + 20.0f, loud + 21.0f};
+            setConstants(constants, g_dummyFrameToken, viewport);
+            setConstants(otherConstants, g_dummyFrameToken, otherViewport);
         }
         // ONE EVALUATION PER PRESENT, which is what a real upscaled title does
         // and what makes the drained record's identity checkable frame by frame.
