@@ -35,48 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **Advanced metrics: FSR's depth plane at infinity is shown as "∞".** Engines with an infinite depth range tell
-  FSR that one of the two camera planes is at infinity, and FrameLedger took that value for "not set" — so a
-  session's depth range showed one plane where the game had given two. The plane at infinity is now stored and
-  shown as such. Only for FSR, and only while Advanced metrics is on; nothing else about what is read changed.
-
-### Changed
-
-- **The Overlay's log is whole after a game exits, and says more.** The log FrameLedger's part inside the game
-  writes (`logs\overlay-<pid>-….log`) used to hold only the first half second of a session unless the session
-  ended while the game was still running: a game that exits takes the thread that writes the log with it. It is
-  now written during the session, whenever something new was noted. Each hook that went in is named by its module
-  and function (four AMD modules used to be four identical lines), a hook that could not go in says why, and the
-  log lists which kinds of call each AMD FidelityFX module received and which upscaling and frame-generation
-  modules the game loaded, and when. This is for finding out why a game's upscaler reads "unknown" — nothing in
-  it is a measurement, and nothing from it is stored in a session. Measured cost: about 4 billionths of a second
-  per FidelityFX call.
-
-### Fixed
-
-- **The part inside the game can no longer leave a hook in after it has stopped.** Two gaps in how the Overlay keeps
-  track of its own patches, found by reading the code and not by a failure: a patch made while the table of patches
-  was full would have been made anyway and never taken out, and a stop that arrived at the exact moment a hook was
-  going in could miss it. A patch now takes its place in the table before it is made — no place, no patch — and is
-  recorded before it can run, so the stop either removes it or the installer does. A patch that could not be made
-  is written to the Overlay's log with the reason, where it used to be silent. No hook's own code changed.
-
-- **A session that saw two upscalers is named after the one it ran, with that one's quality and render size.** The
-  session's upscaler used to be the first one FrameLedger saw named, while the quality mode and the render size
-  came from whichever frames carried them. A game that evaluated DLSS briefly and then ran FSR was stored as "DLSS"
-  with FSR's quality and FSR's render size. The name is now the technology named on the most frames, the quality
-  and the size are read from that technology's frames only, and such a session is marked "settings changed during
-  session". What that technology did not say reads N/A rather than borrowing the other's value. Sessions already
-  stored are not rewritten.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.42` | 2026-11-12 | [`docs/changelog/0.1.0-beta.42.md`](docs/changelog/0.1.0-beta.42.md) |
 | `0.1.0-beta.41` | 2026-11-12 | [`docs/changelog/0.1.0-beta.41.md`](docs/changelog/0.1.0-beta.41.md) |
 | `0.1.0-beta.40` | 2026-11-12 | [`docs/changelog/0.1.0-beta.40.md`](docs/changelog/0.1.0-beta.40.md) |
 | `0.1.0-beta.39` | 2026-11-11 | [`docs/changelog/0.1.0-beta.39.md`](docs/changelog/0.1.0-beta.39.md) |

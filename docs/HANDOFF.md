@@ -80,6 +80,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.38`, `§NEXT` (the owner's request of 2026-11-11, the four trains) | [`handoff/history/0.1.0-beta.38.md`](handoff/history/0.1.0-beta.38.md) |
 | `§beta.39`, train B's plan as approved (its `§NEXT`) | [`handoff/history/0.1.0-beta.39.md`](handoff/history/0.1.0-beta.39.md) |
 | `§beta.40`, what the owner's first sessions with it showed, train B's traps | [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md) |
+| `§beta.41`, what the owner's sessions on beta.40 and beta.41 showed, the plan of 2026-11-12 (D119–D122) | [`handoff/history/0.1.0-beta.41.md`](handoff/history/0.1.0-beta.41.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19, 38, 39) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -87,133 +88,84 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-12, 0.1.0-beta.41: one fix — the sensor library is no longer closed under its other users
+## **START HERE** — 2026-11-12, 0.1.0-beta.42: no new patch site — the label, the registry, a log that outlives the game, the plane at infinity
 
-*Status is `docs/changelog/0.1.0-beta.41.md`; this is what no other file carries.* 0.1.0-beta.40 was released in the
-small hours of 2026-11-12 and the owner ran it that same night on eight games, as administrator with PawnIO — the
-first elevated run there has been. A copy of the ledger and the Agent's log showed the in-game readings working
-(Lies of P, the first real game read) and **a defect of train A that only that elevation can show**: three
-LibreHardwareMonitor `Computer`s in one Agent, and the library's per-process state closed by one under the others.
-This release is that fix and nothing else: #400 (0.1.0-beta.40's release facts; two comparisons SonarCloud flagged),
-#401 (`LhmLibrary`), and this one. **Everything about train B — what was built, what the owner's sessions showed,
-the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md)**; the fix is
-[`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics and [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md)
-§M13.
+*Status is `docs/changelog/0.1.0-beta.42.md`; this is what no other file carries.* The owner marked items 38 and 39
+passed on 2026-11-12 and train B's second step was planned the same morning. A review of the draft against the code
+changed it, and the owner split it (D122): **this release adds no patch site**, and the two new hooks are
+0.1.0-beta.43. Four pull requests and this one: #406 (the session's upscaler label, D120; the decisions D119–D122),
+#407 (the patch registry), #408 (the native log and the descriptor-type census, D121), #409 (FSR's plane at
+infinity, D119; Qodana's native report). **What the owner's sessions on beta.40 and beta.41 showed, and the plan as
+approved, are [`handoff/history/0.1.0-beta.41.md`](handoff/history/0.1.0-beta.41.md)**; what each pull request built
+is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking and §Native logging, [`03_METRICS.md`](03_METRICS.md)
+§Upscaling and [`07_IPC.md`](07_IPC.md) §Region 5.
 
-### What this release decided
+### What this release decided, beyond D119–D122
 
-- **D118 — the fix is released at once as 0.1.0-beta.41, and train B's numbers move by one.** D113 had named
-  beta.41 for the train's second release. Told so, the owner chose to release the fix now. The train's second
-  release is **beta.42**, its third **beta.43**, train C **beta.44**, train D **beta.45**. Released changelogs and
-  moved HANDOFF sections keep the numbers of their day; so do the comments in `fl_shm.h` and `ShmLayout.cs` (the
-  members "0.1.0-beta.41" and "beta.42" fill), **deliberately**: touching them would have changed source that is
-  loaded into a game in a release that says the game-side code is beta.40's line for line. The release that fills
-  a member rewrites its comment.
-- **The reads of the sensor library are not put under one lock**, only its opens and closes. A lock around every
-  read would have put a session's once-a-second poll behind the Advanced reader's, undoing the separate threads
-  that keep a hanging sensor from holding up the other reader.
+- **The descriptor-type census is not behind the Advanced-metrics switch.** It is a diagnostic that reaches the log
+  file and nothing else — no record, no shared memory, no session — like `HOOK_INSTALLED`. Behind the switch it
+  could not answer D121 for a session recorded with the switch off, which is most of them. Its cost was measured
+  and stated instead (+3.8 ns a dispatch).
+- **The log's text grew to 72 characters; nothing else about the ring did.** 256 events, static, 24 KiB.
+- **A slot of the patch registry that was ever live is never reused**, and a failed create or enable leaves the
+  hook created in MinHook as it always did. Both are the smaller change: the first keeps the stop's walk lock-free
+  without a second word per slot, the second changes no failure path that has never been seen to run.
+- **The live card still names the first upscaler a session saw** (`FgLadder.UpscalerIdentity`). The stored
+  session's name is the modal one (D120); for a session in progress the question is a different one.
+- **Qodana's "never used" on the registry test's stand-in engines is switched off for that file**, not answered by
+  turning the template into function pointers: the header is loaded into a game, and D100 changes such code only
+  for a defect.
 
 ### NEXT
 
-1. ~~**The owner runs item 39** (this fix, on the PC that showed the fault) **and the rest of item 38** (an FSR 3.1+
-   title; two sessions of one running game; the cost; the values of Lies of P against the game's own settings).~~
-   **Both passed on 2026-11-12, on the owner's word** ("Bạn có thể đánh dấu là pass và tiếp tục") after the thirteen
-   sessions below; [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) says what those sessions covered and
-   what they did not.
-2. **Planned and approved 2026-11-12 (D119–D122): the second step is two releases.** **0.1.0-beta.42 has no new
-   patch site** — five pull requests: (1) the session's upscaler label (D120); (2) the Overlay's patch registry
-   refuses a patch it cannot register, and registers before it enables; (3) the native log is flushed whenever
-   something new was logged, every inventory row's install line names its module and symbol, a failed patch says
-   why, and the first sight of each ffx descriptor type on each module is logged — so that one Cyberpunk session on
-   beta.42 says where its upscale goes (D121); (4) FSR's infinite depth plane (D119); (5) the release, owner-only
-   item 40. **0.1.0-beta.43 is the two new hooks** and begins only when that log was read; its design — reviewed
-   against the code, which changed it — is in the plan of that day and below. What the review found that the first
-   draft had wrong: there is no "dominant segment" (segments split on output size only), so the label is the modal
-   name over the dominant stream; the patch table drops a patch silently when full; the init thread's flush runs
-   after the watchdog starts; a second NaN pattern for "infinite" would have been dropped by the Agent — real
-   +infinity is stored instead; the new rows must be gated before `ResolveScoped`, which takes a module reference a
-   call; `slSetConstants` needs the struct's GUID checked on every call; `ffxConfigure` needs an owner slot of its
-   own; summaries across viewports must come from the first viewport seen.
-   ~~**0.1.0-beta.42 — train B's second release — when the owner says item 38 passed begins now, with its plan**~~: `slSetConstants` and
-   `ffxConfigure`. A plan of its own first. What it must settle, beside what
-   [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md) §NEXT lists (`kMaxPatches = 48`, the window
-   of `sl::Constants` pinned outside the camera members, the per-call overhead, the gate's list for the two new
-   structs):
-   - ~~**`FLT_MAX` in an FSR depth plane.** Lies of P gave `cameraFar = 10` and no `cameraNear`; most likely the
-     plane at infinity is `FLT_MAX`, which the Overlay refuses as "nobody set this". Decide whether it is stored as
-     "infinite" — an Overlay change, with its overhead stated.~~ *(Decided, D119, and built in beta.42:
-     `FL_ADV_FLOAT_INFINITE`, shown "∞". Whether Lies of P's missing plane IS `FLT_MAX` is still the hypothesis it
-     was — item 40 reads it.)*
-   - ~~**Valor Mortis.** One exit by access violation 51 seconds after injection under beta.40, none under an earlier
-     build, not attributed. Its crash count is 1; a second such end switches its hooking off. Before adding a hook
-     to that game's process, ask the owner whether it happened again.~~ **Answered by the owner, 2026-11-12: it was
-     the game's own — a shader-compilation error on entering the game, shown in the game's own crash dialog.** Not
-     FrameLedger's. It ran normally under beta.41 afterwards. Its crash count still stands at 1, because the crash
-     policy counts an abnormal end within 60 seconds of injection whoever caused it: a second one, from any cause,
-     switches its hooking off, and the owner then switches it on again from the game's page.
-   - **The release numbers in the comments** of `fl_shm.h`, `ShmLayout.cs`, `hook-harness` and `guard_test.cpp` for
-     the members that release fills (D118).
-3. **0.1.0-beta.43 — the third — when the owner says the one before passed**: `slGetFeatureVersion` and
-   `slGetFeatureRequirements`.
-4. **Trains C and D** (beta.44, beta.45) each begin with a spike and end in the owner's go or no.
+1. **The owner runs item 40** — above all **one session of Cyberpunk 2077 with FSR upscaling** on beta.42, then
+   quits the game the ordinary way. Its `logs\overlay-<pid>-….log` is what beta.43 waits for.
+2. **Read that log, then plan 0.1.0-beta.43** — `slSetConstants` and `ffxConfigure`, and the fix for D121 if the
+   log shows the route. What to look for: which `HOOK_INSTALLED` lines there are (which of the four ffx modules and
+   the FSR 3.0 host were patched); the `FFX_DISPATCH` lines — is `b=0x10001` (UPSCALE) on any module, or only
+   `0x20004` / `0x2000c` / `0x20003`; an `UPSCALE_ROUTE` line; `PATCH_FAILED`; the last `RUNTIME_CENSUS` word.
+   **No UPSCALE type anywhere and no route line means the upscale does not come through any export the Overlay
+   patches** — statically linked, or a module the inventory does not name — and then the fix is not a new arm in
+   a detour. The design for the two hooks, as the review left it, is the plan of 2026-11-12 (moved with the
+   section above) and these points: the new rows are gated at the top of `InstallByFamily`, **before**
+   `ResolveScoped`, and installed only once the process was ever asked; hook families 13 and 14 with latches of
+   their own; `slSetConstants` checks the struct's GUID and `structVersion ≥ 1` on every call and reads only
+   `jitterOffset`, `mvecScale`, `cameraNear` … `cameraAspectRatio` and the seven Booleans — never bytes 368..423,
+   pinned by `offsetof` of the allowed members; summaries from the first viewport seen; `ffxConfigure` has an
+   owner slot of its own and reads `frameGenerationEnabled`, `allowAsyncWorkloads`, `flags`,
+   `onlyPresentGenerated`, `generationRect` and nothing else; the detours also consult `MayObserve()`;
+   `overlay-fields-check` gains three parameter names, `structType` among the shared members and an `offsetof` per
+   listed `sl::Constants` member. The registry holds 48 and the worst case becomes 25
+   (`kPatchSitesOutsideTheInventory` stays 7; the inventory's row count goes from 13 to 18 and its
+   `static_assert` says so).
+3. **0.1.0-beta.44** — `slGetFeatureVersion` and `slGetFeatureRequirements` — when the owner says beta.43 passed.
+4. **Trains C and D** (beta.45, beta.46) each begin with a spike and end in the owner's go or no.
 
 ### Left open by this session
 
-- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request.~~ **Recorded 2026-11-12: 0.1.0-beta.41 was released
-  2026-11-11T22:38:39Z** (05:38 on the 12th in the owner's time zone) from the signed tag on `a6b95e8` (#402), by
-  run 43111028661 — green at the first attempt, one run for the one tag push. Eight assets; the seven digests of
-  `SHA256SUMS.txt` equal the ones GitHub computed; the shipped natives carry `FL_BUILD_ID v0.1.0-beta.41`. The delta
-  from beta.40 is 807,692 bytes beside a full package of 110,708,416 — "Delta processed 0452 files. 0022 patched,
-  0430 unchanged". The wiki was published by run 43113525941. The rehearsal on the release branch (run 43108189693)
-  had made a delta of 841,038 bytes with the same file counts.
-- ~~**The fix has not been seen to work.** It was written from the log's timing; the fault needs an elevated Agent with
-  PawnIO. Item 39 is the check, and `20_OPEN_QUESTIONS` §M13 stays open until then.~~ **The owner's first seven
-  sessions on beta.41 show no fault** (2026-11-12, 06:38–07:01, read from the Agent's log and a copy of the ledger):
-  not one `advanced:` line, and every session with the option on stored its 212 or 213 series, the processor's 119
-  among them. On beta.40 the same morning the processor device faulted out after **each** of the six sessions
-  recorded between 04:34 and 05:07. The rarer fault — the reader failing to open — was one session in sixteen, so
-  seven clean ones do not yet say it is gone. ~~Whether item 39 has passed is the owner's to say.~~ The owner
-  marked it passed the same day.
-- **What those sessions say of train B's first release** (the same log and ledger; the owner named which games are
-  first-person — Kingdom Come: Deliverance II, Cyberpunk 2077, Dying Light: The Beast, Valor Mortis — the rest
-  third-person, and Psycho-Sleuth 2D):
-  - **The first FSR 3.1 title read: Kingdom Come: Deliverance II** (FSR 3.1 chosen in the game;
-    `amd_fidelityfx_upscaler_dx12.dll` 4.0.2 behind the loader). Performance mode, 1280×720 to 2560×1440;
-    sharpening on at 0.5; `cameraNear` 0.05 and `cameraFar` 8000 — **both planes, the only title that gives both**;
-    one vertical field of view for the whole session, 63.1°; a reported frame time of 16.67 ms. A 41-second session
-    of the same game that never left its menu read nothing and says so.
-  - **Dying Light: The Beast** upscaling with FSR: sharpening off, 75.4°–78° vertical, 7.5 ms. **Clair Obscur**:
-    sharpening off, 5.7°–90.7° over four minutes. So far the two first-person titles hold a narrow range and the
-    two third-person ones a wide one (Lies of P 21.6°–73.7°) — what one would expect of cutscene and aiming
-    cameras, and no more than that: four titles.
-  - **Three engines give `cameraFar` alone, as a small number** — 10 (Lies of P), 1 (Clair Obscur), 0.1 (Dying
-    Light) — which is the near plane of an inverted, infinite depth with the other plane at `FLT_MAX`. That is the
-    case beta.42's plan has to decide.
-  - **Clair Obscur reports a frame time of 0.001 ms in some seconds.** It is what the game hands FSR, stored as it
-    was said; the lowest value of that series is not a frame time anyone saw.
-  - **Cyberpunk 2077 read nothing**, with FSR frame generation running and the render size known: its upscaling did
-    not come through an ffx-api upscale dispatch in those sessions. Which upscaler it was set to is the owner's to
-    say; `ffxConfigure` (beta.42) is where its frame generation would be read.
-  - **One session of Dying Light names DLSS as its upscaler and carries FSR's quality byte and render size** (81
-    seconds, both an FSR dispatch and a DLSS evaluation seen, "settings changed" not set). Not this train's code —
-    the session summary's choice between two upscalers seen in one session — and not looked into. **The owner,
-    2026-11-12: Dying Light and Expedition 33 were set, in the game, to FSR upscaling with DLSS frame generation.**
-    So "FSR beside DLSS frame generation" in their other sessions is the setting, not a misreading; in this one the
-    summary picked the wrong one of the two for its upscaler line, which is still to be looked at.
-  - **A session without consent says so**: two Cyberpunk sessions before its consent dialog was accepted are
-    Tier 2, and their Advanced row says *not measured inside the game*. **The option off stored nothing** again,
-    this time on a title that upscales with FSR 3.1 (Dying Light, beta.41).
+- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request.
+- **No real game was run on this build.** The four changes were tested with the harness and the cost measured on
+  the headers. Item 40 is the first real session.
+- **Whether the missing plane of Lies of P, Clair Obscur and Dying Light is `FLT_MAX`** is still the reading their
+  small `cameraFar` values point to, not a measurement. Item 40 (c).
+- **A flake with a cause now, and a question in it for the owner.**
+  `ShmDrainIntegrationTests.TheGuardInjectsTheOverlayAndTheReaderDrainsRealFrames` was red once in this release's
+  local gate (and once on 2026-11-11, when the assertion did not yet print the verdict): the supervisor's first
+  re-scan, 0.8 s after the injection, came back `ModuleScanFailed` — *a module list came back incomplete* — while
+  the harness was still loading modules. The same gate was green on the same code before and after. In the test
+  it is a re-run. **In a real session the same answer is a safety unhook**: a re-scan that cannot read the module
+  list of a game that is still running stops the session (`19_SAFETY` §During a session; D48 covers only a game
+  that has exited). Whether the guard should read the list a second time before refusing is a change to rule 2's
+  checks and is the owner's to decide; nothing was changed.
+- **SonarCloud has not answered for #406–#409**: `main`'s `sonarcloud` job was cancelled by the next merge each
+  time. It runs to its end on this release's commit; read it then.
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
-  sensors "have never been read on real hardware".** They have been read on one PC and compared with nothing. The
-  owner's to reword.
-- **SonarCloud's `csharpsquid:S3869` on `ParentDump.cs`** is open on `main` until the owner accepts it again (it was item
-  38 (j), the one part of that item not done; the owner said on 2026-11-12 that they will). Until then `main`'s `sonarcloud` job is red on that one line.
-- **Items 36 (d) (`LogNoteW`) and 37 are still open**; the ledger shows part of 37 (e) happened — the elevated
-  groups opened and read — and nothing of it was compared with another tool. The alpha line still rests (D98).
+  sensors "have never been read on real hardware"** — the owner's to reword. **SonarCloud's `csharpsquid:S3869` on
+  `ParentDump.cs`** is the owner's to accept. **Items 36 (d) and 37 are still open.** The alpha line still rests
+  (D98).
 
-**Owner-only:** ~~item 39~~ passed 2026-11-12, with item 38. Nothing new is open from this release; items 36 (d)
-and 37 still are.
+**Owner-only:** item 40.
 
 ## Owner-only — no PR can close these
 
@@ -516,6 +468,21 @@ and 37 still are.
    answered on 2026-11-11; what is left for a real game is the hooked session and the elevated one. (g) **The words**: the `vi` strings read as a Vietnamese
    speaker would write them; the `ja` strings marked `review`. (h) **A copy of the ledger** (`--data-dir`) that holds
    such a session: the page is there, opens on *Session*, and *This PC* says it is a copy.
+40. **beta.42 — the log that answers D121, the label, the plane at infinity** (D119–D122). (a) **The update from
+   beta.41**: Help ▸ Check for updates, *Restart to update* with no game running; no terms window. (b) **Cyberpunk
+   2077 with FSR upscaling** (FSR 3 or 4, with or without FSR frame generation — as it was when the upscaler read
+   "unknown"): one session of a few minutes of play, then **quit the game from its own menu**. Nothing else is
+   needed: `%LOCALAPPDATA%\FrameLedger\logs\overlay-<pid>-….log` of that session is what is read. If the session
+   now names FSR, say so — nothing in this release should have changed that. (c) **A game that gave one depth
+   plane** — Lies of P, Clair Obscur or Dying Light: The Beast, FSR upscaling, **Advanced metrics on**: the
+   session's Advanced page shows both planes, one of them "∞". If it still shows one, the missing plane is not
+   `FLT_MAX` and the log of (b)'s kind says nothing about it — say so. (d) **A session that changes upscaler** —
+   Dying Light: The Beast as it was (DLSS evaluated, then FSR), or any game switched between DLSS and FSR in its
+   menu during one session: the summary names the one that ran longest, with that one's quality and render size,
+   and says *settings changed during session*. (e) **Any hooked game, ended by quitting it**: its overlay log has
+   lines after the first second — `HOOK_INSTALLED` with a module and a function, `RUNTIME_CENSUS` — and no
+   `PATCH_FAILED`; if there is one, its `a=` number is the reason.
+
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
