@@ -9,7 +9,7 @@ barrier. It is written for the person who has just met one; the details for deve
 FrameLedger is a desktop program: its own window, its dialogs, its document windows, the icon by the clock and the
 notices Windows shows for it. It draws nothing inside a game, so it cannot make a game itself any easier to use.
 
-*Beta software: this page describes version 0.1.0-beta.41. In the app: Help ▸ Accessibility.*
+*Beta software: this page describes version 0.1.0-beta.42. In the app: Help ▸ Accessibility.*
 
 ## What FrameLedger aims for
 

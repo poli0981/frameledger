@@ -129,9 +129,10 @@ What the region is, as a contract between the two sides:
   the detour and never reach the region; a size of 0 is "not given".
 - **A per-frame value is summarised where it is seen**: a flag is an "ever seen" mask, a jitter the largest magnitude,
   a field of view its lowest and highest (D114), the reported frame time a count and a sum the watchdog drains.
-- **Sized once for the train's three releases.** The members ~~0.1.0-beta.41 and beta.42~~ 0.1.0-beta.42 and
-  beta.43 fill *(renumbered 2026-11-12, D118: a fix release took beta.41; the comments in `fl_shm.h` and
-  `ShmLayout.cs` still carry the old numbers until the release that fills each member rewrites them)* (`ffxFg*`,
+- **Sized once for the train's three releases.** The members ~~0.1.0-beta.41 and beta.42~~ ~~0.1.0-beta.42 and
+  beta.43~~ 0.1.0-beta.43 and beta.44 fill *(renumbered twice on 2026-11-12 — D118: a fix release took beta.41;
+  D122: the second step became two releases, and beta.42 fills none of them. The comments in `fl_shm.h` and
+  `ShmLayout.cs` carry the new numbers since beta.42)* (`ffxFg*`,
   `sl*`, `features`) are declared now and stay zero until then, so those releases bump no layout.
 - The Vulkan layer never writes it. `ShmLayoutMirrorTests.TheAdvancedStateMirrorMatches` checks every member's
   offset against `fl-layout-dump`; `ShmRingReaderTests` the three reads and that the request is stored either way.
