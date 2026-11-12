@@ -35,63 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **Two more calls are hooked inside a game, only where Advanced metrics was asked for** (Advanced metrics train B,
-  the third step): `slGetFeatureVersion` and `slGetFeatureRequirements` of `sl.interposer.dll` — what Streamline
-  answers when a game asks which version a feature is and what it requires. The original call runs first and its
-  answer is read only when it succeeded: the feature's Streamline and NGX versions; the graphics APIs it supports,
-  whether V-Sync must be off and hardware-accelerated GPU scheduling on, how many threads, viewports and buffers,
-  and the Windows and driver versions found beside the ones required. **The lists the answer points to — the
-  buffer tags, the names of Vulkan extensions and features — are never followed.** As with `slSetConstants`,
-  neither patch is made in a game no session has asked, and each stays for the life of the process once made. A
-  game asks these while it starts, so the two rows are the first the Overlay patches — and most sessions, attached
-  later, will still not see the calls. Nothing is shown of them yet: the Agent and the App read them in the next
-  pull request. No layout change (5), no schema change (23).
-
-- **A session shows which version each Streamline feature is, and what it requires** (Advanced metrics). Two
-  catalog entries are now read inside the game: `sl.feature.versions` and `sl.feature.requirements` — Streamline's
-  answers to the two questions a game asks about a feature, in NVIDIA's own names (`kFeatureDLSS_G · versionNGX`,
-  `kFeatureDLSS · driverVersionRequired`). The line under the session says for each of the two calls whether it was
-  read, not hooked, or — the usual case — *hooked — the game asks this while it starts, and did not ask again after
-  FrameLedger attached*. **Most sessions will show nothing here**: a game asks before FrameLedger is in it. A game
-  that asks later is read then, and a second session of a game that kept running keeps what the first read. The
-  Agent's end-to-end tests now run a Streamline target as well as an FSR one.
-
-### Changed
-
-- **Privacy Policy 2.18**: it names what Streamline answers about a feature — the features asked about, their
-  versions, what each requires — and what of that answer is never read (the lists it points to: the buffers' names,
-  the names of Vulkan extensions and features); "two further calls" is four. The terms window shows once after the
-  update. The Disclaimer stays 2.15.
-- **Switching hooking back on starts the count of early abnormal ends again** (owner decision D126). The count was
-  never set back, so a game that had once been switched off — after two ends within 60 seconds of injection — was
-  switched off again by every single such end after its user switched it on, under a reason that still said
-  "twice". Seen on 2026-11-12: Lies of P, two ends in October, one crash of its own that day. Two are needed again
-  each time. Nothing else about the rule moves: it only switches off, an anti-cheat block is never cleared, and the
-  user-mode exception's trial keeps its own record.
-
-### Fixed
-
-- **A field of view a game gives in degrees is no longer labelled radians** (Advanced metrics; owner decision
-  D128). Cyberpunk 2077 gives NVIDIA Streamline 51–90 where the library expects radians, and the session read
-  `51.0055 – 90 rad (2922.4° – 5156.6°)`. A value too large to be radians is now shown as the game gave it, with a
-  line that says it is not radians, and is not converted. Sessions recorded on 0.1.0-beta.43 keep the line they
-  were stored with.
-- **An FSR frame-generation configuration with no flag set says "None"** (Advanced metrics). The row was missing,
-  where an upscale with no flag has always said so.
-- **The accuracy statement and the limitations no longer say that what a game tells Streamline, and how it
-  configures FSR frame generation, have not been read from a real game**: they were, on 2026-11-12 — three games
-  and one. What is still unconfirmed is named: the DLSS options, and a configuration that reaches FSR through
-  AMD's 2.3 loader. A fault while a game is closing, which a session measured from inside the game does not see,
-  is written down as a limit (owner decision D127: not changed in this release).
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.44` | 2026-11-12 | [`docs/changelog/0.1.0-beta.44.md`](docs/changelog/0.1.0-beta.44.md) |
 | `0.1.0-beta.43` | 2026-11-12 | [`docs/changelog/0.1.0-beta.43.md`](docs/changelog/0.1.0-beta.43.md) |
 | `0.1.0-beta.42` | 2026-11-12 | [`docs/changelog/0.1.0-beta.42.md`](docs/changelog/0.1.0-beta.42.md) |
 | `0.1.0-beta.41` | 2026-11-12 | [`docs/changelog/0.1.0-beta.41.md`](docs/changelog/0.1.0-beta.41.md) |
