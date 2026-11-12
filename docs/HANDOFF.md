@@ -170,8 +170,23 @@ it. Four pull requests and this one: #421 (the fixes: a field of view in degrees
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.~~ **Recorded
+  2026-11-12: 0.1.0-beta.44 was released 2026-11-12T12:24:26Z** (19:24 in the owner's time zone) from the signed
+  tag on `f9e9fdb` (#424), by run 43214789700 — green at the first attempt, one run for the one tag push. Eight
+  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the four shipped natives carry
+  `FL_BUILD_ID v0.1.0-beta.44`. The delta from beta.43 is 1,866,183 bytes beside a full package of 110,750,960 —
+  "Delta processed 0452 files. 0025 patched, 0427 unchanged". The wiki was published by run 43217647799. The
+  rehearsal on the release branch (run 43204362797, at `56b1157` — the released tree but for two namespace
+  qualifiers #423 dropped afterwards) had made a delta of 1,878,774 bytes with the same file counts. **SonarCloud
+  answered on `f9e9fdb`: the quality gate passed and no issue is open on `main`. Qodana's two reports are green on
+  that commit.** Qodana found two things on the way, each fixed before its pull request merged: three index
+  products in the injected test and the harness (#422, native), and two namespace qualifiers a new `using` made
+  redundant (#423, managed) — #423's auto-merge was held until that report was in. **`check` failed once on
+  #424**, a pull request that changes no code: the CaptureHost's launch-mode end-to-end test
+  (`LaunchModeStartsTheHarnessItselfAndReportsWhatRanUnhooked`) read 19.8 presented frames a second from the
+  harness on a slow runner where it asks for more than 30; the job was run again and passed. A rate asserted
+  against a wall clock on a shared runner — the one flake of this train, not looked into further.
 - **No real game was run on this build.** Two new patch sites, tested with the harness and the stub; their cost
   measured on the headers.
 - **What item 41 left unexercised**: a configure through the FidelityFX 2.3 loader (Cyberpunk 2077 with FSR frame
