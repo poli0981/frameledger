@@ -929,6 +929,14 @@ public unsafe struct FlAdvancedState
     /// <summary>left, top, width, height.</summary>
     public fixed int FfxFgRect[4];
 
+    /// <summary>One side of <see cref="FfxFgRect"/>: 0 left, 1 top, 2 width, 3 height. Four -1 is a rectangle the capture side could not state.</summary>
+    public readonly int FfxFgRectAt(int side)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(side);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(side, 3);
+        return FfxFgRect[side];
+    }
+
     /// <summary>Must be zero.</summary>
     public fixed uint ReservedFfx[2];
 

@@ -490,6 +490,9 @@
   <data name="Advanced_Header" xml:space="preserve">
     <value>Thông số nâng cao</value>
   </data>
+  <data name="Advanced_InGameCallsLine" xml:space="preserve">
+    <value>Những gì game báo cho Streamline mỗi khung hình: {0}. Cách game cấu hình frame generation của FSR: {1}.</value>
+  </data>
   <data name="Advanced_InGameLine" xml:space="preserve">
     <value>Bên trong game: {0}.</value>
   </data>
@@ -614,6 +617,18 @@
     <value>đã đọc từ chính các lời gọi của game</value>
   </data>
   <data name="AdvInGame_Unknown" xml:space="preserve">
+    <value>không rõ</value>
+  </data>
+  <data name="AdvInGameCall_NeverCalled" xml:space="preserve">
+    <value>đã hook - game không thực hiện lời gọi</value>
+  </data>
+  <data name="AdvInGameCall_NotHooked" xml:space="preserve">
+    <value>chưa hook - game không nạp thư viện chứa lời gọi này</value>
+  </data>
+  <data name="AdvInGameCall_Read" xml:space="preserve">
+    <value>đã đọc</value>
+  </data>
+  <data name="AdvInGameCall_Unknown" xml:space="preserve">
     <value>không rõ</value>
   </data>
   <data name="AdvReach_Deferred" xml:space="preserve">
@@ -1079,7 +1094,7 @@
     <value>Agent không phản hồi yêu cầu cập nhật quy tắc.</value>
   </data>
   <data name="Settings_Advanced_Body" xml:space="preserve">
-    <value>Đọc thêm từ driver đồ hoạ và các cảm biến phần cứng trong lúc ghi phiên - bộ nhớ và tải của card đồ hoạ ở mức chi tiết, từng quạt và điện áp, khả năng của màn hình, thiết lập của driver cho game - và, với game mà FrameLedger đo từ bên trong, những gì game đưa cho DLSS và FSR (kích thước, preset, làm nét, phơi sáng - không bao giờ là vị trí camera). Tất cả được lưu cùng phiên. Tắt: không đọc và không lưu thêm gì, kể cả bên trong game. Áp dụng từ phiên kế tiếp; phiên đã ghi lúc tắt sẽ không được bổ sung về sau.</value>
+    <value>Đọc thêm từ driver đồ hoạ và các cảm biến phần cứng trong lúc ghi phiên - bộ nhớ và tải của card đồ hoạ ở mức chi tiết, từng quạt và điện áp, khả năng của màn hình, thiết lập của driver cho game - và, với game mà FrameLedger đo từ bên trong, những gì game đưa cho DLSS, Streamline và FSR (kích thước, preset, làm nét, phơi sáng, khoảng độ sâu, cách cấu hình frame generation - không bao giờ là vị trí camera). Tất cả được lưu cùng phiên. Tắt: không đọc và không lưu thêm gì, kể cả bên trong game. Áp dụng từ phiên kế tiếp; phiên đã ghi lúc tắt sẽ không được bổ sung về sau.</value>
   </data>
   <data name="Settings_Advanced_Label" xml:space="preserve">
     <value>Thông số nâng cao</value>

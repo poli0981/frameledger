@@ -122,6 +122,9 @@ src/
                                #   memory's region 5 - what a hooked game told DLSS and FSR, read by the Overlay
                                #   only while the session asks (ICaptureObserver.WantsInGameAdvanced) - into session
                                #   facts and two adv.* series; reach `Game` in the catalog; no schema change.
+                               #   Since 0.1.0-beta.43 also what the game tells Streamline each frame and how it
+                               #   configures FSR frame generation, from two calls hooked only once Advanced has been
+                               #   asked for; AdvancedInGameCall says of each: read, never called, or not hooked.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,

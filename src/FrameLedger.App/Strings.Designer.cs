@@ -260,6 +260,7 @@ public static class Strings
         nameof(Advanced_Elevation_Hint),
         nameof(Advanced_Facts_Header),
         nameof(Advanced_Header),
+        nameof(Advanced_InGameCallsLine),
         nameof(Advanced_InGameLine),
         nameof(Advanced_Machine_Intro),
         nameof(Advanced_Max),
@@ -302,6 +303,10 @@ public static class Strings
         nameof(AdvInGame_NotHooked),
         nameof(AdvInGame_Reading),
         nameof(AdvInGame_Unknown),
+        nameof(AdvInGameCall_NeverCalled),
+        nameof(AdvInGameCall_NotHooked),
+        nameof(AdvInGameCall_Read),
+        nameof(AdvInGameCall_Unknown),
         nameof(AdvReach_Deferred),
         nameof(AdvReach_Game),
         nameof(AdvReach_HookedCall),
@@ -1988,6 +1993,8 @@ public static class Strings
 
     public static string Advanced_Header => ResourceManager.GetString(nameof(Advanced_Header), Culture) ?? nameof(Advanced_Header);
 
+    public static string Advanced_InGameCallsLine => ResourceManager.GetString(nameof(Advanced_InGameCallsLine), Culture) ?? nameof(Advanced_InGameCallsLine);
+
     public static string Advanced_InGameLine => ResourceManager.GetString(nameof(Advanced_InGameLine), Culture) ?? nameof(Advanced_InGameLine);
 
     public static string Advanced_Machine_Intro => ResourceManager.GetString(nameof(Advanced_Machine_Intro), Culture) ?? nameof(Advanced_Machine_Intro);
@@ -2071,6 +2078,14 @@ public static class Strings
     public static string AdvInGame_Reading => ResourceManager.GetString(nameof(AdvInGame_Reading), Culture) ?? nameof(AdvInGame_Reading);
 
     public static string AdvInGame_Unknown => ResourceManager.GetString(nameof(AdvInGame_Unknown), Culture) ?? nameof(AdvInGame_Unknown);
+
+    public static string AdvInGameCall_NeverCalled => ResourceManager.GetString(nameof(AdvInGameCall_NeverCalled), Culture) ?? nameof(AdvInGameCall_NeverCalled);
+
+    public static string AdvInGameCall_NotHooked => ResourceManager.GetString(nameof(AdvInGameCall_NotHooked), Culture) ?? nameof(AdvInGameCall_NotHooked);
+
+    public static string AdvInGameCall_Read => ResourceManager.GetString(nameof(AdvInGameCall_Read), Culture) ?? nameof(AdvInGameCall_Read);
+
+    public static string AdvInGameCall_Unknown => ResourceManager.GetString(nameof(AdvInGameCall_Unknown), Culture) ?? nameof(AdvInGameCall_Unknown);
 
     public static string AdvReach_Deferred => ResourceManager.GetString(nameof(AdvReach_Deferred), Culture) ?? nameof(AdvReach_Deferred);
 

@@ -184,7 +184,17 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
     library. The session says which it was — nothing seen, or not measured inside the game — and neither means the
     game uses no upscaler. They are the game's words, not a check of what the upscaler did; the field of view is a
     lowest and highest value, never a line over time; FSR's memory is a point where the game asked, so most sessions
-    have none. **None of it has been read from a real game yet.**
+    have none. FSR's upscaling values have been read from real games; **the DLSS options have not been confirmed on
+    one yet.**
+  - **What a game tells Streamline each frame, and how it configures FSR frame generation** (since 0.1.0-beta.43)
+    are read from two calls FrameLedger hooks **only once a session with Advanced metrics on has started in that
+    game** — a session recorded with the option off puts neither hook in. Streamline's values are those of **the
+    first viewport that called**: a game with several (split screen, a picture-in-picture view) shows one, and the
+    count of calls covers all. The frame-generation rows are **what the game asked for** — a game that asks for
+    generation and gets none still reads "on", and the session's summary is where what was generated is measured. A
+    setting the game changed during the session reads "on and off". The session's line says, for each of the two,
+    whether it was read, hooked and never called by the game, or not hooked (the game did not load the library).
+    Streamline 1.x is not read. **Neither has been confirmed on a real game yet.**
   - **The driver's own figures** — the card's firmware and architecture, its memory in detail, what a display can do
     with HDR and variable refresh, the driver's settings for the game — exist on **NVIDIA** cards only. On other cards
     they read N/A; the card's sensors (fans, voltages, loads) are read on every brand, and none has been tested on an

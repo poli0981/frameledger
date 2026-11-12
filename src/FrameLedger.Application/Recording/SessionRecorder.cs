@@ -374,7 +374,8 @@ public sealed class SessionRecorder : ISessionRecorder
         // records Advanced metrics - the same condition the shared reader is held under.
         private readonly InGameAdvancedSampler? _inGame = advanced is null ? null : new InGameAdvancedSampler();
         private IReadOnlyList<AdvancedReading>? _inGamePending;
-        private (IReadOnlyList<AdvancedFact> Facts, AdvancedInGameStatus Status) _inGameContext = ([], AdvancedInGameStatus.Unknown);
+        private (IReadOnlyList<AdvancedFact> Facts, AdvancedInGameStatus Status, AdvancedInGameCall? Streamline, AdvancedInGameCall? FrameGeneration) _inGameContext =
+            ([], AdvancedInGameStatus.Unknown, null, null);
         private IReadOnlyList<AdvancedFact> _sessionWithGame = [];
 
         /// <summary>A session that records Advanced metrics asks the Overlay for what the game tells its upscaler (D111).</summary>
@@ -475,12 +476,20 @@ public sealed class SessionRecorder : ISessionRecorder
                 _sessionFactsRead = Task.Run(() => _sessionFacts = ReadSessionFacts(advanced, target));
             }
 
+            if (atEnd)
+            {
+                // The one fact that is a count is brought up to the last publication (InGameAdvancedSampler.Conclude).
+                _inGame?.Conclude();
+            }
+
             AdvancedSnapshot? snapshot = advanced.Latest;
             IReadOnlyList<AdvancedFact>? session = _sessionFacts;
             IReadOnlyList<AdvancedFact> game = _inGame?.Facts ?? [];
             AdvancedInGameStatus status = InGameStatus();
+            (AdvancedInGameCall? streamline, AdvancedInGameCall? frameGeneration) = InGameCalls();
             (IReadOnlyList<AdvancedFact>?, IReadOnlyList<AdvancedSeriesInfo>?, AdvancedSources?, IReadOnlyList<AdvancedFact>?) now = (snapshot?.MachineFacts, snapshot?.Series, snapshot?.Sources, session);
-            bool sameGame = ReferenceEquals(game, _inGameContext.Facts) && status == _inGameContext.Status;
+            bool sameGame = ReferenceEquals(game, _inGameContext.Facts) && status == _inGameContext.Status
+                && streamline == _inGameContext.Streamline && frameGeneration == _inGameContext.FrameGeneration;
             if ((snapshot is null && session is null && game.Count == 0)
                 || (sameGame && ReferenceEquals(now.Item1, _context.Machine) && ReferenceEquals(now.Item2, _context.Series) && Equals(now.Item3, _context.Sources) && ReferenceEquals(now.Item4, _context.Session)))
             {
@@ -494,12 +503,31 @@ public sealed class SessionRecorder : ISessionRecorder
             }
 
             _context = now;
-            _inGameContext = (game, status);
+            _inGameContext = (game, status, streamline, frameGeneration);
             writer.SetAdvancedContext(new AdvancedSessionData(
                 snapshot?.MachineFacts ?? [],
                 _sessionWithGame,
                 snapshot?.Series ?? [],
-                (snapshot?.Sources ?? AdvancedSources.Unknown) with { InGame = status }));
+                (snapshot?.Sources ?? AdvancedSources.Unknown) with { InGame = status, StreamlineConstants = streamline, FsrFrameGeneration = frameGeneration }));
+        }
+
+        /// <summary>
+        /// What became of the two calls hooked only for Advanced metrics (0.1.0-beta.43), for a session measured
+        /// inside the game: read, hooked and never called, or not hooked - from the hook families the capture side
+        /// last published and from what its publications carried. Null for a session not measured inside the game:
+        /// <see cref="AdvancedInGameStatus.NotHooked"/> already says so.
+        /// </summary>
+        private (AdvancedInGameCall? Streamline, AdvancedInGameCall? FrameGeneration) InGameCalls()
+        {
+            if (_inGame is null || AttachedAt is null)
+            {
+                return (null, null);
+            }
+
+            var hooks = (FlHookFamily)(_last?.WriterState.HooksInstalledMask ?? 0u);
+            return (
+                _inGame.Call(FlAdvancedValid.SlConstants, hooks.HasFlag(FlHookFamily.SlConstants)),
+                _inGame.Call(FlAdvancedValid.FfxFgConfig, hooks.HasFlag(FlHookFamily.FfxConfigure)));
         }
 
         /// <summary>

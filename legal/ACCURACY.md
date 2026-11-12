@@ -113,7 +113,11 @@
 >   range, field-of-view range, flags and frame time it hands FSR, are read from the arguments of the calls
 >   FrameLedger intercepts and shown as the game stated them — not checked against what the upscaler did. Most games
 >   set their DLSS options through a call that cannot be intercepted and show none; the FSR values need FSR 3.1 or
->   later through AMD's own library. None of it has been read from a real game yet.
+>   later through AMD's own library. Since beta.43 also what a game tells NVIDIA Streamline about each frame (jitter,
+>   motion-vector scale, depth range, field-of-view range, how often it reset the upscaler's history — for the first
+>   viewport that called, where a game has several) and how it configures FSR frame generation (the settings it asked
+>   for, not whether frames were generated). FSR's upscaling values have been read from real games; the DLSS options,
+>   Streamline's constants and the frame-generation configuration have not been confirmed on one yet.
 > - **Safety:** every pre-injection check runs before injection, including the signed-by-a-known-vendor
 >   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and
 >   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer

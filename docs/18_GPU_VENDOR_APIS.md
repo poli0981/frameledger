@@ -752,7 +752,7 @@ planning, the design reviewed against the code before it was approved.
   `ICaptureObserver.WantsInGameAdvanced`; `CaptureSession` writes the word either way as the ring is attached, before
   its first guard result, and from then on carries each publication of region 5 on `CaptureProgress.InGameAdvanced`
   — one instance a publication, the same one on the ten ticks between two. `Application.Capture.InGameAdvancedSampler`
-  turns a publication into what a session stores: the session facts of the thirteen `Game` entries below, in the
+  turns a publication into what a session stores: the session facts of the thirteen `Game` entries below (nineteen since 0.1.0-beta.43), in the
   vendor's own words (a preset is its letter, a member its name), and two series —
   `adv.ffx.upscale.frame_time_delta`, the mean of one second's dispatches, and `adv.ffx.memory_usage`, a point for
   each second the game asked. The facts are one list until a field they are made of moves, so the recorder's context
@@ -764,6 +764,20 @@ planning, the design reviewed against the code before it was approved.
   `NotHooked`. The page says it in the session's sources line and, on Sources, that such an entry is read inside a
   game FrameLedger measures when the game makes the call. The aliasable part of FSR's memory is published and not
   shown: the catalog has one memory entry.
+  **The second step, 2026-11-12 (0.1.0-beta.43, PR-4).** Six more entries have reach `Game`: `sl.constants.jitter`,
+  `.motion_vectors`, `.depth`, `.projection`, `.resets` and `ffx.framegen.config`, from the two calls hooked only
+  for Advanced metrics (`17_HOOK_ENGINE` §Hook inventory, `slSetConstants` and `ffxConfigure`). The sampler makes
+  them from members region 5 already had (layout 5 as it was; schema 23 as it was): a switch is `on`, `off` or
+  `on_and_off` from the two words of what was seen, the flags are AMD's own names, the rectangle is the last one
+  the game gave and is left out where the capture side could not state it, the field of view is a range (D114).
+  **A count is not part of what makes the facts new** — `sl.constants.resets` grows all session, and a context
+  rewritten on each would be one a second — so `InGameAdvancedSampler.Conclude` brings it up to the last
+  publication once, when the session ends. `AdvancedSources.StreamlineConstants` and `.FsrFrameGeneration`
+  (`AdvancedInGameCall`; null in every row written before, and in a session not measured inside the game) say for
+  each call which of three things happened: `Read`; `NeverCalled` — the capture side published the hook's family
+  (`FlHookFamily.SlConstants`, `.FfxConfigure` in the writer state's mask) and no publication carried the group; or
+  `NotHooked` — the family was never published, which is a game that did not load the library, a Streamline 1.x
+  interposer, or a patch that was refused. The page says it in one more sentence of the session's sources line.
 - **D113 — three releases, because a new patch site cannot be proven in CI.** A crash in a game under the user-mode
   anti-cheat exception's trial ends that exception for good (D38), and every release already means restarting the
   game. **beta.40**: more fields of calls *already* hooked — `sl::DLSSOptions` where the game chains it into
@@ -799,6 +813,10 @@ planning, the design reviewed against the code before it was approved.
 - **What will read N/A, and says why.** Many titles set their DLSS options through `slDLSSSetOptions`, which is not
   an export (train D), so `sl.dlss.*` is filled only for a title that passes its options with the evaluate call.
   `slGetFeatureVersion` and `slGetFeatureRequirements` are calls a game makes while starting.
+- **Privacy Policy 2.17** at beta.43 (approved with that release's plan): 2.16 listed DLSS's and FSR's upscaling
+  parameters by name, and Streamline's per-frame constants and the frame-generation configuration are in neither
+  list, so they are named — and §4 says the two calls are intercepted only once a session with the option on has
+  started in the game.
 - **Privacy Policy 2.16** at beta.40, once for the three releases: with Advanced metrics on, for a game FrameLedger
   injects into, the parameters the game gives its upscaler and frame generation through the intercepted calls are
   *stored* — sizes, presets, exposure, sharpening, the jitter's, the depth's and the field of view's ranges, flags,
@@ -984,15 +1002,15 @@ that is not built — Train B), `Spike` (Trains C and D), `Refused`, `Deferred`,
 
 | Id | What it is | Scope | Source | Reach | Unit |
 |---|---|---|---|---|---|
-| `sl.constants.jitter` | The jitter offsets the game gave Streamline | SessionFact | Streamline | NewHook | Text |
-| `sl.constants.motion_vectors` | Motion-vector scale, and whether they are 3D, dilated, jittered | SessionFact | Streamline | NewHook | Text |
-| `sl.constants.depth` | Near and far planes, and whether depth is inverted | SessionFact | Streamline | NewHook | Text |
-| `sl.constants.projection` | Field of view, aspect ratio, orthographic or not | SessionFact | Streamline | NewHook | Text |
-| `sl.constants.resets` | How often the game reset the upscaler's history | SessionFact | Streamline | NewHook | Count |
+| `sl.constants.jitter` | The jitter offsets the game gave Streamline | SessionFact | Streamline | Game | Table |
+| `sl.constants.motion_vectors` | Motion-vector scale, and whether they are 3D, dilated, jittered | SessionFact | Streamline | Game | Table |
+| `sl.constants.depth` | Near and far planes, and whether depth is inverted | SessionFact | Streamline | Game | Table |
+| `sl.constants.projection` | Field of view, aspect ratio, orthographic or not | SessionFact | Streamline | Game | Table |
+| `sl.constants.resets` | How often the game reset the upscaler's history | SessionFact | Streamline | Game | Count |
+| `ffx.framegen.config` | The game's FSR frame-generation configuration | SessionFact | FidelityFx | Game | Table |
 | `sl.feature.versions` | Each Streamline feature's version and its NGX model version | SessionFact | Streamline | NewHook | Table |
 | `sl.feature.requirements` | What each Streamline feature requires: operating system, driver, buffers | SessionFact | Streamline | NewHook | Table |
 | `sl.init.preferences` | The preferences the game started Streamline with | SessionFact | Streamline | NewHook | Text |
-| `ffx.framegen.config` | The game's FSR frame-generation configuration | SessionFact | FidelityFx | NewHook | Text |
 | `sl.constants.camera` | Camera position, axes and matrices | SessionFact | Streamline | PlayerState | Text |
 
 **Inside the game: routes a spike decides**
