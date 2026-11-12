@@ -143,8 +143,14 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking and §Native logging, [`
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request.~~ **Recorded 2026-11-12: 0.1.0-beta.42 was released
+  2026-11-12T02:31:07Z** (09:31 in the owner's time zone) from the signed tag on `a708ae8` (#410), by run
+  43139775713 — green at the first attempt, one run for the one tag push. Eight assets; the seven digests of
+  `SHA256SUMS.txt` equal the ones GitHub computed; the four shipped natives carry `FL_BUILD_ID v0.1.0-beta.42`. The
+  delta from beta.41 is 710,943 bytes beside a full package of 110,716,228 — "Delta processed 0452 files. 0023
+  patched, 0429 unchanged". The wiki was published by run 43142009098. The rehearsal on the release branch (run
+  43137520796) had made a delta of 735,485 bytes with the same file counts.
 - **No real game was run on this build.** The four changes were tested with the harness and the cost measured on
   the headers. Item 40 is the first real session.
 - **Whether the missing plane of Lies of P, Clair Obscur and Dying Light is `FLT_MAX`** is still the reading their
@@ -157,12 +163,24 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking and §Native logging, [`
   it is a re-run. **In a real session the same answer is a safety unhook**: a re-scan that cannot read the module
   list of a game that is still running stops the session (`19_SAFETY` §During a session; D48 covers only a game
   that has exited). Whether the guard should read the list a second time before refusing is a change to rule 2's
-  checks and is the owner's to decide; nothing was changed.
-- **SonarCloud has not answered for #406–#409**: `main`'s `sonarcloud` job was cancelled by the next merge each
-  time. It runs to its end on this release's commit; read it then.
+  checks and is the owner's to decide; nothing was changed. **A second one within the hour, in the gate of the pull
+  request that records the release's facts:**
+  `ToolhelpProcessSnapshotSourceTests.ThisProcessIsInTheSnapshotWithItsNormalisedImagePathAndACreationTime` got an
+  empty snapshot — `ToolhelpProcessSnapshotSource.Take` returns an empty list when the snapshot cannot be taken or
+  walked, and says nothing. Green on the run after. Both are Windows refusing, for a moment, to enumerate something
+  on a PC that was building, testing and running FrameLedger itself at once; what an empty snapshot does to the
+  watcher's tick in a real session was not looked into.
+- ~~**SonarCloud has not answered for #406–#409**: `main`'s `sonarcloud` job was cancelled by the next merge each
+  time. It runs to its end on this release's commit; read it then.~~ **It answered on `a708ae8`: the quality gate
+  passed, and one issue was open on `main`** — `cpp:S5813`, a `strlen` in the helper the new log case of
+  `guard_test.cpp` reads lines with (#408). Fixed in the pull request that records these facts: the helper takes
+  strings. **`csharpsquid:S3869` on `ParentDump.cs` is no longer open** — SonarCloud shows it accepted at
+  2026-11-11T21:13Z (04:13 on the 12th, the owner's time), which is before the texts that still called it open
+  were written; they were not checked against SonarCloud then. **Qodana's two reports are green on the release's
+  commit**; the native one was red from #407 to #408 on seven problems in test code, answered in #409.
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
-  sensors "have never been read on real hardware"** — the owner's to reword. **SonarCloud's `csharpsquid:S3869` on
-  `ParentDump.cs`** is the owner's to accept. **Items 36 (d) and 37 are still open.** The alpha line still rests
+  sensors "have never been read on real hardware"** — the owner's to reword. ~~**SonarCloud's `csharpsquid:S3869` on
+  `ParentDump.cs`** is the owner's to accept.~~ *(Done — the line above.)* **Items 36 (d) and 37 are still open.** The alpha line still rests
   (D98).
 
 **Owner-only:** item 40.
