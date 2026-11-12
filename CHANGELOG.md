@@ -37,6 +37,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **FSR upscaling is counted once per frame whichever way the game's FidelityFX loader passes it on.** Newer
+  FidelityFX loaders hand a call on to the library behind them in a way that brought the same upscale to
+  FrameLedger twice; with frame generation off, the count of frames the game rendered would have doubled — Native
+  FPS twice too high. Seen in how Cyberpunk 2077's loader passes on its frame-generation calls; no game tested so
+  far upscales through such a loader, so this is a precaution. The upscale is now counted where the game calls it,
+  and nowhere else. (Owner decision D125. Measured cost: none that can be told from noise.)
+
 - **A game is no longer left unrecorded because it was still loading when FrameLedger looked at it.** Before it
   hooks a game, and again right after, FrameLedger lists the modules the game has loaded and checks them against
   the anti-cheat list. A game that is starting loads and unloads modules for several seconds, and when the list

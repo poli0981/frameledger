@@ -217,7 +217,14 @@ Asked for as "Resolution Scaling = FSR 3, frame generation off". Read the same w
    lost this way on beta.42. What the owner then checks is the Agent's log: no `guard=ModuleScanFailed` end at a
    game's launch, and if one comes its signal now says which kind — *kept changing while it was read* (four reads
    were not enough) or *came back incomplete* (more modules than the guard's buffer holds).
-2. **~~Read that log, then~~ plan 0.1.0-beta.43** — `slSetConstants` and `ffxConfigure`, and the fix for D121 if the
+2. **0.1.0-beta.43 — planned and approved 2026-11-12 (D123–D125), and under way.** The guard's re-read (D123,
+   #413) ships with it and not on its own (D124). Five pull requests after it: (1) an UPSCALE is counted at the
+   first source that saw one (D125) — the fixture's loader bound through the leaves' exports read K = 1 as 2.0
+   before it; (2) `slSetConstants`; (3) `ffxConfigure` on the four ffx modules; (4) the Agent, the App and the
+   Privacy Policy 2.17, whose wording the plan carried and the owner approved with it; (5) the release, owner-only
+   item 41. The design is the one below, as the review of 2026-11-12's first plan left it; nothing in the logs
+   changed it except D125.
+   ~~**Read that log, then plan 0.1.0-beta.43**~~ — `slSetConstants` and `ffxConfigure`, and the fix for D121 if the
    log shows the route. What to look for: which `HOOK_INSTALLED` lines there are (which of the four ffx modules and
    the FSR 3.0 host were patched); the `FFX_DISPATCH` lines — is `b=0x10001` (UPSCALE) on any module, or only
    `0x20004` / `0x2000c` / `0x20003`; an `UPSCALE_ROUTE` line; `PATCH_FAILED`; the last `RUNTIME_CENSUS` word.
@@ -739,6 +746,8 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D121 | [`HANDOFF.md`](HANDOFF.md) §NEXT | Cyberpunk 2077 was set to FSR upscaling and FrameLedger named none: a detection gap, to be investigated — which first needs a native log that survives the game's exit |
 | D122 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | train B's second step is split: **beta.42** has no new patch site (D119–D121 and the patch registry's hardening); **beta.43** is the two new hooks, begun only after the owner has run Cyberpunk on beta.42 and its log was read. The third release is beta.44, train C beta.45, train D beta.46 |
 | D123 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §Pre-injection checks, check 1 | a module list that changed while the guard read it is read again, at most three times, before it refuses — five real sessions on one PC in a week had ended as a safety unhook with no frame recorded; a list that never settles still refuses, and nothing else about what refuses changed |
+| D124 | [`HANDOFF.md`](HANDOFF.md) §NEXT | the guard's re-read (D123) ships with 0.1.0-beta.43 and not as a release of its own — the train's numbers do not move a third time; until then a launch can still be lost that way on beta.42 |
+| D125 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory | an FSR UPSCALE is counted at the first source that saw one and at no other — a precaution for a loader that hands a dispatch on to the leaf's export (Cyberpunk 2077's 2.3.0 does, for frame generation); no title run so far upscales through one |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

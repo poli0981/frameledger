@@ -26,6 +26,16 @@
 //
 // IT IS A FIXTURE, NOT A CLAIM ABOUT THE REAL LOADER'S INTERNALS beyond the one
 // measured fact: the leaf exports stay silent behind it.
+//
+// AND A SECOND MEASURED FACT, 2026-11-12, FOR A LATER LOADER. Cyberpunk 2077's
+// loader 2.3.0 hands a dispatch on to the leaf's EXPORT: each frame-generation
+// dispatch type was logged on the loader and on the frame-generation leaf. So the
+// stub has a second way to be bound -- FlStubLoaderBindThroughExports -- that
+// forwards through the leaves' exported ffxDispatch, and with all four modules
+// hooked the Overlay then sees every dispatch at two of them. What it does with
+// that is owner decision D125: an UPSCALE is counted at the first module that
+// sees it. No title run so far upscales through such a loader; the fixture is how
+// the rule is held.
 
 #include <ffx_api.h>
 
@@ -51,7 +61,7 @@ Bound         g_upscaler;
 Bound         g_frameGeneration;
 volatile LONG g_forwarded = 0;
 
-void Bind(Bound& b, HMODULE h) {
+void Bind(Bound& b, HMODULE h, bool dispatchThroughExport = false) {
     if (h == nullptr) {
         b = Bound{};
         return;
@@ -60,9 +70,10 @@ void Bind(Bound& b, HMODULE h) {
     b.destroy = reinterpret_cast<PfnFfxDestroyContext>(reinterpret_cast<void*>(GetProcAddress(h, "ffxDestroyContext")));
     b.configure = reinterpret_cast<PfnFfxConfigure>(reinterpret_cast<void*>(GetProcAddress(h, "ffxConfigure")));
     b.query = reinterpret_cast<PfnFfxQuery>(reinterpret_cast<void*>(GetProcAddress(h, "ffxQuery")));
-    // DISPATCH GOES THROUGH THE DIRECT ENTRY, NOT THE EXPORT -- see the header comment.
-    b.dispatch =
-        reinterpret_cast<PfnFfxDispatch>(reinterpret_cast<void*>(GetProcAddress(h, "FlStubFfxDispatchDirect")));
+    // DISPATCH GOES THROUGH THE DIRECT ENTRY, NOT THE EXPORT -- see the header comment -- unless this is the later
+    // loader's shape (FlStubLoaderBindThroughExports).
+    b.dispatch = reinterpret_cast<PfnFfxDispatch>(
+        reinterpret_cast<void*>(GetProcAddress(h, dispatchThroughExport ? "ffxDispatch" : "FlStubFfxDispatchDirect")));
 }
 
 // Route by EFFECT ID, which is what the real loader's provider lookup keys on
@@ -88,6 +99,12 @@ extern "C" {
 __declspec(dllexport) void FlStubLoaderBind(HMODULE upscaler, HMODULE frameGeneration) {
     Bind(g_upscaler, upscaler);
     Bind(g_frameGeneration, frameGeneration);
+}
+
+// The loader 2.3 shape (measured on Cyberpunk 2077, 2026-11-12): dispatches are handed to the leaves' exports.
+__declspec(dllexport) void FlStubLoaderBindThroughExports(HMODULE upscaler, HMODULE frameGeneration) {
+    Bind(g_upscaler, upscaler, true);
+    Bind(g_frameGeneration, frameGeneration, true);
 }
 
 __declspec(dllexport) unsigned int FlStubLoaderForwarded() {

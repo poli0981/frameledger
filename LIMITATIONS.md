@@ -90,7 +90,9 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   same games as *Render → output resolution* in the accuracy statement; elsewhere it says it was not measured.
 - The upscaler is read from the game's calls: DLSS and NIS through NVIDIA Streamline, and FSR through AMD's
   FidelityFX libraries. **Intel XeSS is not read** (its licence forbids it), FSR 2 and upscalers built into the
-  game are not identified, and Vulkan and OpenGL games read N/A. Where no hook saw DLSS but the NVIDIA driver
+  game are not identified — Cyberpunk 2077's FSR 2.1 is one: its sessions say "unknown" beside a measured render
+  size — and Vulkan and OpenGL games read N/A. A game that sends FSR upscaling through two unrelated libraries in
+  one run is counted from the first alone (none is known). Where no hook saw DLSS but the NVIDIA driver
   reports it, the page says it is the driver's report.
 - **The quality mode** (Quality, Balanced, DLAA, …) is shown only when it is known: the NVIDIA App's override
   where the NVIDIA driver reports it applied (marked *· NVIDIA App*, since 0.1.0-beta.24), or the mode the game
