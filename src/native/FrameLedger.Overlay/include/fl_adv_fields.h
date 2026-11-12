@@ -192,6 +192,9 @@ struct Accumulators {
     // What Streamline answered about each feature the game asked about (0.1.0-beta.44): FL_ADV_FEATURE_SLOTS slots
     // of FL_ADV_FEATURE_WORDS words, laid out as the region's `features` (fl_shm.h). Kept across a new request.
     std::atomic<uint32_t> features[FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS]{};
+
+    // slShutdown calls since the request (0.1.0-beta.45)
+    std::atomic<uint32_t> slShutdowns{0u};
 };
 
 // Word 1 of a feature slot: which of the two questions has an answer in it.
@@ -208,7 +211,13 @@ inline constexpr uint32_t kFeatureSupportResultShift = 8u;
 inline constexpr uint32_t kFeatureSupportResultMask = 0xFFu << kFeatureSupportResultShift;
 // What of word 1 is a SESSION's -- what the game did while it was watched -- and is cleared by a new request. The
 // rest is a fact about the process (which version, what it requires, whether it is supported and loaded) and stays.
-inline constexpr uint32_t kFeatureSessionBits = kFeatureSwitchedOff | kFeatureSwitchedOn;
+// How many times the game allocated and freed the feature's resources: four bits each, stopping at 15.
+inline constexpr uint32_t kFeatureAllocShift = 16u;
+inline constexpr uint32_t kFeatureFreeShift = 20u;
+inline constexpr uint32_t kFeatureCountMask = 0xFu;
+inline constexpr uint32_t kFeatureSessionBits = kFeatureSwitchedOff | kFeatureSwitchedOn |
+                                                (kFeatureCountMask << kFeatureAllocShift) |
+                                                (kFeatureCountMask << kFeatureFreeShift);
 
 // Whether `leaf` is the module whose calls a summary counts: the first one seen, and
 // from then on only it. A title that goes through the loader has the same call
@@ -595,6 +604,42 @@ inline void ObserveSlSetFeatureLoaded(uint32_t feature, bool loaded, Accumulator
     NoteBits(a.validMask, FL_ADV_VALID_SL_FEATURES);
 }
 
+// One more in a four-bit count of a slot's word 1, which stops at 15 and never carries into its neighbour.
+inline void BumpCount(std::atomic<uint32_t>& word, uint32_t shift) noexcept {
+    uint32_t seen = word.load(std::memory_order_relaxed);
+    while (((seen >> shift) & kFeatureCountMask) != kFeatureCountMask) {
+        if (word.compare_exchange_weak(seen, seen + (1u << shift), std::memory_order_relaxed)) {
+            break;
+        }
+    }
+}
+
+// The game allocating, and freeing, a feature's resources (0.1.0-beta.45): counted for the feature and nothing else
+// -- the command buffer and the viewport of the same calls are not arguments of these functions.
+inline void ObserveSlAllocateResources(uint32_t feature, Accumulators& a) noexcept {
+    std::atomic<uint32_t>* slot = FeatureSlot(feature, a);
+    if (slot == nullptr) {
+        return;
+    }
+    BumpCount(slot[1], kFeatureAllocShift);
+    NoteBits(a.validMask, FL_ADV_VALID_SL_FEATURES);
+}
+
+inline void ObserveSlFreeResources(uint32_t feature, Accumulators& a) noexcept {
+    std::atomic<uint32_t>* slot = FeatureSlot(feature, a);
+    if (slot == nullptr) {
+        return;
+    }
+    BumpCount(slot[1], kFeatureFreeShift);
+    NoteBits(a.validMask, FL_ADV_VALID_SL_FEATURES);
+}
+
+// The game shutting Streamline down (0.1.0-beta.45): a count.
+inline void ObserveSlShutdown(Accumulators& a) noexcept {
+    a.slShutdowns.fetch_add(1u, std::memory_order_relaxed);
+    NoteBits(a.validMask, FL_ADV_VALID_SL_SHUTDOWN);
+}
+
 // A NEW REQUEST: the summaries start afresh, so a session's ranges, masks and
 // counts are its own and not those of the session before it in the same game.
 // THE WATCHDOG'S. A detour running beside it loses nothing that matters: what it
@@ -656,6 +701,7 @@ inline void Reset(Accumulators& a) noexcept {
     a.slAspectBits.store(FL_ADV_FLOAT_NONE, relaxed);
     a.slFlagsSeenTrue.store(0u, relaxed);
     a.slFlagsSeenFalse.store(0u, relaxed);
+    a.slShutdowns.store(0u, relaxed);
     // The feature slots stay; what of their word 1 is a session's does not (0.1.0-beta.45).
     for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS; ++i) {
         std::atomic<uint32_t>* slot = &a.features[static_cast<size_t>(i) * FL_ADV_FEATURE_WORDS];
@@ -757,6 +803,7 @@ inline void Publish(Accumulators& a, FlAdvancedState* region, uint32_t request, 
     put32(region->slAspectBits, a.slAspectBits.load(relaxed));
     put32(region->slFlagsSeenTrue, a.slFlagsSeenTrue.load(relaxed));
     put32(region->slFlagsSeenFalse, a.slFlagsSeenFalse.load(relaxed));
+    put32(region->slShutdowns, a.slShutdowns.load(relaxed));
 
     for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS; ++i) {
         put32(region->features[i], a.features[i].load(relaxed));

@@ -1195,7 +1195,18 @@ PFN_SlSetFeatureLoaded   g_origSlSetFeatureLoaded = nullptr;
 std::atomic<uint32_t>    g_slFeatureSupportedLive{0};
 std::atomic<uint32_t>    g_slFeatureLoadedLive{0};
 std::atomic<uint32_t>    g_slSetFeatureLoadedLive{0};
-std::atomic<uint32_t>    g_frameTokens{0};
+
+// slAllocateResources, slFreeResources, slShutdown (0.1.0-beta.45): the same terms.
+using PFN_SlAllocateResources = ::PFun_slAllocateResources*;
+using PFN_SlFreeResources = ::PFun_slFreeResources*;
+using PFN_SlShutdown = ::PFun_slShutdown*;
+PFN_SlAllocateResources g_origSlAllocateResources = nullptr;
+PFN_SlFreeResources     g_origSlFreeResources = nullptr;
+PFN_SlShutdown          g_origSlShutdown = nullptr;
+std::atomic<uint32_t>   g_slAllocateResourcesLive{0};
+std::atomic<uint32_t>   g_slFreeResourcesLive{0};
+std::atomic<uint32_t>   g_slShutdownLive{0};
+std::atomic<uint32_t>   g_frameTokens{0};
 // The HIGHEST frame index seen so far, tagged in bit 32 so that index 0 is
 // distinct from "no frame yet". Measured 2026-09-03 on Cyberpunk 2077
 // (20_OPEN_QUESTIONS §S31, row P4): the title asks for a token 3 to 4.6 times per
@@ -1846,6 +1857,39 @@ sl::Result STDMETHODCALLTYPE Hook_SlSetFeatureLoaded(sl::Feature feature, bool l
         }
     })
     return g_origSlSetFeatureLoaded(feature, loaded);
+}
+
+// The game allocating a feature's resources (0.1.0-beta.45): counted for the feature. The command buffer and the
+// viewport are forwarded and not looked at. The original is called exactly once, on every path.
+sl::Result STDMETHODCALLTYPE Hook_SlAllocateResources(sl::CommandBuffer* cmdBuffer, sl::Feature feature,
+                                                      const sl::ViewportHandle& viewport) {
+    FL_HOOK_GUARD({
+        if (g_advancedRequested.load(std::memory_order_relaxed) != 0u && MayObserve()) {
+            fl::adv::ObserveSlAllocateResources(static_cast<uint32_t>(feature), g_adv);
+        }
+    })
+    return g_origSlAllocateResources(cmdBuffer, feature, viewport);
+}
+
+// The game freeing them (0.1.0-beta.45). ON A GAME'S WAY OUT, as slShutdown below is: the call is noted BEFORE the
+// original, and nothing of ours runs after it returns.
+sl::Result STDMETHODCALLTYPE Hook_SlFreeResources(sl::Feature feature, const sl::ViewportHandle& viewport) {
+    FL_HOOK_GUARD({
+        if (g_advancedRequested.load(std::memory_order_relaxed) != 0u && MayObserve()) {
+            fl::adv::ObserveSlFreeResources(static_cast<uint32_t>(feature), g_adv);
+        }
+    })
+    return g_origSlFreeResources(feature, viewport);
+}
+
+// The game shutting Streamline down (0.1.0-beta.45): a count, taken before the original runs.
+sl::Result STDMETHODCALLTYPE Hook_SlShutdown() {
+    FL_HOOK_GUARD({
+        if (g_advancedRequested.load(std::memory_order_relaxed) != 0u && MayObserve()) {
+            fl::adv::ObserveSlShutdown(g_adv);
+        }
+    })
+    return g_origSlShutdown();
 }
 
 // slSetTagForFrame: the FrameToken first, then the same list slSetTag takes. The
@@ -2636,6 +2680,27 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         }
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlSetFeatureLoaded),
                           reinterpret_cast<void**>(&g_origSlSetFeatureLoaded), g_slSetFeatureLoadedLive, name);
+    }
+    if (family == fl::inventory::kFamilySlAllocateResources) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlAllocateResources),
+                          reinterpret_cast<void**>(&g_origSlAllocateResources), g_slAllocateResourcesLive, name);
+    }
+    if (family == fl::inventory::kFamilySlFreeResources) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlFreeResources),
+                          reinterpret_cast<void**>(&g_origSlFreeResources), g_slFreeResourcesLive, name);
+    }
+    if (family == fl::inventory::kFamilySlShutdown) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlShutdown),
+                          reinterpret_cast<void**>(&g_origSlShutdown), g_slShutdownLive, name);
     }
     if (family == fl::inventory::kFamilyFfxConfigure) {
         if (g_advancedSeen == 0u) {

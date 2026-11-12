@@ -314,6 +314,15 @@ public enum FlHookFamily : uint
 
     /// <summary><c>slSetFeatureLoaded</c> is hooked (0.1.0-beta.45), under the same conditions.</summary>
     SlSetFeatureLoaded = 1u << 19,
+
+    /// <summary><c>slAllocateResources</c> is hooked (0.1.0-beta.45), under the same conditions.</summary>
+    SlAllocateResources = 1u << 20,
+
+    /// <summary><c>slFreeResources</c> is hooked (0.1.0-beta.45), under the same conditions.</summary>
+    SlFreeResources = 1u << 21,
+
+    /// <summary><c>slShutdown</c> is hooked (0.1.0-beta.45), under the same conditions.</summary>
+    SlShutdown = 1u << 22,
 }
 
 /// <summary>
@@ -797,6 +806,9 @@ public enum FlAdvancedValid : uint
 
     /// <summary>0.1.0-beta.44 (D118, D122): at least one feature slot is filled.</summary>
     SlFeatures = 1u << 5,
+
+    /// <summary>0.1.0-beta.45: <c>slShutdown</c> was seen; <see cref="FlAdvancedState.SlShutdowns"/> counts.</summary>
+    SlShutdown = 1u << 6,
 }
 
 /// <summary>
@@ -989,8 +1001,11 @@ public unsafe struct FlAdvancedState
 
     public uint SlFlagsSeenFalse;
 
+    /// <summary><c>slShutdown</c> calls since the request (0.1.0-beta.45; the word was the first of three reserved).</summary>
+    public uint SlShutdowns;
+
     /// <summary>Must be zero.</summary>
-    public fixed uint ReservedSl[3];
+    public fixed uint ReservedSl[2];
 
     /// <summary><see cref="FeatureSlots"/> slots of <see cref="FeatureWords"/> words each (0.1.0-beta.44).</summary>
     public fixed uint Features[FeatureSlots * FeatureWords];

@@ -159,6 +159,12 @@ What the region is, as a contract between the two sides:
   other bit of the word is a fact about the process and stays, as the slot does. A feature Streamline refused has
   a slot with only that word in it. `FL_HOOK_SL_FEATURE_SUPPORTED` (bit 17), `FL_HOOK_SL_FEATURE_LOADED` (18) and
   `FL_HOOK_SL_SET_FEATURE_LOADED` (19) are published with their patches.
+- **And two counts** (the same release): bits 16..19 of word 1 are how many times the game allocated the feature's
+  resources (`slAllocateResources`), bits 20..23 how many times it freed them (`slFreeResources`) — each stops at
+  15 — and `slShutdowns` (@308, taken from the three reserved words that ended the `sl::Constants` line; two remain)
+  counts `slShutdown` calls, with `FL_ADV_VALID_SL_SHUTDOWN` (bit 6 of the mask) set once one was seen. All three
+  are a session's and a new request clears them. `FL_HOOK_SL_ALLOCATE_RESOURCES` (bit 20),
+  `FL_HOOK_SL_FREE_RESOURCES` (21) and `FL_HOOK_SL_SHUTDOWN` (22) are published with their patches.
 - The Vulkan layer never writes it. `ShmLayoutMirrorTests.TheAdvancedStateMirrorMatches` checks every member's
   offset against `fl-layout-dump`; `ShmRingReaderTests` the three reads and that the request is stored either way.
 

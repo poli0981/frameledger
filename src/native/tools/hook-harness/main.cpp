@@ -130,7 +130,9 @@
 //                    Since 0.1.0-beta.45, on the same frames, it asks slIsFeatureSupported about DLSS, DLSS frame
 //                    generation, NIS (refused: not supported) and Reflex (refused: missing) with an adapter whose
 //                    LUID pointer is wild; asks slIsFeatureLoaded about DLSS (yes), PCL (no) and NIS (refused);
-//                    and switches DLSS on and DLSS frame generation on and off through slSetFeatureLoaded
+//                    and switches DLSS on and DLSS frame generation on and off through slSetFeatureLoaded;
+//                    allocates DLSS's resources and frees frame generation's on each of those frames, and calls
+//                    slShutdown on every fourth of them - then goes on using the stub
 //   --churn-module <dll>
 //                    load and free the module in a loop on a thread of its own, for the life of the process: a
 //                    module list that keeps changing under whoever reads it (the guard's D123, 2026-11-12)
@@ -2601,6 +2603,43 @@ bool ProbeAdvFields() {
                   "a new request clears the switches seen and keeps the answers; the slot itself stays claimed");
         }
 
+        // 0.1.0-beta.45, the counted three: a feature's resources allocated and freed, and Streamline shut down.
+        {
+            fl::adv::Accumulators s;
+            const auto            word1 = [&s](uint32_t slot) {
+                return s.features[static_cast<size_t>(slot) * FL_ADV_FEATURE_WORDS + 1u].load();
+            };
+            fl::adv::ObserveSlSetFeatureLoaded(sl::kFeatureDLSS, true, s);
+            for (int i = 0; i < 3; ++i) {
+                fl::adv::ObserveSlAllocateResources(sl::kFeatureDLSS, s);
+            }
+            fl::adv::ObserveSlFreeResources(sl::kFeatureDLSS, s);
+            Check(word1(0) == (fl::adv::kFeatureSwitchedOn | (3u << fl::adv::kFeatureAllocShift) |
+                               (1u << fl::adv::kFeatureFreeShift)),
+                  "three allocations and one free of one feature: two four-bit counts beside the bits already there");
+            for (int i = 0; i < 40; ++i) {
+                fl::adv::ObserveSlAllocateResources(sl::kFeatureDLSS, s);
+                fl::adv::ObserveSlFreeResources(sl::kFeatureDLSS_G, s);
+            }
+            Check(word1(0) == (fl::adv::kFeatureSwitchedOn | (15u << fl::adv::kFeatureAllocShift) |
+                               (1u << fl::adv::kFeatureFreeShift)) &&
+                      word1(1) == (15u << fl::adv::kFeatureFreeShift),
+                  "a count stops at 15 and never carries into the count beside it");
+            fl::adv::ObserveSlShutdown(s);
+            fl::adv::ObserveSlShutdown(s);
+            auto* counted = new fl::FlAdvancedState{};
+            fl::adv::Publish(s, counted, 3u, 1u);
+            Check(counted->slShutdowns == 2u && (counted->validMask & fl::FL_ADV_VALID_SL_SHUTDOWN) != 0u &&
+                      counted->reservedSl[0] == 0u && counted->reservedSl[1] == 0u,
+                  "two shutdowns: the count in its own word, its bit of the mask, the two words left reserved zero");
+            fl::adv::Reset(s);
+            fl::adv::Publish(s, counted, 4u, 2u);
+            Check(counted->slShutdowns == 0u && (counted->validMask & fl::FL_ADV_VALID_SL_SHUTDOWN) == 0u &&
+                      word1(0) == 0u && word1(1) == 0u && counted->features[0] == sl::kFeatureDLSS + 1u,
+                  "a new request: the counts and the shutdowns are the last session's and go; the slots stay claimed");
+            delete counted;
+        }
+
         // WHERE THE MEMBERS ARE, by this build's own struct: everything read lies before the Vulkan members, and the
         // pointer to the tag list sits between two members that are read.
         const auto at = [&r](const void* member) {
@@ -3350,6 +3389,19 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
         Check(false, "the stub exports slIsFeatureSupported, slIsFeatureLoaded and slSetFeatureLoaded");
         return 1;
     }
+    using StubAllocateResourcesFn = sl::Result(STDMETHODCALLTYPE*)(void*, sl::Feature, const sl::ViewportHandle&);
+    using StubFreeResourcesFn = sl::Result(STDMETHODCALLTYPE*)(sl::Feature, const sl::ViewportHandle&);
+    using StubShutdownFn = sl::Result(STDMETHODCALLTYPE*)();
+    auto allocateResources =
+        reinterpret_cast<StubAllocateResourcesFn>(reinterpret_cast<void*>(GetProcAddress(stub, "slAllocateResources")));
+    auto freeResources =
+        reinterpret_cast<StubFreeResourcesFn>(reinterpret_cast<void*>(GetProcAddress(stub, "slFreeResources")));
+    auto shutdownStreamline =
+        reinterpret_cast<StubShutdownFn>(reinterpret_cast<void*>(GetProcAddress(stub, "slShutdown")));
+    if (advanced && (allocateResources == nullptr || freeResources == nullptr || shutdownStreamline == nullptr)) {
+        Check(false, "the stub exports slAllocateResources, slFreeResources and slShutdown");
+        return 1;
+    }
     sl::Constants      constants;
     sl::Constants      otherConstants;
     sl::ViewportHandle otherViewport{kAdvSlOtherViewport};
@@ -3430,6 +3482,12 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
                 isFeatureLoaded(sl::kFeatureNIS, loaded);
                 setFeatureLoaded(sl::kFeatureDLSS, true);
                 setFeatureLoaded(sl::kFeatureDLSS_G, (evaluated & 16) != 0);
+                // The command buffer is a wild pointer here too: counted, never looked at.
+                allocateResources(reinterpret_cast<void*>(static_cast<uintptr_t>(1)), sl::kFeatureDLSS, viewport);
+                freeResources(sl::kFeatureDLSS_G, viewport);
+                if ((evaluated % 64) == 3) {
+                    shutdownStreamline();
+                }
             }
         }
         // ONE EVALUATION PER PRESENT, which is what a real upscaled title does
