@@ -72,6 +72,10 @@ $script:Camera = @(
     'cameraPosition', 'cameraForward'
 )
 
+# What identifies the adapter a game asks Streamline about (sl::AdapterInfo, owner decision D131): its LUID, the
+# size of it, or a Vulkan physical device. Named nowhere in the code loaded into a game.
+$script:Adapter = @('deviceLUID', 'deviceLUIDSizeInBytes', 'vkPhysicalDevice')
+
 # The two structs that hold one.
 $script:CameraStruct = @('sl::Constants', 'ffxDispatchDescFrameGenerationPrepareV2')
 
@@ -157,6 +161,9 @@ function Test-Field([string]$Header, [string]$ListText, [hashtable]$Others) {
         foreach ($token in $script:Camera) {
             if ($code -cmatch "(?<!\w)$token(?!\w)") { $problems.Add("$key names $token - where a camera is or looks is read nowhere in code loaded into a game (rule 4)") }
         }
+        foreach ($token in $script:Adapter) {
+            if ($code -cmatch "(?<!\w)$token(?!\w)") { $problems.Add("$key names $token - which adapter a game asks Streamline about is read nowhere in code loaded into a game (D131)") }
+        }
         foreach ($struct in $script:CameraStruct) {
             $bare = [regex]::Escape($struct)
             if ($code -cmatch "sizeof\s*\(\s*$bare\s*\)") { $problems.Add("$key measures ${struct}: the struct holds a camera, and is neither measured nor copied") }
@@ -224,6 +231,9 @@ inline void Publish(Accumulators& a, FlAdvancedState* region) noexcept { region-
         @{ Name = 'the answers about a feature read through their parameters, each member on the list, pass'; Header = $goodHeader + "`ninline void ObserveV(uint32_t feature, const sl::FeatureVersion& fv, Accumulators& a) noexcept { Put(a.f, fv.versionSL); }`ninline void ObserveR(uint32_t feature, const sl::FeatureRequirements& fr, Accumulators& a) noexcept { a.n.store(fr.numRequiredTags); Put(a.f, fr.osVersionDetected); }"; List = $goodList + "sl::FeatureVersion::versionSL`nsl::FeatureRequirements::numRequiredTags`nsl::FeatureRequirements::osVersionDetected`n"; Other = $goodOther; Expect = 0 },
         @{ Name = 'the list of required tags, a pointer of the game''s, FAILS when it is not on the list'; Header = $goodHeader + "`ninline void ObserveR(uint32_t feature, const sl::FeatureRequirements& fr, Accumulators& a) noexcept { a.n.store(fr.numRequiredTags); Keep(fr.requiredTags[0]); }"; List = $goodList + "sl::FeatureRequirements::numRequiredTags`n"; Other = $goodOther; Expect = 1 },
         @{ Name = 'a member of the answer read outside the header FAILS'; Header = $goodHeader + "`ninline void ObserveR(uint32_t feature, const sl::FeatureRequirements& fr, Accumulators& a) noexcept { a.n.store(fr.numRequiredTags); }"; List = $goodList + "sl::FeatureRequirements::numRequiredTags`n"; Other = @{ 'dllmain.cpp' = 'void Hook(sl::FeatureRequirements& requirements) { Keep(requirements.numRequiredTags); }' }; Expect = 1 },
+        @{ Name = 'the adapter a game asks about, forwarded by its parameter and never looked into, passes'; Header = $goodHeader; List = $goodList; Other = @{ 'dllmain.cpp' = 'sl::Result Hook(sl::Feature feature, const sl::AdapterInfo& adapterInfo) { return g_orig(feature, adapterInfo); } // never adapterInfo.deviceLUID' }; Expect = 0 },
+        @{ Name = 'the adapter''s LUID read in the detour FAILS'; Header = $goodHeader; List = $goodList; Other = @{ 'dllmain.cpp' = 'sl::Result Hook(sl::Feature feature, const sl::AdapterInfo& adapterInfo) { Keep(adapterInfo.deviceLUID[0]); return g_orig(feature, adapterInfo); }' }; Expect = 1 },
+        @{ Name = 'a Vulkan physical device taken from the adapter in the layer FAILS'; Header = $goodHeader; List = $goodList; Other = @{ 'layer.cpp' = 'void* device = info->vkPhysicalDevice;' }; Expect = 1 },
         @{ Name = 'a header with no read at all FAILS'; Header = '// o.outputWidth is somewhere else'; List = "# nothing`n"; Other = $goodOther; Expect = 1 }
     )
     foreach ($c in $cases) {

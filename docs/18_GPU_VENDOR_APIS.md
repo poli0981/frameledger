@@ -716,8 +716,9 @@ every `nvapi.` row; nothing is estimated in its place (FR-4.9).
 |---|---|---|---|
 | A | 0.1.0-beta.39 | read by the Agent only — NVAPI and LibreHardwareMonitor — storage, the page. **Nothing changes in code loaded into a game** | this section |
 | B | 0.1.0-beta.40, ~~.41, .42~~ ~~.42, .43~~ .42, .43, .44 *(three releases since D113, 2026-11-11; one was planned. Renumbered 2026-11-12, D118: 0.1.0-beta.41 is a fix release for the sensor library, not part of the train. **Four since D122, the same day**: the second step is beta.42 — no new patch site — and beta.43, the two new hooks; the third step is beta.44)* | inside the game: more fields of the Streamline and FidelityFX calls already hooked, and new hooks on functions `sl.interposer.dll` **exports** (`17_HOOK_ENGINE` §Hook inventory's ⏳ rows); shared-memory layout 5 — §Train B below | a plan of its own; overhead measured; each release after the first waits for the owner's run of the one before |
-| C | ~~0.1.0-beta.41~~ ~~0.1.0-beta.43~~ ~~0.1.0-beta.44~~ 0.1.0-beta.45 *(D118, D122)* | Reflex latency per frame | a spike, then the owner's go or no |
-| D | ~~0.1.0-beta.42~~ ~~0.1.0-beta.44~~ ~~0.1.0-beta.45~~ 0.1.0-beta.46 *(D118, D122)* | the Streamline feature state behind `slGetFeatureFunction` — DLSS frame generation's, DLSS's, Reflex's | a spike, then the owner's go or no |
+| B, a fourth step | 0.1.0-beta.45 *(D130, 2026-11-12)* | six more of Streamline's core calls — is a feature supported, is it loaded, the game switching it, its resources allocated and freed, Streamline shut down | hooks installed only where asked for, as in the second and third steps; `slInit` is not among them (D129) |
+| C | ~~0.1.0-beta.41~~ ~~0.1.0-beta.43~~ ~~0.1.0-beta.44~~ ~~0.1.0-beta.45~~ after 0.1.0-beta.45 *(D118, D122, D130)* | Reflex latency per frame | a spike — written beside beta.45, a document only — then the owner's go or no |
+| D | ~~0.1.0-beta.42~~ ~~0.1.0-beta.44~~ ~~0.1.0-beta.45~~ ~~0.1.0-beta.46~~ after train C *(D118, D122, D130)* | the Streamline feature state behind `slGetFeatureFunction` — DLSS frame generation's, DLSS's, Reflex's | a spike, then the owner's go or no |
 
 Rules 4 and 5, the hook inventory, the measured overhead and the anti-cheat guard bind B, C and D exactly as they bind
 every hook. `sl::Constants` is read without its camera position, axes and matrices: where the camera is, is where the
@@ -820,6 +821,20 @@ planning, the design reviewed against the code before it was approved.
   into a game stayed 0.1.0-beta.40's, line for line, in a release that fixes something else).
 - **D112 — `slInit` is not hooked in train B.** A game calls it before FrameLedger attaches, so its preferences
   would almost never be seen. If it is ever hooked: `applicationId`, `projectId` and the paths are never read.
+- **D129 — `slInit` is not hooked at all** (owner decision 2026-11-12, asked to reopen D112 and shown what was
+  found). No mode of the shipped product is in the game in time: *Play ▸ Start directly* does not create the game
+  suspended — it waits for the presentation runtime, runs the guard, then injects; nothing is ever patched on a
+  game's thread, so a hook lands some hundred milliseconds after its module appears (`17_HOOK_ENGINE`, the loader
+  lock); and a hook that exists only for Advanced metrics waits for the Agent's request, which comes after the
+  attach. A hook on it would be a patch that reads nothing. `sl.init.preferences` says so in the catalog. Most of
+  what it would have told is read another way: which features are loaded (`slIsFeatureLoaded`), and whether a
+  newer plugin than the game's own is in use (the versions of 0.1.0-beta.44).
+- **D130 — six more core calls in one release, 0.1.0-beta.45**: `slIsFeatureSupported`, `slIsFeatureLoaded`,
+  `slSetFeatureLoaded`, `slAllocateResources`, `slFreeResources`, `slShutdown`. Trains C and D come after it; train
+  C's spike is written beside it, as a document.
+- **D131 — the adapter a game asks `slIsFeatureSupported` about is never read**: `sl::AdapterInfo` holds its LUID
+  or a Vulkan physical device. The feature's id and the result are all that is kept, and a build check refuses the
+  names of the struct's members in the code loaded into a game.
 - **D114 — the field of view is a session's range**, lowest to highest, never a series: a series would say when the
   player aimed.
 - **D115 — a tail member is read only where it is proven to be there** (`17_HOOK_ENGINE` §Which struct version

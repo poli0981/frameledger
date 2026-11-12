@@ -35,6 +35,26 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Three more of Streamline's calls are hooked inside a game, only where Advanced metrics was asked for** (owner
+  decisions D129–D131): `slIsFeatureSupported`, `slIsFeatureLoaded` and `slSetFeatureLoaded` — whether Streamline
+  says a feature is supported (its answer, a refusal included), whether it is loaded, and the game switching a
+  feature off and on while it runs. No vendor struct is read for these: the feature's id, a result code, a yes or
+  no. **The adapter a game names when it asks whether a feature is supported is never read**, and the build now
+  refuses code that names what identifies it. As with the four hooks before them, none of the three patches is made
+  in a game no session has asked. Nothing is shown of them yet: the Agent and the App read them in a later pull
+  request. No layout change (5), no schema change (23).
+- **`slInit` is not hooked, and will not be** (D129). A game starts Streamline once, before FrameLedger can be in
+  it — also when FrameLedger starts the game itself — so a hook there would be a patch that reads nothing.
+
+### Fixed
+
+- **A stop that restores many patches no longer leaves its last lines out of the Overlay's log.** Restoring a patch
+  takes about 160 ms, and the wait for the stop's log lines was two seconds whatever the number of patches: with
+  fifteen the log ended "the stop was still writing". The patches were restored; the log did not say so. The wait
+  is now sized to the number of patches a game can hold.
+
 ### Changed
 
 - **The limitations, the accuracy statement and the user guide no longer say that most sessions will show nothing

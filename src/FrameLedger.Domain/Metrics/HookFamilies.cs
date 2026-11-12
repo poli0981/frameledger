@@ -41,4 +41,13 @@ public enum HookFamilies
 
     /// <summary><c>slGetFeatureRequirements</c> is hooked (0.1.0-beta.44) - only where Advanced metrics was ever asked for.</summary>
     SlFeatureRequirements = 1 << 16,
+
+    /// <summary><c>slIsFeatureSupported</c> is hooked (0.1.0-beta.45) - only where Advanced metrics was ever asked for.</summary>
+    SlFeatureSupported = 1 << 17,
+
+    /// <summary><c>slIsFeatureLoaded</c> is hooked (0.1.0-beta.45) - only where Advanced metrics was ever asked for.</summary>
+    SlFeatureLoaded = 1 << 18,
+
+    /// <summary><c>slSetFeatureLoaded</c> is hooked (0.1.0-beta.45) - only where Advanced metrics was ever asked for.</summary>
+    SlSetFeatureLoaded = 1 << 19,
 }

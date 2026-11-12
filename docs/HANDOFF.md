@@ -216,10 +216,14 @@ Agent's log, eight overlay logs and Windows' application log. Advanced metrics w
    — said the evening beta.44 came out, to be done if beta.44 passed, and then "update and go on" once these
    sessions were in. It reopens D112 (`slInit` is not hooked in train B; if ever: never `applicationId`,
    `projectId`, the paths), and `slIsFeatureSupported` is handed an `sl::AdapterInfo` whose `deviceLUID` and
-   `vkPhysicalDevice` are not to be read (D104). **Planned with the owner before any code**: which other parts,
-   what of each is read, the Privacy Policy's wording, and where train C goes.
-3. **Train C (Reflex latency per frame) and train D** each begin with a spike and end in the owner's go or no; their
-   release numbers follow from item 2's plan.
+   `vkPhysicalDevice` are not to be read (D104). ~~**Planned with the owner before any code**: which other parts,
+   what of each is read, the Privacy Policy's wording, and where train C goes.~~ **Planned and approved 2026-11-12
+   (D129–D131)**: `slInit` stays out — shown why it cannot be seen, the owner chose so; six calls go in, in one
+   release, **0.1.0-beta.45** — `slIsFeatureSupported`, `slIsFeatureLoaded`, `slSetFeatureLoaded`,
+   `slAllocateResources`, `slFreeResources`, `slShutdown`; Privacy Policy 2.19's wording approved with the plan.
+   Pull requests: three hooks, three hooks, the Agent and the App with the policy, the release.
+3. **Train C (Reflex latency per frame)**: its spike is written beside beta.45, a document only; code waits for the
+   owner's go after reading it. **Train D** after that, the same way.
 
 ### Left open by this session
 
@@ -811,6 +815,9 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D126 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §Crash & stability safety | the count of early abnormal ends starts again when the user switches hooking on (the consent grant sets it to 0) — it was never set back, so a game once switched off was switched off again by every single such end, under a reason that says "twice" (Lies of P, 2026-11-12) |
 | D127 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §Crash & stability safety | a fault while a game is closing, which a hooked session does not see (Hogwarts Legacy, the driver's `_nvngx.dll`, hooked or not), is written down and not changed in 0.1.0-beta.44 — seeing it would end a user-mode exception for a fault no hook caused; a decision of its own |
 | D128 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | a field of view over π is shown as the game gave it, with a row that says it is not radians, and is never converted — Cyberpunk 2077 gives Streamline degrees; converting would store a guess at the unit as the game's word |
+| D129 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | `slInit` is not hooked at all — asked to reopen D112 and shown that no shipped mode is in the game in time (launch mode waits for the presentation runtime, no patch is ever made on a game's thread, an Advanced-only hook waits for the Agent's request), the owner kept it out; a hook there would be a patch that reads nothing |
+| D130 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | six more Streamline core calls are hooked in one release, 0.1.0-beta.45 — `slIsFeatureSupported`, `slIsFeatureLoaded`, `slSetFeatureLoaded`, `slAllocateResources`, `slFreeResources`, `slShutdown`; trains C and D come after it, and train C's spike is written beside it as a document |
+| D131 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory | the adapter a game asks `slIsFeatureSupported` about (`sl::AdapterInfo`: a LUID, or a Vulkan physical device) is never read — the feature's id and the result only; a build check refuses the struct's member names in code loaded into a game |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

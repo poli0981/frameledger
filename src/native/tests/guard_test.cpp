@@ -6980,6 +6980,16 @@ constexpr uint32_t kFeatureIdDlss = 0u;
 constexpr uint32_t kFeatureIdNis = 2u;
 constexpr uint32_t kFeatureIdPcl = 4u;
 constexpr uint32_t kFeatureIdDlssG = 1000u;
+constexpr uint32_t kFeatureIdReflex = 3u;
+// Word 1 of a slot as the harness and the stub leave it since 0.1.0-beta.45 (fl_shm.h lists the bits): DLSS - both
+// questions of beta.44 answered (3), supported with eOk (4), loaded and yes (8 + 16), switched on (64); DLSS frame
+// generation - the same three, never asked whether loaded, switched off and on (32 + 64); NIS - not supported, the
+// vendor's code 32 in bits 8..15; Reflex - missing, code 31; PCL - asked only whether loaded, and it is not (8).
+constexpr uint32_t kAdvFeatureWord1Dlss = 3u | 4u | 8u | 16u | 64u;
+constexpr uint32_t kAdvFeatureWord1DlssG = 3u | 4u | 32u | 64u;
+constexpr uint32_t kAdvFeatureWord1Nis = 4u | (32u << 8);
+constexpr uint32_t kAdvFeatureWord1Reflex = 4u | (31u << 8);
+constexpr uint32_t kAdvFeatureWord1Pcl = 8u;
 // ...and hands ffxConfigure a frame-generation configuration before each frame's dispatches (0.1.0-beta.43).
 constexpr uint32_t kAdvFfxFgFlags = 1u << 4;    // FFX_FRAMEGENERATION_FLAG_DRAW_DEBUG_PACING_LINES
 constexpr int32_t  kAdvFfxFgRectWidth = 1920;
@@ -7063,9 +7073,15 @@ const uint32_t* FeatureSlotOf(const fl::FlAdvancedState& a, uint32_t feature) {
     return nullptr;
 }
 
-// A slot's words 1..23 against "both questions answered" and the stub's numbers.
+// Word 1 of the slot region 5 holds for `feature`; 0 where it holds none.
+uint32_t FeatureWord1(const fl::FlAdvancedState& a, uint32_t feature) {
+    const uint32_t* slot = FeatureSlotOf(a, feature);
+    return slot == nullptr ? 0u : slot[1];
+}
+
+// A slot's words 1..23 against "both questions of beta.44 answered" and the stub's numbers.
 bool FeatureSlotIs(const uint32_t* slot, const uint32_t (&expected)[22]) {
-    if (slot == nullptr || slot[1] != 3u) {
+    if (slot == nullptr || (slot[1] & 3u) != 3u) {
         return false;
     }
     return std::memcmp(slot + 2, expected, sizeof(expected)) == 0;
@@ -7351,8 +7367,14 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     const auto        slConstants = static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS);
     const auto        slFeatures = static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION) |
                                    static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS);
-    const char* const featureExports[2] = {"slGetFeatureVersion", "slGetFeatureRequirements"};
-    unsigned char     featurePristine[2][16]{};
+    const auto        slFeatureState = static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_SUPPORTED) |
+                                       static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_LOADED) |
+                                       static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED);
+    constexpr int     kFeatureExports = 5;
+    const char* const featureExports[kFeatureExports] = {"slGetFeatureVersion", "slGetFeatureRequirements",
+                                                         "slIsFeatureSupported", "slIsFeatureLoaded",
+                                                         "slSetFeatureLoaded"};
+    unsigned char     featurePristine[kFeatureExports][16]{};
     unsigned char     featureNow[16]{};
 
     // ---- 1. NEVER ASKED (owner decision D111): the evaluation is hooked, the game calls slSetConstants every frame,
@@ -7368,9 +7390,10 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     CHECK(RegionFiveIsZero(r));
     CHECK((r.st->hooksInstalledMask & slConstants) == 0u);
     CHECK((r.st->hooksInstalledMask & slFeatures) == 0u);
+    CHECK((r.st->hooksInstalledMask & slFeatureState) == 0u);
     REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
     CHECK(std::memcmp(pristine, now, sizeof(now)) == 0);
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < kFeatureExports; ++i) {
         unsigned char featureInFile[16]{};
         REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, featureExports[i],
                                       featurePristine[i], featureInFile));
@@ -7382,9 +7405,12 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     REQUIRE(WaitForHookFamily(r.st, slConstants));
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION)));
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS)));
+    REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_SUPPORTED)));
+    REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_LOADED)));
+    REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED)));
     REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
     CHECK(std::memcmp(pristine, now, sizeof(now)) != 0);    // patched now
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < kFeatureExports; ++i) {
         REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, featureExports[i], featureNow));
         CHECK(std::memcmp(featurePristine[i], featureNow, sizeof(featureNow)) != 0);
     }
@@ -7396,7 +7422,10 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     // a feature on one frame in sixteen: read on until the summaries hold all of them (bounded by ReadAdvanced's own
     // wait, a few publications).
     for (int i = 0; i < 8 && (a.slResets == 0u || a.slFovMinBits == a.slFovMaxBits ||
-                              !FeatureSlotIs(FeatureSlotOf(a, kFeatureIdDlssG), kAdvFeatureDlssG));
+                              !FeatureSlotIs(FeatureSlotOf(a, kFeatureIdDlssG), kAdvFeatureDlssG) ||
+                              FeatureWord1(a, kFeatureIdDlssG) != kAdvFeatureWord1DlssG ||
+                              FeatureWord1(a, kFeatureIdDlss) != kAdvFeatureWord1Dlss ||
+                              FeatureWord1(a, kFeatureIdPcl) != kAdvFeatureWord1Pcl);
          ++i) {
         REQUIRE(ReadAdvanced(r, 1u, a, a.samples, wanted));
     }
@@ -7410,11 +7439,28 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     // back full of 99s -- and NOT the one asked about with a struct whose GUID was broken, which it did answer.
     CHECK(FeatureSlotIs(FeatureSlotOf(a, kFeatureIdDlss), kAdvFeatureDlss));
     CHECK(FeatureSlotIs(FeatureSlotOf(a, kFeatureIdDlssG), kAdvFeatureDlssG));
-    CHECK(FeatureSlotOf(a, kFeatureIdNis) == nullptr);
-    CHECK(FeatureSlotOf(a, kFeatureIdPcl) == nullptr);
     CHECK(a.features[0] == kFeatureIdDlss + 1u);
     CHECK(a.features[FL_ADV_FEATURE_WORDS] == kFeatureIdDlssG + 1u);
-    CHECK(a.features[size_t{2} * FL_ADV_FEATURE_WORDS] == 0u);    // two features, two slots
+
+    // 0.1.0-beta.45: whether each is supported, whether it is loaded, and the game switching it. NIS and Reflex have
+    // a slot now -- a refusal is the answer to "is it supported", kept with its code -- and still none of the version
+    // and requirements the stub refused or of the answer that came with a broken struct: every other word of their
+    // slots is zero. PCL was asked only whether it is loaded; NIS's refused "loaded" (the bool left true) is not kept.
+    CHECK(FeatureWord1(a, kFeatureIdDlss) == kAdvFeatureWord1Dlss);
+    CHECK(FeatureWord1(a, kFeatureIdDlssG) == kAdvFeatureWord1DlssG);
+    CHECK(FeatureWord1(a, kFeatureIdNis) == kAdvFeatureWord1Nis);
+    CHECK(FeatureWord1(a, kFeatureIdReflex) == kAdvFeatureWord1Reflex);
+    CHECK(FeatureWord1(a, kFeatureIdPcl) == kAdvFeatureWord1Pcl);
+    for (const uint32_t refused : {kFeatureIdNis, kFeatureIdReflex, kFeatureIdPcl}) {
+        const uint32_t* slot = FeatureSlotOf(a, refused);
+        REQUIRE(slot != nullptr);
+        bool restIsZero = true;
+        for (uint32_t i = 2; i < FL_ADV_FEATURE_WORDS; ++i) {
+            restIsZero = restIsZero && slot[i] == 0u;
+        }
+        CHECK(restIsZero);
+    }
+    CHECK(a.features[size_t{5} * FL_ADV_FEATURE_WORDS] == 0u);    // five features, five slots
 
     // The options chained into the evaluation, as before.
     CHECK(a.dlssStructVersion == 3u);    // the version these headers declare, which is what entitles the tail
@@ -7470,6 +7516,7 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     CHECK(std::memcmp(&held, RegionFive(r), sizeof(held)) == 0);
     CHECK((r.st->hooksInstalledMask & slConstants) != 0u);
     CHECK((r.st->hooksInstalledMask & slFeatures) == slFeatures);
+    CHECK((r.st->hooksInstalledMask & slFeatureState) == slFeatureState);
     REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
     CHECK(std::memcmp(pristine, now, sizeof(now)) != 0);
 
@@ -7478,8 +7525,10 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     CHECK(r.st->status == fl::FL_STATUS_READY);
 
     // ---- 4. STOPPED: the export's first bytes are the file's again, and the log says which patch was restored.
+    // The status is written after the last patch is restored, and a restore is some 160 ms: fifteen patches in this
+    // target since 0.1.0-beta.45, so the wait is ten seconds where three were enough for twelve.
     r.ctl->unhookRequested = 1;
-    for (int i = 0; i < 60 && r.st->status != fl::FL_STATUS_UNHOOKED; ++i) {
+    for (int i = 0; i < 200 && r.st->status != fl::FL_STATUS_UNHOOKED; ++i) {
         ++r.ctl->guardTicks;
         Sleep(50);
     }
@@ -7500,7 +7549,7 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     CHECK(std::memcmp(pristine, now, sizeof(now)) == 0);
     CHECK(text.find("HOOK_INSTALLED   sl.interposer.dll!slSetConstants") != std::string::npos);
     CHECK(text.find("UNHOOK_RESTORED  sl.interposer.dll!slSetConstants") != std::string::npos);
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < kFeatureExports; ++i) {
         REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, featureExports[i], featureNow));
         CHECK(std::memcmp(featurePristine[i], featureNow, sizeof(featureNow)) == 0);
         CHECK(text.find(std::string("HOOK_INSTALLED   sl.interposer.dll!") + featureExports[i]) != std::string::npos);

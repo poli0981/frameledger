@@ -126,7 +126,9 @@ inline constexpr uint32_t kFamiliesEvaluateFeatureDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
     static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS) |
     static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION) |
-    static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS);
+    static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_SUPPORTED) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_LOADED) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED);
 
 static_assert((kFamilyEvaluateFeature & kFamiliesEvaluateFeatureDoesNotImplement) == 0u,
               "the slEvaluateFeature row claims a family its detour does not implement -- hookinventory-check "
@@ -211,7 +213,9 @@ inline constexpr uint32_t kFamiliesFfxDispatchDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
     static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_NEURAL_RENDERING) |
     static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS) | static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE) |
-    static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS);
+    static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_SUPPORTED) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_LOADED) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED);
 
 static_assert((kFamilyFfxDispatch & kFamiliesFfxDispatchDoesNotImplement) == 0u,
               "the ffxDispatch rows claim a family their detour does not implement -- hookinventory-check reads "
@@ -336,6 +340,37 @@ static_assert(kFamilySlFeatureRequirements != kFamilyEvaluateFeature &&
               "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand "
               "slGetFeatureRequirements' detour to another export, or another's to it");
 
+// --- Streamline: slIsFeatureSupported, slIsFeatureLoaded, slSetFeatureLoaded (0.1.0-beta.45, D129-D131) ---
+//
+// WHETHER A FEATURE IS SUPPORTED, WHETHER IT IS LOADED, AND THE GAME SWITCHING IT ON AND OFF. Bare arguments and
+// results, no vendor struct: the feature's id, the sl::Result the question was answered with (a refusal IS the
+// answer to "is it supported"), the bool slIsFeatureLoaded wrote when it said OK, the bool the game passed to
+// slSetFeatureLoaded. THE ADAPTER slIsFeatureSupported IS ASKED ABOUT IS NEVER READ (D131): sl::AdapterInfo holds
+// the adapter's LUID or a Vulkan physical device, and the detour forwards the reference without looking at it --
+// tools/overlay-fields-check.ps1 refuses the names of its members anywhere in the code loaded into a game.
+//
+// INSTALLED ONLY WHERE ASKED FOR (D111), a row and a bit each, like every row that exists only for Advanced metrics.
+// slInit IS NOT A ROW AND WILL NOT BE (D129): a game calls it once, before this DLL is in the process or before a
+// patch can land -- nothing is ever patched on a game's thread (17_HOOK_ENGINE, the loader lock) -- so a hook on it
+// would be a patch that reads nothing.
+inline constexpr uint32_t kFamilySlFeatureSupported = static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_SUPPORTED);
+inline constexpr uint32_t kFamilySlFeatureLoaded = static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_LOADED);
+inline constexpr uint32_t kFamilySlSetFeatureLoaded = static_cast<uint32_t>(fl::FL_HOOK_SL_SET_FEATURE_LOADED);
+// One bit each, and no earlier family holds any of them: InstallByFamily binds a row by EQUALITY on its family, so
+// a value shared with another row would hand one export's detour to another.
+inline constexpr uint32_t kFamiliesOfBeta45FeatureState =
+    kFamilySlFeatureSupported | kFamilySlFeatureLoaded | kFamilySlSetFeatureLoaded;
+static_assert(kFamilySlFeatureSupported != kFamilySlFeatureLoaded &&
+                  kFamilySlFeatureSupported != kFamilySlSetFeatureLoaded &&
+                  kFamilySlFeatureLoaded != kFamilySlSetFeatureLoaded,
+              "three rows, three detours, three different families");
+static_assert(((kFamilyEvaluateFeature | kFamilyFfxDispatch | kFamilyFfxQuery | kFamilySlConstants |
+                kFamilySlFeatureVersion | kFamilySlFeatureRequirements |
+                static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS) |
+                static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS)) &
+               kFamiliesOfBeta45FeatureState) == 0u,
+              "an earlier family claims a bit of slIsFeatureSupported, slIsFeatureLoaded or slSetFeatureLoaded");
+
 // --- AMD FidelityFX: ffxConfigure on the same four modules (0.1.0-beta.43, Advanced metrics train B) ---
 //
 // HOW THE GAME CONFIGURES FRAME GENERATION: a title calls ffxConfigure with a frame-generation descriptor, usually
@@ -354,6 +389,7 @@ static_assert(kFamilyFfxConfigure != kFamilyEvaluateFeature && kFamilyFfxConfigu
                   kFamilyFfxConfigure != kFamilyFfxQuery && kFamilyFfxConfigure != kFamilySlConstants &&
                   kFamilyFfxConfigure != kFamilySlFeatureVersion &&
                   kFamilyFfxConfigure != kFamilySlFeatureRequirements &&
+                  (kFamilyFfxConfigure & kFamiliesOfBeta45FeatureState) == 0u &&
                   kFamilyFfxConfigure != static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS) &&
                   kFamilyFfxConfigure != static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS),
               "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand ffxConfigure's detour "
@@ -452,11 +488,14 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
 #define FL_HOOK_INVENTORY(X)                                                                                           \
     X(L"sl.interposer.dll", "slGetFeatureVersion", fl::inventory::kFamilySlFeatureVersion)                             \
     X(L"sl.interposer.dll", "slGetFeatureRequirements", fl::inventory::kFamilySlFeatureRequirements)                   \
+    X(L"sl.interposer.dll", "slIsFeatureSupported", fl::inventory::kFamilySlFeatureSupported)                          \
+    X(L"sl.interposer.dll", "slIsFeatureLoaded", fl::inventory::kFamilySlFeatureLoaded)                                \
     X(L"sl.interposer.dll", "slEvaluateFeature", fl::inventory::kFamilyEvaluateFeature)                                \
     X(L"sl.interposer.dll", "slSetTag", fl::FL_HOOK_UPSCALER_PARAMS)                                                   \
     X(L"sl.interposer.dll", "slSetTagForFrame", fl::FL_HOOK_UPSCALER_PARAMS)                                           \
     X(L"sl.interposer.dll", "slGetNewFrameToken", fl::FL_HOOK_FG_EVALUATIONS)                                          \
     X(L"sl.interposer.dll", "slSetConstants", fl::inventory::kFamilySlConstants)                                       \
+    X(L"sl.interposer.dll", "slSetFeatureLoaded", fl::inventory::kFamilySlSetFeatureLoaded)                            \
     X(L"amd_fidelityfx_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                                    \
     X(L"amd_fidelityfx_upscaler_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                           \
     X(L"amd_fidelityfx_framegeneration_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                    \
@@ -476,7 +515,7 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
 #define FL_COUNT_ROW(mod, sym, family) +1u
 inline constexpr uint32_t kRowCount = 0u FL_HOOK_INVENTORY(FL_COUNT_ROW);
 #undef FL_COUNT_ROW
-static_assert(kRowCount == 20u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
+static_assert(kRowCount == 23u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
 
 // A row's "module!symbol", for the native log, built at compile time from the row's own two spellings -- so an
 // install line names the module it patched, and no second list of names exists to drift from the table

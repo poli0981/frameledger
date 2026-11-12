@@ -1184,7 +1184,18 @@ PFN_SlGetFeatureVersion      g_origSlGetFeatureVersion = nullptr;
 PFN_SlGetFeatureRequirements g_origSlGetFeatureRequirements = nullptr;
 std::atomic<uint32_t>        g_slFeatureVersionLive{0};
 std::atomic<uint32_t>        g_slFeatureRequirementsLive{0};
-std::atomic<uint32_t>        g_frameTokens{0};
+
+// slIsFeatureSupported, slIsFeatureLoaded, slSetFeatureLoaded (0.1.0-beta.45, Advanced metrics): the same terms.
+using PFN_SlIsFeatureSupported = ::PFun_slIsFeatureSupported*;
+using PFN_SlIsFeatureLoaded = ::PFun_slIsFeatureLoaded*;
+using PFN_SlSetFeatureLoaded = ::PFun_slSetFeatureLoaded*;
+PFN_SlIsFeatureSupported g_origSlIsFeatureSupported = nullptr;
+PFN_SlIsFeatureLoaded    g_origSlIsFeatureLoaded = nullptr;
+PFN_SlSetFeatureLoaded   g_origSlSetFeatureLoaded = nullptr;
+std::atomic<uint32_t>    g_slFeatureSupportedLive{0};
+std::atomic<uint32_t>    g_slFeatureLoadedLive{0};
+std::atomic<uint32_t>    g_slSetFeatureLoadedLive{0};
+std::atomic<uint32_t>    g_frameTokens{0};
 // The HIGHEST frame index seen so far, tagged in bit 32 so that index 0 is
 // distinct from "no frame yet". Measured 2026-09-03 on Cyberpunk 2077
 // (20_OPEN_QUESTIONS §S31, row P4): the title asks for a token 3 to 4.6 times per
@@ -1798,6 +1809,43 @@ sl::Result STDMETHODCALLTYPE Hook_SlGetFeatureRequirements(sl::Feature feature, 
         }
     })
     return result;
+}
+
+// Whether Streamline says a feature is supported (0.1.0-beta.45). THE ORIGINAL RUNS FIRST, exactly once, with both
+// arguments forwarded untouched; what is kept is its RESULT -- every result, since "not supported" is an answer to
+// this question -- and the feature's id. THE ADAPTER IS FORWARDED AND NEVER LOOKED AT (owner decision D131): it
+// holds the adapter's LUID or a Vulkan physical device, and no member of it is named anywhere in this DLL.
+sl::Result STDMETHODCALLTYPE Hook_SlIsFeatureSupported(sl::Feature feature, const sl::AdapterInfo& adapterInfo) {
+    const sl::Result result = g_origSlIsFeatureSupported(feature, adapterInfo);
+    FL_HOOK_GUARD({
+        if (g_advancedRequested.load(std::memory_order_relaxed) != 0u && MayObserve()) {
+            fl::adv::ObserveSlFeatureSupported(static_cast<uint32_t>(feature), static_cast<uint32_t>(result), g_adv);
+        }
+    })
+    return result;
+}
+
+// Whether Streamline says a feature is loaded (0.1.0-beta.45): the bool it wrote, read as the byte it is, and only
+// when it said OK -- a refusal leaves the bool as the game made it.
+sl::Result STDMETHODCALLTYPE Hook_SlIsFeatureLoaded(sl::Feature feature, bool& loaded) {
+    const sl::Result result = g_origSlIsFeatureLoaded(feature, loaded);
+    FL_HOOK_GUARD({
+        if (result == sl::Result::eOk && g_advancedRequested.load(std::memory_order_relaxed) != 0u && MayObserve()) {
+            fl::adv::ObserveSlFeatureLoaded(static_cast<uint32_t>(feature), fl::adv::ByteIsSet(loaded), g_adv);
+        }
+    })
+    return result;
+}
+
+// The game switching a feature off or on while it runs (0.1.0-beta.45): what it asked for, noted before the call.
+// Both arguments forwarded untouched, the original called exactly once on every path.
+sl::Result STDMETHODCALLTYPE Hook_SlSetFeatureLoaded(sl::Feature feature, bool loaded) {
+    FL_HOOK_GUARD({
+        if (g_advancedRequested.load(std::memory_order_relaxed) != 0u && MayObserve()) {
+            fl::adv::ObserveSlSetFeatureLoaded(static_cast<uint32_t>(feature), loaded, g_adv);
+        }
+    })
+    return g_origSlSetFeatureLoaded(feature, loaded);
 }
 
 // slSetTagForFrame: the FrameToken first, then the same list slSetTag takes. The
@@ -2568,6 +2616,27 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlGetFeatureRequirements),
                           reinterpret_cast<void**>(&g_origSlGetFeatureRequirements), g_slFeatureRequirementsLive, name);
     }
+    if (family == fl::inventory::kFamilySlFeatureSupported) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlIsFeatureSupported),
+                          reinterpret_cast<void**>(&g_origSlIsFeatureSupported), g_slFeatureSupportedLive, name);
+    }
+    if (family == fl::inventory::kFamilySlFeatureLoaded) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlIsFeatureLoaded),
+                          reinterpret_cast<void**>(&g_origSlIsFeatureLoaded), g_slFeatureLoadedLive, name);
+    }
+    if (family == fl::inventory::kFamilySlSetFeatureLoaded) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlSetFeatureLoaded),
+                          reinterpret_cast<void**>(&g_origSlSetFeatureLoaded), g_slSetFeatureLoadedLive, name);
+    }
     if (family == fl::inventory::kFamilyFfxConfigure) {
         if (g_advancedSeen == 0u) {
             return false;
@@ -3126,7 +3195,15 @@ DWORD WatchdogLoop() noexcept {
 // safety stop), that thread can still be in its loop when this one flushes: fl_guard's native-log case read the file
 // with the dxgi line in it and the kernelbase line -- the last patch -- missing for good, under load. So the flush
 // waits for the stop to say it is done, bounded, and writes STOP_FLUSHED (a = 1 when the stop finished) last.
-constexpr ULONGLONG kStopLogWaitMs = 2000;
+//
+// THE BOUND IS A QUARTER OF A SECOND FOR EVERY PATCH THE REGISTRY CAN HOLD (0.1.0-beta.45). It was 2000 ms. A stop
+// restores its patches one at a time -- each compared before it is restored (§H7) -- and every MH_DisableHook takes a
+// snapshot of the system's threads before it suspends this process's: about 160 ms a patch on the development PC.
+// Twelve patches (the Streamline fixture until then) took 1.9 s and fitted; with three more rows the stop took 2.4 s,
+// the flush gave up first, and the log ended "the stop was still writing" with the last three UNHOOK_RESTORED lines
+// missing -- the patches were restored, the log did not say so. The wait ends the moment the stop is logged, so the
+// longer bound costs nothing where the stop is quick.
+constexpr ULONGLONG kStopLogWaitMs = 250ull * kMaxPatches;
 
 DWORD WINAPI WatchdogThread(LPVOID) noexcept {
     const DWORD     r = WatchdogLoop();

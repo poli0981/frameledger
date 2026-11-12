@@ -302,6 +302,18 @@ public enum FlHookFamily : uint
 
     /// <summary><c>slGetFeatureRequirements</c> is hooked (0.1.0-beta.44), under the same conditions.</summary>
     SlFeatureRequirements = 1u << 16,
+
+    /// <summary>
+    /// <c>slIsFeatureSupported</c> is hooked (0.1.0-beta.45, owner decisions D129-D131). Only in a process that was asked
+    /// for Advanced metrics at least once; it entitles no frame field. The adapter the game asks about is never read.
+    /// </summary>
+    SlFeatureSupported = 1u << 17,
+
+    /// <summary><c>slIsFeatureLoaded</c> is hooked (0.1.0-beta.45), under the same conditions.</summary>
+    SlFeatureLoaded = 1u << 18,
+
+    /// <summary><c>slSetFeatureLoaded</c> is hooked (0.1.0-beta.45), under the same conditions.</summary>
+    SlSetFeatureLoaded = 1u << 19,
 }
 
 /// <summary>

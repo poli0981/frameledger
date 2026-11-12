@@ -126,7 +126,11 @@
 //                    slGetFeatureRequirements every sixteenth frame - a real game asks while it starts; this one asks
 //                    again so that a hook installed later sees an answer - about DLSS and DLSS frame generation
 //                    (answered), NIS (refused, with loud numbers left in the struct) and PCL with a struct whose GUID
-//                    is broken (answered, and not to be kept)
+//                    is broken (answered, and not to be kept).
+//                    Since 0.1.0-beta.45, on the same frames, it asks slIsFeatureSupported about DLSS, DLSS frame
+//                    generation, NIS (refused: not supported) and Reflex (refused: missing) with an adapter whose
+//                    LUID pointer is wild; asks slIsFeatureLoaded about DLSS (yes), PCL (no) and NIS (refused);
+//                    and switches DLSS on and DLSS frame generation on and off through slSetFeatureLoaded
 //   --churn-module <dll>
 //                    load and free the module in a loop on a thread of its own, for the life of the process: a
 //                    module list that keeps changing under whoever reads it (the guard's D123, 2026-11-12)
@@ -2553,6 +2557,50 @@ bool ProbeAdvFields() {
         Check(twelve,
               "twelve features fill the twelve slots in order; the thirteenth and feature 0xFFFFFFFF are dropped");
 
+        // 0.1.0-beta.45: WORD 1 OF A SLOT holds more than which question was answered.
+        {
+            fl::adv::Accumulators s;
+            const auto            word1 = [&s](uint32_t slot) {
+                return s.features[static_cast<size_t>(slot) * FL_ADV_FEATURE_WORDS + 1u].load();
+            };
+            fl::adv::ObserveSlFeatureVersion(sl::kFeatureDLSS, v, s);
+            fl::adv::ObserveSlFeatureSupported(sl::kFeatureDLSS, 0u, s);
+            fl::adv::ObserveSlFeatureSupported(sl::kFeatureNIS, 32u, s);
+            fl::adv::ObserveSlFeatureLoaded(sl::kFeatureDLSS, true, s);
+            fl::adv::ObserveSlSetFeatureLoaded(sl::kFeatureDLSS, true, s);
+            fl::adv::ObserveSlSetFeatureLoaded(sl::kFeatureDLSS_G, true, s);
+            fl::adv::ObserveSlSetFeatureLoaded(sl::kFeatureDLSS_G, false, s);
+            Check(word1(0) ==
+                      (fl::adv::kFeatureVersionAnswered | fl::adv::kFeatureSupportAnswered |
+                       fl::adv::kFeatureLoadedAnswered | fl::adv::kFeatureLoadedValue | fl::adv::kFeatureSwitchedOn),
+                  "one feature: its version, supported with eOk, loaded and yes, switched on - each its own bits");
+            Check(word1(1) == (fl::adv::kFeatureSupportAnswered | (32u << fl::adv::kFeatureSupportResultShift)),
+                  "a refusal IS the answer to 'is it supported': the code is kept in bits 8..15");
+            Check(word1(2) == (fl::adv::kFeatureSwitchedOn | fl::adv::kFeatureSwitchedOff) &&
+                      s.features[size_t{2} * FL_ADV_FEATURE_WORDS].load() == sl::kFeatureDLSS_G + 1u,
+                  "switched on and then off: both bits, in a slot the switch itself claimed");
+
+            // The last answer replaces the one before, and leaves the neighbouring fields of the word alone.
+            fl::adv::ObserveSlFeatureSupported(sl::kFeatureNIS, 0u, s);
+            fl::adv::ObserveSlFeatureLoaded(sl::kFeatureDLSS, false, s);
+            fl::adv::ObserveSlFeatureSupported(sl::kFeatureDLSS, 31u, s);
+            Check(word1(1) == fl::adv::kFeatureSupportAnswered, "asked again and now supported: the code is 0 again");
+            Check(word1(0) == (fl::adv::kFeatureVersionAnswered | fl::adv::kFeatureSupportAnswered |
+                               (31u << fl::adv::kFeatureSupportResultShift) | fl::adv::kFeatureLoadedAnswered |
+                               fl::adv::kFeatureSwitchedOn),
+                  "a new answer to one question changes its own bits and no other's");
+            fl::adv::ObserveSlFeatureSupported(sl::kFeatureReflex, 4000u, s);
+            Check((word1(3) >> fl::adv::kFeatureSupportResultShift) == 0xFFu,
+                  "a code a byte cannot carry is 0xFF, never another code's number");
+
+            // A NEW REQUEST clears what the game DID while it was watched and keeps what Streamline SAID.
+            fl::adv::Reset(s);
+            Check(word1(0) == (fl::adv::kFeatureVersionAnswered | fl::adv::kFeatureSupportAnswered |
+                               (31u << fl::adv::kFeatureSupportResultShift) | fl::adv::kFeatureLoadedAnswered) &&
+                      word1(2) == 0u && s.features[size_t{2} * FL_ADV_FEATURE_WORDS].load() == sl::kFeatureDLSS_G + 1u,
+                  "a new request clears the switches seen and keeps the answers; the slot itself stays claimed");
+        }
+
         // WHERE THE MEMBERS ARE, by this build's own struct: everything read lies before the Vulkan members, and the
         // pointer to the tag list sits between two members that are read.
         const auto at = [&r](const void* member) {
@@ -3288,6 +3336,20 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
         Check(false, "the stub exports slGetFeatureVersion and slGetFeatureRequirements");
         return 1;
     }
+    // --advanced, 0.1.0-beta.45: whether a feature is supported, whether it is loaded, and switching one.
+    using StubIsFeatureSupportedFn = sl::Result(STDMETHODCALLTYPE*)(sl::Feature, const sl::AdapterInfo&);
+    using StubIsFeatureLoadedFn = sl::Result(STDMETHODCALLTYPE*)(sl::Feature, bool&);
+    using StubSetFeatureLoadedFn = sl::Result(STDMETHODCALLTYPE*)(sl::Feature, bool);
+    auto isFeatureSupported = reinterpret_cast<StubIsFeatureSupportedFn>(
+        reinterpret_cast<void*>(GetProcAddress(stub, "slIsFeatureSupported")));
+    auto isFeatureLoaded =
+        reinterpret_cast<StubIsFeatureLoadedFn>(reinterpret_cast<void*>(GetProcAddress(stub, "slIsFeatureLoaded")));
+    auto setFeatureLoaded =
+        reinterpret_cast<StubSetFeatureLoadedFn>(reinterpret_cast<void*>(GetProcAddress(stub, "slSetFeatureLoaded")));
+    if (advanced && (isFeatureSupported == nullptr || isFeatureLoaded == nullptr || setFeatureLoaded == nullptr)) {
+        Check(false, "the stub exports slIsFeatureSupported, slIsFeatureLoaded and slSetFeatureLoaded");
+        return 1;
+    }
     sl::Constants      constants;
     sl::Constants      otherConstants;
     sl::ViewportHandle otherViewport{kAdvSlOtherViewport};
@@ -3354,6 +3416,20 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
                 sl::FeatureVersion broken;
                 broken.structType = sl::StructType{};
                 getFeatureVersion(sl::kFeaturePCL, broken);
+                // 0.1.0-beta.45. The adapter carries a wild pointer where its LUID would be: followed, it faults.
+                sl::AdapterInfo adapter;
+                adapter.deviceLUID = reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(1));
+                adapter.deviceLUIDSizeInBytes = 8;
+                for (const sl::Feature asked :
+                     {sl::kFeatureDLSS, sl::kFeatureDLSS_G, sl::kFeatureNIS, sl::kFeatureReflex}) {
+                    isFeatureSupported(asked, adapter);
+                }
+                bool loaded = false;
+                isFeatureLoaded(sl::kFeatureDLSS, loaded);
+                isFeatureLoaded(sl::kFeaturePCL, loaded);
+                isFeatureLoaded(sl::kFeatureNIS, loaded);
+                setFeatureLoaded(sl::kFeatureDLSS, true);
+                setFeatureLoaded(sl::kFeatureDLSS_G, (evaluated & 16) != 0);
             }
         }
         // ONE EVALUATION PER PRESENT, which is what a real upscaled title does
