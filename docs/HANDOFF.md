@@ -116,11 +116,61 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking and §Native logging, [`
   turning the template into function pointers: the header is loaded into a game, and D100 changes such code only
   for a defect.
 
+### What the owner's first four sessions on beta.42 showed (2026-11-12, 09:40–09:53)
+
+Dying Light: The Beast, Kingdom Come: Deliverance II, Cyberpunk 2077 and Lies of P, each quit from its own menu;
+read from the four `overlay-<pid>-….log` files, a copy of the ledger, and — for Cyberpunk — the game's own settings
+file and executable on disk. All four hooked, no fault, no `PATCH_FAILED`, the Agent's log without an `advanced:`
+line.
+
+- **D121 is answered, and it is not a detection gap: in that session Cyberpunk 2077 upscaled with FSR 2.1, which is
+  compiled into the game.** Its `UserSettings.json`, written when the session ended, has `ResolutionScaling = FSR2`,
+  `FSR2 = Quality`, `FrameGeneration = FSR3`, `FSR3_FrameGeneration = true` — FSR **2** for the upscale, FSR **3**
+  for frame generation only. Quality is a ratio of 1.5, and the session's render size is 1707×960 at 2560×1440.
+  `Cyberpunk2077.exe` carries FSR 2's own function names (`ffxFsr2GetJitterPhaseCount`,
+  `ffxFsr2GetUpscaleRatioFromQualityMode`) and names one FidelityFX module, the loader; its folder has no FSR 2
+  DLL. **The log says the same from the other side**: the loader (2.3.0), the upscaler leaf (4.1.1) and the
+  frame-generation leaf (4.0.1) were all patched; the loader and the frame-generation leaf were handed `0x20004`
+  (PREPARE) and `0x20003` (FRAMEGENERATION); the loader and the upscaler leaf were asked `0x10002` (the ratio of a
+  quality mode) once at start; **no module was ever handed `0x10001`**, and there is no `UPSCALE_ROUTE` line. The
+  NVIDIA driver's words for the session say DLSS was not running. So the upscale goes through no export at all —
+  the case `LIMITATIONS.md` already names ("FSR 2 and upscalers built into the game are not identified"), and
+  "unknown" beside a measured render size is the true reading. **The owner had said FSR 3 or 4; that the setting is
+  FSR 2.1 is read from the file, and is the owner's to confirm.** Nothing to fix for it in beta.43.
+- **The loader of SDK 2.3 passes a dispatch on to the leaf's export — the older loader does not — and that is a
+  double count waiting for the first title that upscales through it.** In Cyberpunk each frame-generation dispatch
+  type is logged on the loader AND on the frame-generation leaf: the game calls the loader, the loader calls the
+  leaf's exported `ffxDispatch`. In Kingdom Come and Dying Light (loader 1.0.2) the UPSCALE is logged on the loader
+  alone, which is what `fl_hook_inventory.h` measured in September and what the fixture's loader stub copies.
+  Frame generation is unharmed — PREPARE is counted by its frame number, FRAMEGENERATION is a bit, and the
+  session's factor is ×2.0001. **An UPSCALE is counted once per hooked module that sees it**
+  (`g_ffxSeen`'s count): through a 2.3 loader that would be two a frame, and with frame generation off — no
+  PREPARE, so the count falls back to UPSCALE dispatches — the application-frame count would double. Not
+  observed: no UPSCALE was dispatched. **One session answers it: Cyberpunk with Resolution Scaling set to FSR 3
+  and frame generation off** — the log shows whether `0x10001` is on both modules, and the session's frame
+  counts show whether it was counted twice. If so, the fix is beta.43's: count at the first module seen, as
+  `fl::adv::Owns` already does for the Advanced reads.
+- **The plane at infinity is measured, not a hypothesis any more (D119).** Lies of P: `cameraNear = ∞`,
+  `cameraFar = 10`. Dying Light: `cameraNear = ∞`, `cameraFar = 0.1`. Both gave one plane on beta.41. Kingdom
+  Come still gives both as numbers (0.05 and 8000). Clair Obscur was not run.
+- **The logs are whole.** Each has its installs by module and symbol, the census as it grew, and lines long after
+  the first second — Dying Light's first UPSCALE at 71.6 s, Kingdom Come's at 37.5 s, when play began. One line
+  looks odd and was not looked into: Cyberpunk's frame-generation leaf's `ffxDispatch` is at `0x241cde7ba10`, far
+  from where the other modules sit (`0x7ff…`); the patch went in and was called.
+- **Dying Light was named FSR, Quality, with DLSS frame generation ×3.99** — its settings as the owner gave them.
+  No session changed upscaler part-way, so D120's case was not exercised.
+
 ### NEXT
 
-1. **The owner runs item 40** — above all **one session of Cyberpunk 2077 with FSR upscaling** on beta.42, then
-   quits the game the ordinary way. Its `logs\overlay-<pid>-….log` is what beta.43 waits for.
-2. **Read that log, then plan 0.1.0-beta.43** — `slSetConstants` and `ffxConfigure`, and the fix for D121 if the
+1. ~~**The owner runs item 40** — above all **one session of Cyberpunk 2077 with FSR upscaling** on beta.42, then
+   quits the game the ordinary way. Its `logs\overlay-<pid>-….log` is what beta.43 waits for.~~ **Run 2026-11-12;
+   the section above is what it showed.** What is left of item 40 is (d), a session that changes upscaler, and
+   the owner's word on the rest.
+1a. **Before beta.43's plan: one session of Cyberpunk 2077 with Resolution Scaling = FSR 3, frame generation
+   off** (the second bullet above), and a second with it on. It says whether FrameLedger names FSR 3 there —
+   the route through the loader that D121 was first taken to be about — and whether the 2.3 loader counts an
+   UPSCALE twice.
+2. **~~Read that log, then~~ plan 0.1.0-beta.43** — `slSetConstants` and `ffxConfigure`, and the fix for D121 if the
    log shows the route. What to look for: which `HOOK_INSTALLED` lines there are (which of the four ffx modules and
    the FSR 3.0 host were patched); the `FFX_DISPATCH` lines — is `b=0x10001` (UPSCALE) on any module, or only
    `0x20004` / `0x2000c` / `0x20003`; an `UPSCALE_ROUTE` line; `PATCH_FAILED`; the last `RUNTIME_CENSUS` word.
@@ -500,6 +550,11 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking and §Native logging, [`
    and says *settings changed during session*. (e) **Any hooked game, ended by quitting it**: its overlay log has
    lines after the first second — `HOOK_INSTALLED` with a module and a function, `RUNTIME_CENSUS` — and no
    `PATCH_FAILED`; if there is one, its `a=` number is the reason.
+   **Four sessions were run on 2026-11-12 and read the same morning** (START HERE §What the owner's first four
+   sessions on beta.42 showed): (a) happened — the sessions carry the beta.42 build; (b) read, and D121 answered:
+   the session upscaled with FSR 2.1, built into the game; (c) Lies of P and Dying Light show `cameraNear = ∞`;
+   (e) all four logs are whole and none has a `PATCH_FAILED`. **(d) was not exercised**, and the owner has not
+   said the item passed.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
