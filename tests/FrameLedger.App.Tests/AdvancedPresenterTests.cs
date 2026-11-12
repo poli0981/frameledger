@@ -241,7 +241,8 @@ public sealed class AdvancedPresenterTests
             At(live, id).Status.Should().Be(Strings.Advanced_Status_InGame);
         }
 
-        At(live, "sl.init.preferences").Status.Should().Be(AdvancedLabels.Reach(AdvancedReach.NewHook), "a hook that is not built is still a later release");
+        At(live, "sl.init.preferences").Status.Should().Be(AdvancedLabels.Reach(AdvancedReach.BeforeAttach), "a call made before FrameLedger is in the game is never read, and the page says why (D129)");
+        AdvancedLabels.Reach(AdvancedReach.BeforeAttach).Should().NotBe(nameof(AdvancedReach.BeforeAttach), "the reason has words of its own in every language");
         live.Where(static r => r.IsRead).Should().HaveCount(AdvancedMetricCatalog.All.Count(static m => m.IsRead));
     }
 
@@ -309,6 +310,44 @@ public sealed class AdvancedPresenterTests
         }
 
         AdvancedLabels.InGameCall(AdvancedInGameCall.NeverCalled).Should().NotBe(AdvancedLabels.InGameCall(AdvancedInGameCall.NotHooked), "the two reasons a value is absent are not one");
+    }
+
+    [Fact]
+    public void ASessionsSourcesLineNamesTheSixCallsOfBeta45UnderWhatBecameOfEach()
+    {
+        // 0.1.0-beta.45: six calls would be six sentences; they are one, each call by its own name under which of the
+        // three things happened to it, and "none" where a group is empty. A row stored before has none of the six.
+        AdvancedSources beta44 = AdvancedFixtures.Sources with
+        {
+            InGame = AdvancedInGameStatus.Reading,
+            StreamlineConstants = AdvancedInGameCall.Read,
+            FsrFrameGeneration = AdvancedInGameCall.NotHooked,
+            StreamlineFeatureVersion = AdvancedInGameCall.Read,
+            StreamlineFeatureRequirements = AdvancedInGameCall.Read,
+        };
+        string before = AdvancedPresenter.SourcesLine(beta44);
+        before.Should().NotContain("slIsFeatureSupported");
+
+        AdvancedSources all = beta44 with
+        {
+            StreamlineFeatureSupported = AdvancedInGameCall.Read,
+            StreamlineFeatureLoaded = AdvancedInGameCall.Read,
+            StreamlineSetFeatureLoaded = AdvancedInGameCall.NeverCalled,
+            StreamlineAllocateResources = AdvancedInGameCall.Read,
+            StreamlineFreeResources = AdvancedInGameCall.NeverCalled,
+            StreamlineShutdown = AdvancedInGameCall.NeverCalled,
+        };
+        string line = AdvancedPresenter.SourcesLine(all);
+        line.Should().StartWith(before, "what was said before is said as before");
+        line.Should().EndWith(string.Format(
+            CultureInfo.CurrentCulture,
+            Strings.Advanced_InGameMoreCallsLine,
+            "slIsFeatureSupported, slIsFeatureLoaded, slAllocateResources",
+            "slSetFeatureLoaded, slFreeResources, slShutdown",
+            AdvancedLabels.Token("none")));
+
+        // One of the six missing - a row no build writes - and the sentence is not there at all.
+        AdvancedPresenter.SourcesLine(all with { StreamlineShutdown = null }).Should().Be(before);
     }
 
     [Fact]

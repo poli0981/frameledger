@@ -235,7 +235,9 @@ public static class Strings
         nameof(Adv_sl_dlssg_options),
         nameof(Adv_sl_dlssg_state),
         nameof(Adv_sl_dlssg_vram_estimate),
+        nameof(Adv_sl_feature_lifecycle),
         nameof(Adv_sl_feature_requirements),
+        nameof(Adv_sl_feature_support),
         nameof(Adv_sl_feature_versions),
         nameof(Adv_sl_init_preferences),
         nameof(Adv_sl_nis_options),
@@ -263,6 +265,7 @@ public static class Strings
         nameof(Advanced_InGameCallsLine),
         nameof(Advanced_InGameFeatureCallsLine),
         nameof(Advanced_InGameLine),
+        nameof(Advanced_InGameMoreCallsLine),
         nameof(Advanced_Machine_Intro),
         nameof(Advanced_Max),
         nameof(Advanced_Mean),
@@ -309,6 +312,7 @@ public static class Strings
         nameof(AdvInGameCall_NotHooked),
         nameof(AdvInGameCall_Read),
         nameof(AdvInGameCall_Unknown),
+        nameof(AdvReach_BeforeAttach),
         nameof(AdvReach_Deferred),
         nameof(AdvReach_Game),
         nameof(AdvReach_HookedCall),
@@ -1946,7 +1950,11 @@ public static class Strings
 
     public static string Adv_sl_dlssg_vram_estimate => ResourceManager.GetString(nameof(Adv_sl_dlssg_vram_estimate), Culture) ?? nameof(Adv_sl_dlssg_vram_estimate);
 
+    public static string Adv_sl_feature_lifecycle => ResourceManager.GetString(nameof(Adv_sl_feature_lifecycle), Culture) ?? nameof(Adv_sl_feature_lifecycle);
+
     public static string Adv_sl_feature_requirements => ResourceManager.GetString(nameof(Adv_sl_feature_requirements), Culture) ?? nameof(Adv_sl_feature_requirements);
+
+    public static string Adv_sl_feature_support => ResourceManager.GetString(nameof(Adv_sl_feature_support), Culture) ?? nameof(Adv_sl_feature_support);
 
     public static string Adv_sl_feature_versions => ResourceManager.GetString(nameof(Adv_sl_feature_versions), Culture) ?? nameof(Adv_sl_feature_versions);
 
@@ -2001,6 +2009,8 @@ public static class Strings
     public static string Advanced_InGameFeatureCallsLine => ResourceManager.GetString(nameof(Advanced_InGameFeatureCallsLine), Culture) ?? nameof(Advanced_InGameFeatureCallsLine);
 
     public static string Advanced_InGameLine => ResourceManager.GetString(nameof(Advanced_InGameLine), Culture) ?? nameof(Advanced_InGameLine);
+
+    public static string Advanced_InGameMoreCallsLine => ResourceManager.GetString(nameof(Advanced_InGameMoreCallsLine), Culture) ?? nameof(Advanced_InGameMoreCallsLine);
 
     public static string Advanced_Machine_Intro => ResourceManager.GetString(nameof(Advanced_Machine_Intro), Culture) ?? nameof(Advanced_Machine_Intro);
 
@@ -2093,6 +2103,8 @@ public static class Strings
     public static string AdvInGameCall_Read => ResourceManager.GetString(nameof(AdvInGameCall_Read), Culture) ?? nameof(AdvInGameCall_Read);
 
     public static string AdvInGameCall_Unknown => ResourceManager.GetString(nameof(AdvInGameCall_Unknown), Culture) ?? nameof(AdvInGameCall_Unknown);
+
+    public static string AdvReach_BeforeAttach => ResourceManager.GetString(nameof(AdvReach_BeforeAttach), Culture) ?? nameof(AdvReach_BeforeAttach);
 
     public static string AdvReach_Deferred => ResourceManager.GetString(nameof(AdvReach_Deferred), Culture) ?? nameof(AdvReach_Deferred);
 

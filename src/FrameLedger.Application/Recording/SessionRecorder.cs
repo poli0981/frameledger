@@ -515,12 +515,18 @@ public sealed class SessionRecorder : ISessionRecorder
                     FsrFrameGeneration = calls.FrameGeneration,
                     StreamlineFeatureVersion = calls.FeatureVersion,
                     StreamlineFeatureRequirements = calls.FeatureRequirements,
+                    StreamlineFeatureSupported = calls.FeatureSupported,
+                    StreamlineFeatureLoaded = calls.FeatureLoaded,
+                    StreamlineSetFeatureLoaded = calls.SetFeatureLoaded,
+                    StreamlineAllocateResources = calls.AllocateResources,
+                    StreamlineFreeResources = calls.FreeResources,
+                    StreamlineShutdown = calls.Shutdown,
                 }));
         }
 
         /// <summary>
         /// What became of the calls hooked only for Advanced metrics (two since 0.1.0-beta.43, four since
-        /// 0.1.0-beta.44), for a session measured inside the game: read, hooked and never called, or not hooked - from
+        /// 0.1.0-beta.44, ten since 0.1.0-beta.45), for a session measured inside the game: read, hooked and never called, or not hooked - from
         /// the hook families the capture side last published and from what its publications carried. All null for a
         /// session not measured inside the game: <see cref="AdvancedInGameStatus.NotHooked"/> already says so.
         /// </summary>
@@ -536,16 +542,28 @@ public sealed class SessionRecorder : ISessionRecorder
                 _inGame.Call(FlAdvancedValid.SlConstants, hooks.HasFlag(FlHookFamily.SlConstants)),
                 _inGame.Call(FlAdvancedValid.FfxFgConfig, hooks.HasFlag(FlHookFamily.FfxConfigure)),
                 _inGame.FeatureCall(FlAdvancedState.FeatureVersionAnswered, hooks.HasFlag(FlHookFamily.SlFeatureVersion)),
-                _inGame.FeatureCall(FlAdvancedState.FeatureRequirementsAnswered, hooks.HasFlag(FlHookFamily.SlFeatureRequirements)));
+                _inGame.FeatureCall(FlAdvancedState.FeatureRequirementsAnswered, hooks.HasFlag(FlHookFamily.SlFeatureRequirements)),
+                _inGame.FeatureCall(FlAdvancedState.FeatureSupportAnswered, hooks.HasFlag(FlHookFamily.SlFeatureSupported)),
+                _inGame.FeatureCall(FlAdvancedState.FeatureLoadedAnswered, hooks.HasFlag(FlHookFamily.SlFeatureLoaded)),
+                _inGame.FeatureCall(InGameAdvancedSampler.FeatureSwitched, hooks.HasFlag(FlHookFamily.SlSetFeatureLoaded)),
+                _inGame.FeatureCall(InGameAdvancedSampler.FeatureAllocated, hooks.HasFlag(FlHookFamily.SlAllocateResources)),
+                _inGame.FeatureCall(InGameAdvancedSampler.FeatureFreed, hooks.HasFlag(FlHookFamily.SlFreeResources)),
+                _inGame.Call(FlAdvancedValid.SlShutdown, hooks.HasFlag(FlHookFamily.SlShutdown)));
         }
 
-        /// <summary>The four calls' states, compared as one value when deciding whether the session's context moved.</summary>
+        /// <summary>The ten calls' states, compared as one value when deciding whether the session's context moved.</summary>
         [StructLayout(LayoutKind.Auto)]
         private readonly record struct InGameCallStates(
             AdvancedInGameCall? Streamline,
             AdvancedInGameCall? FrameGeneration,
             AdvancedInGameCall? FeatureVersion,
-            AdvancedInGameCall? FeatureRequirements);
+            AdvancedInGameCall? FeatureRequirements,
+            AdvancedInGameCall? FeatureSupported,
+            AdvancedInGameCall? FeatureLoaded,
+            AdvancedInGameCall? SetFeatureLoaded,
+            AdvancedInGameCall? AllocateResources,
+            AdvancedInGameCall? FreeResources,
+            AdvancedInGameCall? Shutdown);
 
         /// <summary>
         /// What the row says of the entries read inside the game: read, measured inside the game with none of their

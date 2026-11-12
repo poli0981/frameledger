@@ -1016,6 +1016,32 @@ public unsafe struct FlAdvancedState
     /// <summary>Word 1 of a slot: <c>slGetFeatureRequirements</c> answered for this feature.</summary>
     public const uint FeatureRequirementsAnswered = 1u << 1;
 
+    /// <summary>Word 1 (0.1.0-beta.45): <c>slIsFeatureSupported</c> answered; its <c>sl::Result</c> is in bits 8..15.</summary>
+    public const uint FeatureSupportAnswered = 1u << 2;
+
+    /// <summary>Word 1: <c>slIsFeatureLoaded</c> answered, and <see cref="FeatureLoadedValue"/> is what it said.</summary>
+    public const uint FeatureLoadedAnswered = 1u << 3;
+
+    public const uint FeatureLoadedValue = 1u << 4;
+
+    /// <summary>Word 1: the game was seen to switch the feature off through <c>slSetFeatureLoaded</c>. A session's.</summary>
+    public const uint FeatureSwitchedOff = 1u << 5;
+
+    /// <summary>Word 1: the game was seen to switch it on. A session's.</summary>
+    public const uint FeatureSwitchedOn = 1u << 6;
+
+    /// <summary>Word 1: where the result of <c>slIsFeatureSupported</c> starts; eight bits, 0xFF a code a byte cannot carry.</summary>
+    public const int FeatureSupportResultShift = 8;
+
+    /// <summary>Word 1: where the count of <c>slAllocateResources</c> calls starts; four bits, stopping at 15. A session's.</summary>
+    public const int FeatureAllocShift = 16;
+
+    /// <summary>Word 1: the same for <c>slFreeResources</c>.</summary>
+    public const int FeatureFreeShift = 20;
+
+    /// <summary>A four-bit count's mask, and the value at which it stopped counting.</summary>
+    public const uint FeatureCountMask = 0xFu;
+
     /// <summary>
     /// One word of one feature slot, as <c>fl_shm.h</c> lays them out: 0 the <c>sl::Feature</c> id plus one (0 = an
     /// empty slot; slots fill from 0), 1 which question was answered, 2..7 the two versions, 8 the flags, 9..11 three

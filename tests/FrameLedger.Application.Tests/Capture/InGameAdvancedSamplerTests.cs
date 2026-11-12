@@ -412,6 +412,101 @@ public sealed class InGameAdvancedSamplerTests
     }
 
     [Fact]
+    public void WhetherAFeatureIsSupportedAndLoadedAndWhatTheGameDidWithItAreTwoFacts()
+    {
+        // 0.1.0-beta.45: six more calls, all kept in word 1 of a feature's slot but the shutdowns. DLSS - supported,
+        // loaded, switched on, its resources allocated three times; frame generation - supported, switched off and
+        // on, freed fifteen times or more (the count stops there); NIS - refused, and the refusal is the answer; PCL -
+        // asked only whether it is loaded, and it is not. Streamline shut down twice.
+        const uint dlss = FlAdvancedState.FeatureSupportAnswered | FlAdvancedState.FeatureLoadedAnswered | FlAdvancedState.FeatureLoadedValue
+            | FlAdvancedState.FeatureSwitchedOn | (3u << FlAdvancedState.FeatureAllocShift);
+        const uint frameGeneration = FlAdvancedState.FeatureSupportAnswered | FlAdvancedState.FeatureSwitchedOff | FlAdvancedState.FeatureSwitchedOn
+            | (15u << FlAdvancedState.FeatureFreeShift);
+        const uint nis = FlAdvancedState.FeatureSupportAnswered | (32u << FlAdvancedState.FeatureSupportResultShift);
+        FlAdvancedState s = InGameStates.WithFeature(InGameStates.Empty(), 0, 0, dlss);
+        s = InGameStates.WithFeature(s, 1, 1000, frameGeneration);
+        s = InGameStates.WithFeature(s, 2, 2, nis);
+        s = InGameStates.WithFeature(s, 3, 4, FlAdvancedState.FeatureLoadedAnswered);
+        s = s with { SlShutdowns = 2, ValidMask = s.ValidMask | FlAdvancedValid.SlShutdown };
+        var sampler = new InGameAdvancedSampler();
+        sampler.Take(new InGameAdvanced(s));
+
+        AdvancedFact support = Fact(sampler, "sl.feature.support");
+        Rows(support).Should().Equal(
+            "kFeatureDLSS · slIsFeatureSupported=eOk",
+            "kFeatureDLSS · slIsFeatureLoaded=on",
+            "kFeatureDLSS_G · slIsFeatureSupported=eOk",
+            "kFeatureNIS · slIsFeatureSupported=eErrorFeatureNotSupported",
+            "kFeaturePCL · slIsFeatureLoaded=off");
+        support.Value.Rows![1].Token.Should().Be("on", "the App translates the word");
+        support.Value.Rows![0].Token.Should().BeNull("a result is the vendor's own name");
+        Rows(Fact(sampler, "sl.feature.lifecycle")).Should().Equal(
+            "kFeatureDLSS · slSetFeatureLoaded=on",
+            "kFeatureDLSS · slAllocateResources=3",
+            "kFeatureDLSS_G · slSetFeatureLoaded=on_and_off",
+            "kFeatureDLSS_G · slFreeResources=≥ 15",
+            "slShutdown=2");
+        sampler.Facts.Should().NotContain(static f => f.Id == "sl.feature.versions" || f.Id == "sl.feature.requirements", "neither question of beta.44 was answered");
+    }
+
+    [Fact]
+    public void AResultWithNoNameAShutdownAloneAndAFeatureNobodyTouchedAreSaidAsTheyAre()
+    {
+        // The last code the vendor names, the first number past its list, and what the capture side writes for a code
+        // a byte could not carry. A slot with nothing of this release in word 1 adds no row.
+        FlAdvancedState s = InGameStates.WithFeature(InGameStates.Empty(), 0, 0, FlAdvancedState.FeatureSupportAnswered | (39u << FlAdvancedState.FeatureSupportResultShift));
+        s = InGameStates.WithFeature(s, 1, 3, FlAdvancedState.FeatureSupportAnswered | (40u << FlAdvancedState.FeatureSupportResultShift));
+        s = InGameStates.WithFeature(s, 2, 5, FlAdvancedState.FeatureSupportAnswered | (0xFFu << FlAdvancedState.FeatureSupportResultShift));
+        s = InGameStates.WithFeature(s, 3, 1001, FlAdvancedState.FeatureVersionAnswered, 2, 14, 1);
+        var sampler = new InGameAdvancedSampler();
+        sampler.Take(new InGameAdvanced(s));
+
+        Rows(Fact(sampler, "sl.feature.support")).Should().Equal(
+            "kFeatureDLSS · slIsFeatureSupported=eWarnOutOfVRAM",
+            "kFeatureReflex · slIsFeatureSupported=result 40",
+            "kFeatureDeepDVC · slIsFeatureSupported=result 255");
+        sampler.Facts.Should().NotContain(static f => string.Equals(f.Id, "sl.feature.lifecycle", StringComparison.Ordinal), "the game switched, allocated, freed and shut down nothing");
+
+        // Streamline shut down in a game that asked about no feature: one row, and no other fact.
+        var shutdown = new InGameAdvancedSampler();
+        shutdown.Take(new InGameAdvanced(InGameStates.Empty() with { ValidMask = FlAdvancedValid.SlShutdown, SlShutdowns = 1 }));
+        Rows(Fact(shutdown, "sl.feature.lifecycle")).Should().Equal("slShutdown=1");
+        shutdown.Facts.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void EachOfTheSixCallsOfBeta45IsItsOwnQuestionAndACountThatMovesMakesTheFactsNew()
+    {
+        var sampler = new InGameAdvancedSampler();
+        sampler.FeatureCall(FlAdvancedState.FeatureSupportAnswered, hookedIn: true).Should().Be(AdvancedInGameCall.NeverCalled);
+        sampler.Call(FlAdvancedValid.SlShutdown, hookedIn: false).Should().Be(AdvancedInGameCall.NotHooked);
+
+        // Supported and one allocation: those two are read; loaded, switched, freed and shut down are not.
+        const uint first = FlAdvancedState.FeatureSupportAnswered | (1u << FlAdvancedState.FeatureAllocShift);
+        sampler.Take(new InGameAdvanced(InGameStates.WithFeature(InGameStates.Empty(), 0, 0, first)));
+        IReadOnlyList<AdvancedFact> one = sampler.Facts;
+        sampler.FeatureCall(FlAdvancedState.FeatureSupportAnswered, hookedIn: true).Should().Be(AdvancedInGameCall.Read);
+        sampler.FeatureCall(InGameAdvancedSampler.FeatureAllocated, hookedIn: true).Should().Be(AdvancedInGameCall.Read);
+        sampler.FeatureCall(FlAdvancedState.FeatureLoadedAnswered, hookedIn: true).Should().Be(AdvancedInGameCall.NeverCalled);
+        sampler.FeatureCall(InGameAdvancedSampler.FeatureSwitched, hookedIn: true).Should().Be(AdvancedInGameCall.NeverCalled);
+        sampler.FeatureCall(InGameAdvancedSampler.FeatureFreed, hookedIn: false).Should().Be(AdvancedInGameCall.NotHooked);
+        sampler.Call(FlAdvancedValid.SlShutdown, hookedIn: true).Should().Be(AdvancedInGameCall.NeverCalled);
+
+        // The same word again: the same list. A second allocation: a new one. A shutdown: a new one, and read.
+        sampler.Take(new InGameAdvanced(InGameStates.WithFeature(InGameStates.Empty(2), 0, 0, first)));
+        sampler.Facts.Should().BeSameAs(one, "nothing a fact is made of moved");
+        const uint second = FlAdvancedState.FeatureSupportAnswered | (2u << FlAdvancedState.FeatureAllocShift);
+        sampler.Take(new InGameAdvanced(InGameStates.WithFeature(InGameStates.Empty(3), 0, 0, second)));
+        IReadOnlyList<AdvancedFact> two = sampler.Facts;
+        two.Should().NotBeSameAs(one);
+        Rows(Fact(sampler, "sl.feature.lifecycle")).Should().Equal("kFeatureDLSS · slAllocateResources=2");
+        FlAdvancedState withShutdown = InGameStates.WithFeature(InGameStates.Empty(4), 0, 0, second);
+        sampler.Take(new InGameAdvanced(withShutdown with { SlShutdowns = 1, ValidMask = withShutdown.ValidMask | FlAdvancedValid.SlShutdown }));
+        sampler.Facts.Should().NotBeSameAs(two);
+        sampler.Call(FlAdvancedValid.SlShutdown, hookedIn: true).Should().Be(AdvancedInGameCall.Read);
+    }
+
+    [Fact]
     public void ACountDoesNotRebuildTheFactsWhileTheSessionRunsAndIsExactOnceItConcludes()
     {
         // The resets told to Streamline are a count. While the session runs the list is rebuilt only when a value a
@@ -475,13 +570,14 @@ public sealed class InGameAdvancedSamplerTests
             DlssColorBuffersHdr = 2,
         };
 
-        both = InGameStates.WithFeature(both, 0, 0, FlAdvancedState.FeatureVersionAnswered | FlAdvancedState.FeatureRequirementsAnswered, 2, 14, 1, 310, 4, 0, 7, 2, 32, 3);
+        both = InGameStates.WithFeature(
+            both, 0, 0, FlAdvancedState.FeatureVersionAnswered | FlAdvancedState.FeatureRequirementsAnswered | FlAdvancedState.FeatureSupportAnswered | FlAdvancedState.FeatureSwitchedOn, 2, 14, 1, 310, 4, 0, 7, 2, 32, 3);
 
         IReadOnlyList<AdvancedReading> readings = sampler.Take(new InGameAdvanced(both))!;
 
         sampler.Facts.Should().OnlyContain(static f => AdvancedMetricCatalog.Find(f.Id)!.Reach == AdvancedReach.Game);
         sampler.Facts.Select(static f => f.Id).Should().Contain(
-            ["sl.constants.jitter", "sl.constants.resets", "ffx.framegen.config", "ffx.upscale.flags", "sl.dlss.presets", "sl.feature.versions", "sl.feature.requirements"]);
+            ["sl.constants.jitter", "sl.constants.resets", "ffx.framegen.config", "ffx.upscale.flags", "sl.dlss.presets", "sl.feature.versions", "sl.feature.requirements", "sl.feature.support", "sl.feature.lifecycle"]);
         AdvancedJson.Storable(sampler.Facts).Should().HaveCount(sampler.Facts.Count, "what the game said may be stored");
         readings.Select(static r => AdvancedMetricCatalog.Find(r.Series[AdvancedMetric.SeriesPrefix.Length..])!.Reach).Should().OnlyContain(static reach => reach == AdvancedReach.Game);
     }

@@ -221,6 +221,35 @@ public sealed class AdvancedJsonTests
         older.StreamlineFeatureRequirements.Should().BeNull();
     }
 
+    [Fact]
+    public void WhatBecameOfTheSixCallsOfBeta45SurvivesTheLedgerAndAnOlderRowSaysNothingOfThem()
+    {
+        AdvancedSources written = AdvancedSources.Unknown with
+        {
+            InGame = AdvancedInGameStatus.Reading,
+            StreamlineFeatureSupported = AdvancedInGameCall.Read,
+            StreamlineFeatureLoaded = AdvancedInGameCall.NeverCalled,
+            StreamlineSetFeatureLoaded = AdvancedInGameCall.NeverCalled,
+            StreamlineAllocateResources = AdvancedInGameCall.Read,
+            StreamlineFreeResources = AdvancedInGameCall.NotHooked,
+            StreamlineShutdown = AdvancedInGameCall.NeverCalled,
+        };
+
+        string json = AdvancedJson.OfSession([], written);
+        (_, AdvancedSources read) = AdvancedJson.ParseSession(json);
+
+        json.Should().Contain("\"streamlineFeatureSupported\":\"Read\"").And.Contain("\"streamlineFreeResources\":\"NotHooked\"")
+            .And.Contain("\"streamlineShutdown\":\"NeverCalled\"");
+        read.Should().Be(written);
+
+        // 0.1.0-beta.44 wrote exactly this: the four calls of the two releases before and none of these six.
+        const string beta44 = """{"facts":[],"sources":{"nvapi":"Reading","sensors":"Reading","elevatedSensors":"Reading","inGame":"Reading","streamlineConstants":"Read","fsrFrameGeneration":"NeverCalled","streamlineFeatureVersion":"Read","streamlineFeatureRequirements":"Read"}}""";
+        (_, AdvancedSources older) = AdvancedJson.ParseSession(beta44);
+        older.StreamlineFeatureRequirements.Should().Be(AdvancedInGameCall.Read);
+        older.StreamlineFeatureSupported.Should().BeNull("a row that never said is not a row that said the hook was not in");
+        older.StreamlineShutdown.Should().BeNull();
+    }
+
     [Theory]
     [InlineData(AdvancedInGameStatus.Reading)]
     [InlineData(AdvancedInGameStatus.NothingSeen)]

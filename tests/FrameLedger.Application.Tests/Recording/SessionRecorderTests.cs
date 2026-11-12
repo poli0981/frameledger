@@ -1006,8 +1006,14 @@ public sealed class SessionRecorderTests : IAsyncDisposable
                 FsrFrameGeneration = AdvancedInGameCall.NotHooked,
                 StreamlineFeatureVersion = AdvancedInGameCall.NotHooked,
                 StreamlineFeatureRequirements = AdvancedInGameCall.NotHooked,
+                StreamlineFeatureSupported = AdvancedInGameCall.NotHooked,
+                StreamlineFeatureLoaded = AdvancedInGameCall.NotHooked,
+                StreamlineSetFeatureLoaded = AdvancedInGameCall.NotHooked,
+                StreamlineAllocateResources = AdvancedInGameCall.NotHooked,
+                StreamlineFreeResources = AdvancedInGameCall.NotHooked,
+                StreamlineShutdown = AdvancedInGameCall.NotHooked,
             },
-            "the Agent's sources never answered; the game was measured from inside, made none of the calls, and the capture side published none of the four hooks that are installed only for Advanced metrics");
+            "the Agent's sources never answered; the game was measured from inside, made none of the calls, and the capture side published none of the ten hooks that are installed only for Advanced metrics");
         hub.Released.Should().Be(1);
     }
 

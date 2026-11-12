@@ -63,6 +63,25 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.19 of the Privacy Policy changed (0.1.0-beta.45)
+
+**Six more calls read inside the game, only while Advanced metrics is on** (train B's fourth step, owner decisions
+D129–D131; the wording approved with the plan of 0.1.0-beta.45). Version 2.18 named Streamline's answers to two
+questions about a feature — its version, what it requires — and "four further calls". This release reads two more
+answers and four things the game does, none of which is in that list, so the version moves. §1's item on Advanced
+metrics gains, **for each Streamline feature the game asks about or controls: whether Streamline answers that it is
+supported, whether it is loaded, whether the game switched it on or off while it ran, and how many times its
+resources were allocated and freed; and whether the game shut Streamline down, and how many times**. It also says
+two more things that are never read: **what identifies the graphics card that the game hands over with its
+question** — `slIsFeatureSupported` takes an `sl::AdapterInfo`, the adapter's LUID or a Vulkan physical device,
+which D131 forbids and a check in the build refuses by name — and **the content of a graphics resource**: the two
+resource calls take a command buffer and a viewport, forwarded and never looked at. §4's "four further calls" is
+ten, its "two questions" are four, and its list of what is stored names the new facts and repeats that what
+identifies the card is not among them. What the game started Streamline with (`slInit`) is not in the policy
+because it is not read, and will not be (D129). The accuracy block's item says what the new rows are — calls the
+game made, counted to fifteen, not a statement that a feature ran. The Disclaimer stays 2.15. §2 is unchanged:
+nothing is sent.
+
 ### What version 2.18 of the Privacy Policy changed (0.1.0-beta.44)
 
 **Two more calls read inside the game, only while Advanced metrics is on** (train B's third step, owner decisions

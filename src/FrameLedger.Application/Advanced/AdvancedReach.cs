@@ -22,7 +22,7 @@ public enum AdvancedReach
     /// <summary>An argument of a call the Overlay already hooks; not read yet.</summary>
     HookedCall = 3,
 
-    /// <summary>Needs a hook on a function its module exports; the hook is not built.</summary>
+    /// <summary>Needs a hook on a function its module exports; the hook is not built. No entry carries it since 0.1.0-beta.45.</summary>
     NewHook = 4,
 
     /// <summary>A route nobody has proven safe: a spike decides, and the owner says go or no.</summary>
@@ -51,4 +51,10 @@ public enum AdvancedReach
     /// records Advanced metrics (train B, owner decision D111) — and only when the game makes that call.
     /// </summary>
     Game = 12,
+
+    /// <summary>
+    /// The game makes the call once, before FrameLedger is inside it: no shipped mode injects before a game's first
+    /// instruction, and no hook is ever installed on a game's thread. Never read (owner decision D129).
+    /// </summary>
+    BeforeAttach = 13,
 }

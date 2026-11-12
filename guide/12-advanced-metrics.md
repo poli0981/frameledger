@@ -64,14 +64,22 @@ also keeps what the game itself handed to DLSS and FSR:
   again later, and then they are read. Where a game asks only at its start, the line under the session says
   *hooked — the game asks this while it starts, and did not ask again*. The version shown is the one Streamline
   reports, which can be newer than the file in the game's folder.
+- **Whether a feature is supported and loaded, and what the game did with it** (since 0.1.0-beta.45) — two more
+  tables, one row for each feature and call. `kFeatureDLSS_G · slIsFeatureSupported` is Streamline's answer in
+  NVIDIA's own word: `eOk` is yes, and a refusal is named (`eErrorFeatureNotSupported`, `eErrorFeatureMissing`).
+  `· slIsFeatureLoaded` is *on* or *off*. `· slSetFeatureLoaded` says whether the game switched the feature *on*,
+  *off* or *on and off* during the session; `· slAllocateResources` and `· slFreeResources` count how many times it
+  set up and released what the feature needs (up to 15, then `≥ 15`); `slShutdown` counts how many times it shut
+  Streamline down. These begin when FrameLedger is in the game: what the game did while it started is not there.
 
 These are the game's own words to the upscaler, shown in the vendor's notation (`preExposure`, preset `K`).
 FrameLedger does not check what the upscaler did with them.
 
-The last three are read from calls FrameLedger hooks **only for Advanced metrics** — four calls in all: in a game
-where no session has been recorded with the option on since it started, those hooks are not there. The line under the session says,
-for each of the two, whether it was *read*, *hooked — the game did not make the call*, or *not hooked — the game did
-not load the library that has the call*.
+The last four are read from calls FrameLedger hooks **only for Advanced metrics** — ten calls in all: in a game
+where no session has been recorded with the option on since it started, those hooks are not there. The line under
+the session says, for each call, whether it was *read*, *hooked — the game did not make the call*, or *not hooked —
+the game did not load the library that has the call*; the six calls of 0.1.0-beta.45 are named in one sentence,
+under which of the three happened to each.
 
 **Many games will show nothing here**, and the line under the session says why: *the game made none of the calls
 these are read from* — most games set their DLSS options through a call FrameLedger cannot see, and only games that
@@ -101,6 +109,8 @@ comes from, and whether it is read. Where it is not, the reason is written out:
 - **not present on this PC** — the driver's own figures exist on NVIDIA cards only;
 - **read inside a game FrameLedger measures, when the game makes the call** — what the game tells DLSS and FSR
   (above). Some further readings inside the game **come with a later release**;
+- **the game makes this call once, before FrameLedger is inside it** — what the game started Streamline with. It is
+  not read, and no later release will read it;
 - **never read** — a serial number, a display's identification data, which other programs are encoding, the camera's
   position in the game. FrameLedger does not read these at all.
 

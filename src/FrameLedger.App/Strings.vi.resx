@@ -418,6 +418,12 @@
   <data name="Adv_sl_feature_requirements" xml:space="preserve">
     <value>Yêu cầu của từng tính năng Streamline: hệ điều hành, driver, bộ đệm</value>
   </data>
+  <data name="Adv_sl_feature_lifecycle" xml:space="preserve">
+    <value>Từng tính năng được bật hay tắt, tài nguyên được cấp và giải phóng, Streamline bị đóng</value>
+  </data>
+  <data name="Adv_sl_feature_support" xml:space="preserve">
+    <value>Streamline nói từng tính năng có được hỗ trợ không, và có đang nạp không</value>
+  </data>
   <data name="Adv_sl_feature_versions" xml:space="preserve">
     <value>Phiên bản từng tính năng Streamline và phiên bản mô hình NGX của nó</value>
   </data>
@@ -495,6 +501,9 @@
   </data>
   <data name="Advanced_InGameFeatureCallsLine" xml:space="preserve">
     <value>Mỗi tính năng Streamline là phiên bản nào: {0}. Mỗi tính năng cần gì: {1}.</value>
+  </data>
+  <data name="Advanced_InGameMoreCallsLine" xml:space="preserve">
+    <value>Các lời gọi khác của Streamline - đã đọc: {0}; đã hook, game không gọi: {1}; chưa hook: {2}.</value>
   </data>
   <data name="Advanced_InGameLine" xml:space="preserve">
     <value>Bên trong game: {0}.</value>
@@ -654,6 +663,9 @@
   </data>
   <data name="AdvReach_NewHook" xml:space="preserve">
     <value>Bên trong game, cần hook mới - sẽ có ở bản phát hành sau</value>
+  </data>
+  <data name="AdvReach_BeforeAttach" xml:space="preserve">
+    <value>Không đọc: game gọi lời gọi này một lần, trước khi FrameLedger vào trong game</value>
   </data>
   <data name="AdvReach_NotInHeaders" xml:space="preserve">
     <value>Giao diện này không cung cấp</value>

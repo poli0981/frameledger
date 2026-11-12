@@ -127,7 +127,12 @@ src/
                                #   asked for; AdvancedInGameCall says of each: read, never called, or not hooked.
                                #   Since 0.1.0-beta.44 also what Streamline answers when the game asks about a
                                #   feature (its version, what it requires), from two more calls hooked the same
-                               #   way; a game asks while it starts, so "never called" is the usual answer there.
+                               #   way; ~~a game asks while it starts, so "never called" is the usual answer there~~
+                               #   (the games run since ask again later, and are read).
+                               #   Since 0.1.0-beta.45 also whether Streamline says a feature is supported and
+                               #   loaded, the game switching it, its resources allocated and freed and Streamline
+                               #   shut down, from six more calls hooked the same way (D130); slInit is not hooked
+                               #   and its entry says why (AdvancedReach.BeforeAttach, D129).
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,

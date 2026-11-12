@@ -51,7 +51,16 @@ numeric core and does not move; the heading is the full version — corrected 20
   call the original, and run nothing after it. Six new calls in all in this release, each patched only where a
   session asked.
 - **`slInit` is not hooked, and will not be** (D129). A game starts Streamline once, before FrameLedger can be in
-  it — also when FrameLedger starts the game itself — so a hook there would be a patch that reads nothing.
+  it — also when FrameLedger starts the game itself — so a hook there would be a patch that reads nothing. The
+  Advanced page's entry for what a game started Streamline with now gives that reason instead of "a later release".
+- **A session shows whether each Streamline feature is supported and loaded, and what the game did with it**
+  (Advanced metrics). Two catalog entries are read from the six calls above: `sl.feature.support` — Streamline's
+  answer by NVIDIA's own name (`kFeatureDLSS_G · slIsFeatureSupported` = `eOk`; a refusal is named, and it is an
+  answer) and whether the feature is loaded — and `sl.feature.lifecycle` — the game switching a feature on, off or
+  both, how many times it allocated and freed the feature's resources (`≥ 15` past fifteen), and how many times it
+  shut Streamline down. The line under the session names the six calls in one sentence: read; hooked, the game did
+  not make the call; not hooked. They begin when FrameLedger is in the game — what a game did while it started is
+  not there — and they are calls the game made, not a statement that a feature ran. Not confirmed on a real game.
 
 ### Fixed
 
@@ -62,6 +71,11 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Changed
 
+- **Privacy Policy 2.19**: it names, for each Streamline feature a game asks about or controls, whether Streamline
+  says it is supported and loaded, the game switching it on or off, and how many times its resources were allocated
+  and freed, and how many times the game shut Streamline down — and two more things that are never read: what
+  identifies the graphics card a game hands over with its question, and the content of a graphics resource. "Four
+  further calls" is ten. The terms window shows once after the update. The Disclaimer stays 2.15.
 - **The limitations, the accuracy statement and the user guide no longer say that most sessions will show nothing
   of what Streamline answers about a feature.** 0.1.0-beta.44's notes expected that, because a game asks while it
   starts. The first real sessions (2026-11-12, five games) read both answers in every Streamline session: the

@@ -557,6 +557,14 @@
     <value>各 Streamline 機能の要件: OS、ドライバー、バッファー</value>
     <comment>review</comment>
   </data>
+  <data name="Adv_sl_feature_lifecycle" xml:space="preserve">
+    <value>各機能のオン/オフ、リソースの割り当てと解放、Streamline のシャットダウン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_feature_support" xml:space="preserve">
+    <value>Streamline が各機能をサポートしているか、読み込み済みか</value>
+    <comment>review</comment>
+  </data>
   <data name="Adv_sl_feature_versions" xml:space="preserve">
     <value>各 Streamline 機能のバージョンとその NGX モデル バージョン</value>
     <comment>review</comment>
@@ -659,6 +667,10 @@
   </data>
   <data name="Advanced_InGameFeatureCallsLine" xml:space="preserve">
     <value>各 Streamline 機能のバージョン: {0}。各機能の要件: {1}。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_InGameMoreCallsLine" xml:space="preserve">
+    <value>Streamline のその他の呼び出し - 読み取り済み: {0}。フック済みでゲームが呼び出さなかったもの: {1}。未フック: {2}。</value>
     <comment>review</comment>
   </data>
   <data name="Advanced_InGameLine" xml:space="preserve">
@@ -871,6 +883,10 @@
   </data>
   <data name="AdvReach_NewHook" xml:space="preserve">
     <value>ゲーム内 (新しいフックが必要) - 今後のリリースで対応</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_BeforeAttach" xml:space="preserve">
+    <value>読み取らない: ゲームはこの呼び出しを FrameLedger がゲーム内に入る前に一度だけ行います</value>
     <comment>review</comment>
   </data>
   <data name="AdvReach_NotInHeaders" xml:space="preserve">

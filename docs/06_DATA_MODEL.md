@@ -767,7 +767,12 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > and in a session not measured inside the game. **Since 0.1.0-beta.44** also `streamlineFeatureVersion` and
 > `streamlineFeatureRequirements`, the same three values for the two questions a game asks Streamline about a
 > feature — where `NeverCalled` is the usual one, a game asking while it starts — and the facts
-> `sl.feature.versions` and `sl.feature.requirements`, rows named `<feature> · <member>` in the vendor's words. No column and no script: schema 23 as it was. A session deleted
+> `sl.feature.versions` and `sl.feature.requirements`, rows named `<feature> · <member>` in the vendor's words.
+> **Since 0.1.0-beta.45** six more keys, the same three values each — `streamlineFeatureSupported`,
+> `streamlineFeatureLoaded`, `streamlineSetFeatureLoaded`, `streamlineAllocateResources`, `streamlineFreeResources`,
+> `streamlineShutdown`, absent in every row written before — and the facts `sl.feature.support` and
+> `sl.feature.lifecycle`, rows named `<feature> · <call>` (`slShutdown` alone for the shutdowns); a count that
+> reached its ceiling is the text `≥ 15`. No column and no script: schema 23 as it was. A session deleted
 > takes its row with it; a profile no session points to is left, as a hardware snapshot is; the retention sweep
 > removes a session's `adv.` series with its other raw series and keeps its row. Written by the Agent only, in the
 > session's own transaction (`SqliteSessionRepository.InsertAdvancedAsync`). `LatestVersion` is 23;
