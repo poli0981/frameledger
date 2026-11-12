@@ -205,6 +205,17 @@ public static class AdvancedPresenter
                 AdvancedLabels.InGameCall(frameGeneration));
         }
 
+        // The two questions about a feature (0.1.0-beta.44), worded for calls a game makes while it starts. A row
+        // stored before carries neither.
+        if (sources.StreamlineFeatureVersion is { } version && sources.StreamlineFeatureRequirements is { } requirements)
+        {
+            line += " " + string.Format(
+                CultureInfo.CurrentCulture,
+                Strings.Advanced_InGameFeatureCallsLine,
+                AdvancedLabels.InGameStartupCall(version),
+                AdvancedLabels.InGameStartupCall(requirements));
+        }
+
         return line;
     }
 

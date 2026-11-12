@@ -657,6 +657,10 @@
     <value>ゲームが毎フレーム Streamline に伝える内容: {0}。FSR フレーム生成の設定方法: {1}。</value>
     <comment>review</comment>
   </data>
+  <data name="Advanced_InGameFeatureCallsLine" xml:space="preserve">
+    <value>各 Streamline 機能のバージョン: {0}。各機能の要件: {1}。</value>
+    <comment>review</comment>
+  </data>
   <data name="Advanced_InGameLine" xml:space="preserve">
     <value>ゲーム内: {0}。</value>
     <comment>review</comment>
@@ -827,6 +831,10 @@
   </data>
   <data name="AdvInGameCall_NeverCalled" xml:space="preserve">
     <value>フック済み - ゲームはこの呼び出しを行いませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvInGameCall_NotAskedAgain" xml:space="preserve">
+    <value>フック済み - ゲームは起動時にこれを問い合わせ、FrameLedger の接続後は再度問い合わせませんでした</value>
     <comment>review</comment>
   </data>
   <data name="AdvInGameCall_NotHooked" xml:space="preserve">

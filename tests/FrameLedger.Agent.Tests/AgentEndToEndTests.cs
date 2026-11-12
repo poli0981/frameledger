@@ -289,6 +289,85 @@ public sealed class AgentEndToEndTests : IDisposable
         }
     }
 
+    [Fact]
+    public async Task WhatTheGameTellsStreamlineAndIsAnsweredAboutAFeatureIsStoredByASessionThatRecordsAdvancedMetrics()
+    {
+        // The Streamline side of the same road, end to end (0.1.0-beta.44; until then no Agent test ran a Streamline
+        // target): the shipped Agent, the real Overlay, and a target that chains its DLSS options into every
+        // evaluation, calls slSetConstants every frame and asks the stub interposer about a feature every sixteenth -
+        // which is what lets a session that attached after the game's start still see an answer. Three calls hooked
+        // only because this session asked.
+        (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
+
+        Process harness = await StartHarnessAsync("--real --advanced --hold-presenting-upscaled 90");
+        try
+        {
+            await SetAdvancedMetricsAsync(on: true);
+            using (Process on = StartAgent("capture", "--exe", ConsentedExecutable, "--seconds", "10"))
+            {
+                (string output, int exit) = await FinishAsync(on);
+                exit.Should().Be(0, output);
+            }
+
+            LedgerDatabase db = await LedgerDatabase.OpenAsync(Ledger, ct: TestContext.Current.CancellationToken).ConfigureAwait(true);
+            await using (db.ConfigureAwait(true))
+            {
+                var sessions = new SqliteSessionRepository(db);
+                SessionRow session = (await sessions.ListRecentAsync(1, TestContext.Current.CancellationToken).ConfigureAwait(true)).Should().ContainSingle().Subject;
+                session.Tier.Should().Be(CaptureTier.Hooked);
+                AdvancedSessionRow row = (await sessions.FindAdvancedAsync(session.Id, TestContext.Current.CancellationToken).ConfigureAwait(true)).Should().BeOfType<AdvancedSessionRow>().Subject;
+                AssertWhatTheHarnessToldStreamline(row);
+            }
+        }
+        finally
+        {
+            Kill(harness);
+        }
+    }
+
+    /// <summary>The stored row of a session that asked, against what <c>hook-harness --advanced</c> tells Streamline and the stub interposer answers.</summary>
+    private static void AssertWhatTheHarnessToldStreamline(AdvancedSessionRow row)
+    {
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        string[] Rows(string id) => [.. facts.Single(f => string.Equals(f.Id, id, StringComparison.Ordinal)).Value.Rows!.Select(static r => r.Name + "=" + r.Value)];
+
+        // What the harness tells slSetConstants for its first viewport (main.cpp, kAdvSl*).
+        Rows("sl.constants.jitter").Should().Equal("jitterOffset.x=≤ 0.3125", "jitterOffset.y=≤ 0.4375");
+        Rows("sl.constants.depth").Should().Equal("cameraNear=0.25", "cameraFar=4000", "depthInverted=on");
+        Rows("sl.constants.projection").Should().Equal("cameraFOV=0.8 – 1.2 rad (45.8° – 68.8°)", "cameraAspectRatio=1.75", "orthographicProjection=off");
+
+        // What the stub interposer answers about the two features it knows (stub_sl_interposer.cpp), and
+        // nothing of the one it refuses or of the one asked about with a struct that is not the headers'.
+        Rows("sl.feature.versions").Should().Equal(
+            "kFeatureDLSS · versionSL=2.14.1",
+            "kFeatureDLSS · versionNGX=310.4.0",
+            "kFeatureDLSS_G · versionSL=2.14.1",
+            "kFeatureDLSS_G · versionNGX=310.4.1");
+        Rows("sl.feature.requirements").Should().Equal(
+            "kFeatureDLSS · flags=eD3D11Supported, eD3D12Supported, eVulkanSupported",
+            "kFeatureDLSS · maxNumCPUThreads=2",
+            "kFeatureDLSS · maxNumViewports=32",
+            "kFeatureDLSS · numRequiredTags=3",
+            "kFeatureDLSS · osVersionDetected=10.0.26100",
+            "kFeatureDLSS · osVersionRequired=10.0.19041",
+            "kFeatureDLSS · driverVersionDetected=591.44.0",
+            "kFeatureDLSS · driverVersionRequired=512.15.0",
+            "kFeatureDLSS_G · flags=eD3D12Supported, eVSyncOffRequired, eHardwareSchedulingRequired",
+            "kFeatureDLSS_G · maxNumCPUThreads=1",
+            "kFeatureDLSS_G · maxNumViewports=1",
+            "kFeatureDLSS_G · numRequiredTags=4",
+            "kFeatureDLSS_G · osVersionDetected=10.0.26100",
+            "kFeatureDLSS_G · osVersionRequired=10.0.19041",
+            "kFeatureDLSS_G · driverVersionDetected=591.44.0",
+            "kFeatureDLSS_G · driverVersionRequired=551.23.0");
+
+        sources.InGame.Should().Be(AdvancedInGameStatus.Reading, row.FactsJson);
+        sources.StreamlineConstants.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
+        sources.StreamlineFeatureVersion.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
+        sources.StreamlineFeatureRequirements.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
+        sources.FsrFrameGeneration.Should().Be(AdvancedInGameCall.NotHooked, "this target loads no FidelityFX library: " + row.FactsJson);
+    }
+
     /// <summary>The stored row of a session that asked, against what <c>hook-harness --advanced --ffx-memory-query</c> sends and the FSR stub answers.</summary>
     private static void AssertWhatTheHarnessToldFsr(AdvancedSessionRow row)
     {
@@ -314,6 +393,8 @@ public sealed class AgentEndToEndTests : IDisposable
             "generationRect=1920 × 1080 at 0, 0");
         sources.FsrFrameGeneration.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
         sources.StreamlineConstants.Should().Be(AdvancedInGameCall.NotHooked, row.FactsJson);
+        sources.StreamlineFeatureVersion.Should().Be(AdvancedInGameCall.NotHooked, row.FactsJson);
+        sources.StreamlineFeatureRequirements.Should().Be(AdvancedInGameCall.NotHooked, row.FactsJson);
 
         IReadOnlyDictionary<string, Application.Recording.SensorSeriesStats> stats = AdvancedJson.ParseStats(row.StatsJson);
         stats.Should().ContainKey(InGameAdvancedSampler.FrameTimeSeries, row.StatsJson);

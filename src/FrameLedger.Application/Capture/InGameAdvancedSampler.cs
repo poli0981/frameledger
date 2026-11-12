@@ -48,6 +48,12 @@ public sealed class InGameAdvancedSampler
     // FfxApiDispatchUpscaleFlags (ffx_upscale.h), by bit.
     private static readonly string[] _flagTokens = ["draw_debug_view", "non_linear_color_srgb", "non_linear_color_pq"];
 
+    // sl::FeatureRequirementFlags (sl_core_types.h), by bit: the vendor's own names, shown as they are.
+    private static readonly string[] _requirementFlags =
+    [
+        "eD3D11Supported", "eD3D12Supported", "eVulkanSupported", "eVSyncOffRequired", "eHardwareSchedulingRequired",
+    ];
+
     // FfxApiDispatchFramegenerationFlags (ffx_framegeneration.h), by bit: the vendor's own names, shown as they are.
     private static readonly string[] _frameGenerationFlags =
     [
@@ -66,6 +72,7 @@ public sealed class InGameAdvancedSampler
     private FactKey _key;
     private uint _builtResets;
     private FlAdvancedValid _everValid;
+    private uint _featureAnswers;
 
     /// <summary>The session facts as of the last publication taken; empty until the game made a call they are read from.</summary>
     public IReadOnlyList<AdvancedFact> Facts { get; private set; } = [];
@@ -84,6 +91,16 @@ public sealed class InGameAdvancedSampler
     /// </summary>
     public AdvancedInGameCall Call(FlAdvancedValid group, bool hookedIn) =>
         (_everValid & group) != FlAdvancedValid.None ? AdvancedInGameCall.Read : hookedIn ? AdvancedInGameCall.NeverCalled : AdvancedInGameCall.NotHooked;
+
+    /// <summary>
+    /// The same for one of the two questions a game asks Streamline about a feature (0.1.0-beta.44; one bit of the
+    /// mask covers both, so the question is told by what the slots carry): <paramref name="question"/> is
+    /// <see cref="FlAdvancedState.FeatureVersionAnswered"/> or <see cref="FlAdvancedState.FeatureRequirementsAnswered"/>.
+    /// A game asks while it starts, so <see cref="AdvancedInGameCall.NeverCalled"/> here is the usual answer of a
+    /// session attached later, and the App words it that way.
+    /// </summary>
+    public AdvancedInGameCall FeatureCall(uint question, bool hookedIn) =>
+        (_featureAnswers & question) != 0 ? AdvancedInGameCall.Read : hookedIn ? AdvancedInGameCall.NeverCalled : AdvancedInGameCall.NotHooked;
 
     /// <summary>
     /// The session is ending: the facts are brought up to the last publication where they carry a COUNT. A count
@@ -121,6 +138,14 @@ public sealed class InGameAdvancedSampler
 
         SawAnything = true;
         _everValid |= s.ValidMask;
+        if (s.ValidMask.HasFlag(FlAdvancedValid.SlFeatures))
+        {
+            for (int slot = 0; slot < FlAdvancedState.FeatureSlots && s.FeatureWordAt(slot, 0) != 0; slot++)
+            {
+                _featureAnswers |= s.FeatureWordAt(slot, 1);
+            }
+        }
+
         FactKey key = FactKey.Of(published);
         if (key != _key || Facts.Count == 0)
         {
@@ -170,8 +195,107 @@ public sealed class InGameAdvancedSampler
             AddStreamlineConstants(published, facts);
         }
 
+        if (published.State.ValidMask.HasFlag(FlAdvancedValid.SlFeatures))
+        {
+            AddStreamlineFeatures(published, facts);
+        }
+
         return facts;
     }
+
+    // What Streamline answered when the game asked about a feature (slGetFeatureVersion, slGetFeatureRequirements;
+    // 0.1.0-beta.44): a slot per feature in the order the game first asked, the vendor's own names throughout. A
+    // version of all zeros is the vendor's "none" - a feature that uses no NGX model has no versionNGX, a requirement
+    // nobody stated has no row - except versionSL, which an answer always carries. The counts are said as they are:
+    // 0 threads is "it creates none".
+    private static void AddStreamlineFeatures(InGameAdvanced published, List<AdvancedFact> facts)
+    {
+        ref readonly FlAdvancedState s = ref published.State;
+        var versions = new List<AdvancedRow>(8);
+        var requirements = new List<AdvancedRow>(16);
+        for (int slot = 0; slot < FlAdvancedState.FeatureSlots; slot++)
+        {
+            uint id = s.FeatureWordAt(slot, 0);
+            if (id == 0)
+            {
+                break;
+            }
+
+            string feature = FeatureName(id - 1);
+            uint answered = s.FeatureWordAt(slot, 1);
+            if ((answered & FlAdvancedState.FeatureVersionAnswered) != 0)
+            {
+                versions.Add(new AdvancedRow(feature + " · versionSL", VersionText(published, slot, 2)));
+                AddVersion(versions, feature, "versionNGX", published, slot, 5);
+            }
+
+            if ((answered & FlAdvancedState.FeatureRequirementsAnswered) != 0)
+            {
+                uint flags = s.FeatureWordAt(slot, 8);
+                var names = new List<string>(5);
+                for (int bit = 0; bit < 32; bit++)
+                {
+                    if ((flags & (1u << bit)) != 0)
+                    {
+                        names.Add(bit < _requirementFlags.Length ? _requirementFlags[bit] : string.Create(CultureInfo.InvariantCulture, $"bit {bit}"));
+                    }
+                }
+
+                requirements.Add(names.Count == 0 ? new AdvancedRow(feature + " · flags", "none", "none") : new AdvancedRow(feature + " · flags", string.Join(", ", names)));
+                requirements.Add(new AdvancedRow(feature + " · maxNumCPUThreads", s.FeatureWordAt(slot, 9).ToString(CultureInfo.InvariantCulture)));
+                requirements.Add(new AdvancedRow(feature + " · maxNumViewports", s.FeatureWordAt(slot, 10).ToString(CultureInfo.InvariantCulture)));
+                requirements.Add(new AdvancedRow(feature + " · numRequiredTags", s.FeatureWordAt(slot, 11).ToString(CultureInfo.InvariantCulture)));
+                AddVersion(requirements, feature, "osVersionDetected", published, slot, 12);
+                AddVersion(requirements, feature, "osVersionRequired", published, slot, 15);
+                AddVersion(requirements, feature, "driverVersionDetected", published, slot, 18);
+                AddVersion(requirements, feature, "driverVersionRequired", published, slot, 21);
+            }
+        }
+
+        if (versions.Count > 0)
+        {
+            facts.Add(Fact("sl.feature.versions", AdvancedValue.OfRows(versions)));
+        }
+
+        if (requirements.Count > 0)
+        {
+            facts.Add(Fact("sl.feature.requirements", AdvancedValue.OfRows(requirements)));
+        }
+    }
+
+    private static string VersionText(InGameAdvanced published, int slot, int word)
+    {
+        ref readonly FlAdvancedState s = ref published.State;
+        return string.Create(CultureInfo.InvariantCulture, $"{s.FeatureWordAt(slot, word)}.{s.FeatureWordAt(slot, word + 1)}.{s.FeatureWordAt(slot, word + 2)}");
+    }
+
+    private static void AddVersion(List<AdvancedRow> rows, string feature, string member, InGameAdvanced published, int slot, int word)
+    {
+        ref readonly FlAdvancedState s = ref published.State;
+        if ((s.FeatureWordAt(slot, word) | s.FeatureWordAt(slot, word + 1) | s.FeatureWordAt(slot, word + 2)) != 0)
+        {
+            rows.Add(new AdvancedRow(feature + " · " + member, VersionText(published, slot, word)));
+        }
+    }
+
+    // sl::Feature by the vendor's own constant (sl_core_types.h); an id this build has no name for is its number.
+    private static string FeatureName(uint feature) => feature switch
+    {
+        0 => "kFeatureDLSS",
+        1 => "kFeatureNRD_INVALID",
+        2 => "kFeatureNIS",
+        3 => "kFeatureReflex",
+        4 => "kFeaturePCL",
+        5 => "kFeatureDeepDVC",
+        6 => "kFeatureLatewarp",
+        1000 => "kFeatureDLSS_G",
+        1001 => "kFeatureDLSS_RR",
+        1002 => "kFeatureNvPerf",
+        1003 => "kFeatureDirectSR",
+        1004 => "kFeatureDLSS_NR",
+        9999 => "kFeatureImGUI",
+        _ => string.Create(CultureInfo.InvariantCulture, $"feature {feature}"),
+    };
 
     // How the game configures FSR frame generation (ffxConfigure, 0.1.0-beta.43): three switches as seen over the
     // session, the flags any configure carried, and the last rectangle it generates in.
@@ -501,7 +625,8 @@ public sealed class InGameAdvancedSampler
         ulong SlDepth,
         ulong SlFov,
         uint SlAspect,
-        ulong SlFlags)
+        ulong SlFlags,
+        ulong SlFeatures)
     {
         public static FactKey Of(InGameAdvanced published)
         {
@@ -513,7 +638,7 @@ public sealed class InGameAdvancedSampler
             }
 
             return new FactKey(
-                s.ValidMask & (FlAdvancedValid.DlssOptions | FlAdvancedValid.FfxUpscale | FlAdvancedValid.FfxFgConfig | FlAdvancedValid.SlConstants),
+                s.ValidMask & (FlAdvancedValid.DlssOptions | FlAdvancedValid.FfxUpscale | FlAdvancedValid.FfxFgConfig | FlAdvancedValid.SlConstants | FlAdvancedValid.SlFeatures),
                 s.DlssOutputWidth,
                 s.DlssOutputHeight,
                 s.DlssPreExposureBits,
@@ -541,7 +666,30 @@ public sealed class InGameAdvancedSampler
                 Pair(s.SlNearBits, s.SlFarBits),
                 Pair(s.SlFovMinBits, s.SlFovMaxBits),
                 s.SlAspectBits,
-                Pair(s.SlFlagsSeenTrue, s.SlFlagsSeenFalse));
+                Pair(s.SlFlagsSeenTrue, s.SlFlagsSeenFalse),
+                FeaturesHash(published));
+        }
+
+        // The feature slots as one number (FNV-1a over the words of the slots in use): an answer that arrives, or one
+        // that changes, makes the facts new; 0 where the group was not published.
+        private static ulong FeaturesHash(InGameAdvanced published)
+        {
+            ref readonly FlAdvancedState s = ref published.State;
+            if (!s.ValidMask.HasFlag(FlAdvancedValid.SlFeatures))
+            {
+                return 0;
+            }
+
+            ulong hash = 14695981039346656037UL;
+            for (int slot = 0; slot < FlAdvancedState.FeatureSlots && s.FeatureWordAt(slot, 0) != 0; slot++)
+            {
+                for (int word = 0; word < FlAdvancedState.FeatureWords; word++)
+                {
+                    hash = (hash ^ s.FeatureWordAt(slot, word)) * 1099511628211UL;
+                }
+            }
+
+            return hash;
         }
     }
 }

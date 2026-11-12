@@ -117,7 +117,11 @@ app too (Help ▸ User guide, Help ▸ Limitations, Help ▸ Accessibility), and
 >   later through AMD's own library. Since beta.43 also what a game tells NVIDIA Streamline about each frame (jitter,
 >   motion-vector scale, depth range, field-of-view range, how often it reset the upscaler's history — for the first
 >   viewport that called, where a game has several) and how it configures FSR frame generation (the settings it asked
->   for, not whether frames were generated). FSR's upscaling values, Streamline's constants (three games) and the
+>   for, not whether frames were generated). Since beta.44 also what Streamline answers when a game asks about a
+>   feature — its version, and what it requires (graphics APIs, V-Sync, GPU scheduling, Windows and driver versions):
+>   Streamline's answer as the game received it, not a check of the PC, and a game asks while it starts, so a
+>   session that attached later usually has none and says so. FSR's upscaling values, Streamline's constants (three
+>   games) and the
 >   frame-generation configuration (one game) have been read from real games; the DLSS options have not been
 >   confirmed on one yet. A game may give a value in a unit of its own: one gives Streamline its field of view in
 >   degrees, and it is shown as given.

@@ -170,9 +170,11 @@ public static class AdvancedMetricCatalog
         Session("sl.constants.resets", Streamline, Game, Count, Upscaling, "How often the game reset the upscaler's history"),
         Session("ffx.framegen.config", FidelityFx, Game, Table, FrameGeneration, "The game's FSR frame-generation configuration"),
 
+        // ---- Inside the game: two more hooks of their own (0.1.0-beta.44) - what Streamline answers about a feature
+        Session("sl.feature.versions", Streamline, Game, Table, Upscaling, "Each Streamline feature's version and its NGX model version"),
+        Session("sl.feature.requirements", Streamline, Game, Table, Upscaling, "What each Streamline feature requires: operating system, driver, buffers"),
+
         // ---- Inside the game: hooks that are not built ----------------------------------------------------------
-        Session("sl.feature.versions", Streamline, NewHook, Table, Upscaling, "Each Streamline feature's version and its NGX model version"),
-        Session("sl.feature.requirements", Streamline, NewHook, Table, Upscaling, "What each Streamline feature requires: operating system, driver, buffers"),
         Session("sl.init.preferences", Streamline, NewHook, Text, Upscaling, "The preferences the game started Streamline with"),
         Session("sl.constants.camera", Streamline, PlayerState, Text, Upscaling, "Camera position, axes and matrices"),
 

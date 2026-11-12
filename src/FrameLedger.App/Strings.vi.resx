@@ -493,6 +493,9 @@
   <data name="Advanced_InGameCallsLine" xml:space="preserve">
     <value>Những gì game báo cho Streamline mỗi khung hình: {0}. Cách game cấu hình frame generation của FSR: {1}.</value>
   </data>
+  <data name="Advanced_InGameFeatureCallsLine" xml:space="preserve">
+    <value>Mỗi tính năng Streamline là phiên bản nào: {0}. Mỗi tính năng cần gì: {1}.</value>
+  </data>
   <data name="Advanced_InGameLine" xml:space="preserve">
     <value>Bên trong game: {0}.</value>
   </data>
@@ -621,6 +624,9 @@
   </data>
   <data name="AdvInGameCall_NeverCalled" xml:space="preserve">
     <value>đã hook - game không thực hiện lời gọi</value>
+  </data>
+  <data name="AdvInGameCall_NotAskedAgain" xml:space="preserve">
+    <value>đã hook - game hỏi điều này lúc khởi động và không hỏi lại sau khi FrameLedger gắn vào</value>
   </data>
   <data name="AdvInGameCall_NotHooked" xml:space="preserve">
     <value>chưa hook - game không nạp thư viện chứa lời gọi này</value>

@@ -315,6 +315,103 @@ public sealed class InGameAdvancedSamplerTests
     }
 
     [Fact]
+    public void WhatStreamlineAnsweredAboutEachFeatureIsTwoFactsInTheVendorsOwnNames()
+    {
+        // 0.1.0-beta.44: slGetFeatureVersion and slGetFeatureRequirements. A slot per feature in the order the game
+        // first asked, every name the vendor's - the feature's constant, the struct's member, the flag's enumerator.
+        var sampler = new InGameAdvancedSampler();
+        sampler.Take(new InGameAdvanced(InGameStates.Features()));
+
+        Rows(Fact(sampler, "sl.feature.versions")).Should().Equal(
+            "kFeatureDLSS · versionSL=2.14.1",
+            "kFeatureDLSS · versionNGX=310.4.0",
+            "kFeatureDLSS_G · versionSL=2.14.1",
+            "kFeatureDLSS_G · versionNGX=310.4.1");
+        Rows(Fact(sampler, "sl.feature.requirements")).Should().Equal(
+            "kFeatureDLSS · flags=eD3D11Supported, eD3D12Supported, eVulkanSupported",
+            "kFeatureDLSS · maxNumCPUThreads=2",
+            "kFeatureDLSS · maxNumViewports=32",
+            "kFeatureDLSS · numRequiredTags=3",
+            "kFeatureDLSS · osVersionDetected=10.0.26100",
+            "kFeatureDLSS · osVersionRequired=10.0.19041",
+            "kFeatureDLSS · driverVersionDetected=591.44.0",
+            "kFeatureDLSS · driverVersionRequired=512.15.0",
+            "kFeatureDLSS_G · flags=eD3D12Supported, eVSyncOffRequired, eHardwareSchedulingRequired",
+            "kFeatureDLSS_G · maxNumCPUThreads=1",
+            "kFeatureDLSS_G · maxNumViewports=1",
+            "kFeatureDLSS_G · numRequiredTags=4",
+            "kFeatureDLSS_G · osVersionDetected=10.0.26100",
+            "kFeatureDLSS_G · osVersionRequired=10.0.19041",
+            "kFeatureDLSS_G · driverVersionDetected=591.44.0",
+            "kFeatureDLSS_G · driverVersionRequired=551.23.0");
+        sampler.Facts.Should().Contain(static f => string.Equals(f.Id, "sl.constants.jitter", StringComparison.Ordinal), "the constants of the same game stay beside them");
+    }
+
+    [Fact]
+    public void AFeatureAnsweredInPartAnIdWithNoNameAndAVersionNobodyStatedAreSaidAsTheyAre()
+    {
+        // Slot 0: only the version, of a feature with no NGX model - no versionNGX row. Slot 1: only the requirements,
+        // of an id this build has no name for, two flag bits the header does not name, counts of 0 that are counts, and
+        // one version stated out of four. Slot 2: a feature that requires nothing says so. Slot 4 is past an empty slot:
+        // slots fill from 0, so it is not a slot.
+        FlAdvancedState s = InGameStates.WithFeature(InGameStates.Empty(), 0, 3, FlAdvancedState.FeatureVersionAnswered, 2, 14, 1);
+        s = InGameStates.WithFeature(s, 1, 4242, FlAdvancedState.FeatureRequirementsAnswered, 0, 0, 0, 0, 0, 0, 0x120, 0, 1, 0, 0, 0, 0, 10, 0, 22000);
+        s = InGameStates.WithFeature(s, 2, 2, FlAdvancedState.FeatureRequirementsAnswered);
+        s = InGameStates.WithFeature(s, 4, 5, FlAdvancedState.FeatureVersionAnswered, 9, 9, 9);
+        var sampler = new InGameAdvancedSampler();
+        sampler.Take(new InGameAdvanced(s));
+
+        Rows(Fact(sampler, "sl.feature.versions")).Should().Equal("kFeatureReflex · versionSL=2.14.1");
+        AdvancedFact requirements = Fact(sampler, "sl.feature.requirements");
+        Rows(requirements).Should().Equal(
+            "feature 4242 · flags=bit 5, bit 8",
+            "feature 4242 · maxNumCPUThreads=0",
+            "feature 4242 · maxNumViewports=1",
+            "feature 4242 · numRequiredTags=0",
+            "feature 4242 · osVersionRequired=10.0.22000",
+            "kFeatureNIS · flags=none",
+            "kFeatureNIS · maxNumCPUThreads=0",
+            "kFeatureNIS · maxNumViewports=0",
+            "kFeatureNIS · numRequiredTags=0");
+        requirements.Value.Rows![5].Token.Should().Be("none", "the App translates the word");
+
+        // A publication with the group's bit and no slot in use makes neither fact.
+        var none = new InGameAdvancedSampler();
+        none.Take(new InGameAdvanced(InGameStates.Empty() with { ValidMask = FlAdvancedValid.SlFeatures }));
+        none.Facts.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AnAnswerAboutAFeatureThatArrivesLaterMakesTheFactsNewAndEachQuestionIsItsOwn()
+    {
+        var sampler = new InGameAdvancedSampler();
+        sampler.FeatureCall(FlAdvancedState.FeatureVersionAnswered, hookedIn: false).Should().Be(AdvancedInGameCall.NotHooked);
+        sampler.FeatureCall(FlAdvancedState.FeatureVersionAnswered, hookedIn: true).Should().Be(AdvancedInGameCall.NeverCalled, "hooked, and the game did not ask again");
+
+        sampler.Take(new InGameAdvanced(InGameStates.Streamline()));
+        IReadOnlyList<AdvancedFact> before = sampler.Facts;
+        before.Should().NotContain(static f => f.Id.StartsWith("sl.feature.", StringComparison.Ordinal));
+        sampler.FeatureCall(FlAdvancedState.FeatureRequirementsAnswered, hookedIn: true).Should().Be(AdvancedInGameCall.NeverCalled);
+
+        // The version of one feature is answered: the list is new, that question is read, the other is not.
+        FlAdvancedState versionOnly = InGameStates.WithFeature(InGameStates.Streamline(2), 0, 0, FlAdvancedState.FeatureVersionAnswered, 2, 14, 1, 310, 4, 0);
+        sampler.Take(new InGameAdvanced(versionOnly));
+        sampler.Facts.Should().NotBeSameAs(before);
+        Rows(Fact(sampler, "sl.feature.versions")).Should().Equal("kFeatureDLSS · versionSL=2.14.1", "kFeatureDLSS · versionNGX=310.4.0");
+        sampler.FeatureCall(FlAdvancedState.FeatureVersionAnswered, hookedIn: true).Should().Be(AdvancedInGameCall.Read);
+        sampler.FeatureCall(FlAdvancedState.FeatureRequirementsAnswered, hookedIn: true).Should().Be(AdvancedInGameCall.NeverCalled);
+        sampler.FeatureCall(FlAdvancedState.FeatureRequirementsAnswered, hookedIn: false).Should().Be(AdvancedInGameCall.NotHooked);
+
+        // The same slots again: the same list. Both questions answered: a new one, and both read.
+        IReadOnlyList<AdvancedFact> held = sampler.Facts;
+        sampler.Take(new InGameAdvanced(InGameStates.WithFeature(InGameStates.Streamline(3), 0, 0, FlAdvancedState.FeatureVersionAnswered, 2, 14, 1, 310, 4, 0)));
+        sampler.Facts.Should().BeSameAs(held, "nothing a fact is made of moved");
+        sampler.Take(new InGameAdvanced(InGameStates.Features(4)));
+        sampler.Facts.Should().NotBeSameAs(held);
+        sampler.FeatureCall(FlAdvancedState.FeatureRequirementsAnswered, hookedIn: false).Should().Be(AdvancedInGameCall.Read, "a publication that carried it is the proof");
+    }
+
+    [Fact]
     public void ACountDoesNotRebuildTheFactsWhileTheSessionRunsAndIsExactOnceItConcludes()
     {
         // The resets told to Streamline are a count. While the session runs the list is rebuilt only when a value a
@@ -378,10 +475,13 @@ public sealed class InGameAdvancedSamplerTests
             DlssColorBuffersHdr = 2,
         };
 
+        both = InGameStates.WithFeature(both, 0, 0, FlAdvancedState.FeatureVersionAnswered | FlAdvancedState.FeatureRequirementsAnswered, 2, 14, 1, 310, 4, 0, 7, 2, 32, 3);
+
         IReadOnlyList<AdvancedReading> readings = sampler.Take(new InGameAdvanced(both))!;
 
         sampler.Facts.Should().OnlyContain(static f => AdvancedMetricCatalog.Find(f.Id)!.Reach == AdvancedReach.Game);
-        sampler.Facts.Select(static f => f.Id).Should().Contain(["sl.constants.jitter", "sl.constants.resets", "ffx.framegen.config", "ffx.upscale.flags", "sl.dlss.presets"]);
+        sampler.Facts.Select(static f => f.Id).Should().Contain(
+            ["sl.constants.jitter", "sl.constants.resets", "ffx.framegen.config", "ffx.upscale.flags", "sl.dlss.presets", "sl.feature.versions", "sl.feature.requirements"]);
         AdvancedJson.Storable(sampler.Facts).Should().HaveCount(sampler.Facts.Count, "what the game said may be stored");
         readings.Select(static r => AdvancedMetricCatalog.Find(r.Series[AdvancedMetric.SeriesPrefix.Length..])!.Reach).Should().OnlyContain(static reach => reach == AdvancedReach.Game);
     }

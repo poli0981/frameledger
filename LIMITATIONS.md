@@ -205,6 +205,15 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
     shown as the game gave it, with a line saying so, and is never converted (since 0.1.0-beta.44; a session
     recorded before keeps the line it was stored with, which labels the degrees as radians). The count of resets is
     the number of calls in which the game said so — menus and loading screens raise it.
+  - **Which version each Streamline feature is, and what it requires** (since 0.1.0-beta.44) are Streamline's
+    answers to two questions **a game asks while it starts**. FrameLedger hooks the two calls only once a session
+    with Advanced metrics on has started in that game, which is usually after the game asked: **most sessions will
+    show nothing here**, and the session's line then says the call was hooked and the game did not ask again. A
+    game that asks later is read then, and a second session of a game that kept running keeps what the first one
+    read. The rows are Streamline's answer as the game received it — the versions
+    of Windows and of the driver are the ones Streamline found — not FrameLedger's own check of the PC. Twelve
+    features are kept; a thirteenth is not. The lists the answer points to (the buffers, the Vulkan extensions) are
+    never read, so the rows give how many buffers a feature needs and not which. Not confirmed on a real game yet.
   - **The driver's own figures** — the card's firmware and architecture, its memory in detail, what a display can do
     with HDR and variable refresh, the driver's settings for the game — exist on **NVIDIA** cards only. On other cards
     they read N/A; the card's sensors (fans, voltages, loads) are read on every brand, and none has been tested on an

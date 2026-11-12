@@ -752,7 +752,7 @@ planning, the design reviewed against the code before it was approved.
   `ICaptureObserver.WantsInGameAdvanced`; `CaptureSession` writes the word either way as the ring is attached, before
   its first guard result, and from then on carries each publication of region 5 on `CaptureProgress.InGameAdvanced`
   — one instance a publication, the same one on the ten ticks between two. `Application.Capture.InGameAdvancedSampler`
-  turns a publication into what a session stores: the session facts of the thirteen `Game` entries below (nineteen since 0.1.0-beta.43), in the
+  turns a publication into what a session stores: the session facts of the thirteen `Game` entries below (nineteen since 0.1.0-beta.43, twenty-one since 0.1.0-beta.44), in the
   vendor's own words (a preset is its letter, a member its name), and two series —
   `adv.ffx.upscale.frame_time_delta`, the mean of one second's dispatches, and `adv.ffx.memory_usage`, a point for
   each second the game asked. The facts are one list until a field they are made of moves, so the recorder's context
@@ -783,6 +783,18 @@ planning, the design reviewed against the code before it was approved.
   (`FlHookFamily.SlConstants`, `.FfxConfigure` in the writer state's mask) and no publication carried the group; or
   `NotHooked` — the family was never published, which is a game that did not load the library, a Streamline 1.x
   interposer, or a patch that was refused. The page says it in one more sentence of the session's sources line.
+  **The third step, 2026-11-12 (0.1.0-beta.44).** Two more entries have reach `Game`: `sl.feature.versions` and
+  `sl.feature.requirements`, from what Streamline answers `slGetFeatureVersion` and `slGetFeatureRequirements`
+  (`17_HOOK_ENGINE` §Hook inventory). The sampler makes them from region 5's twelve feature slots (layout 5 and
+  schema 23 as they were): rows named `<feature> · <member>`, the feature by NVIDIA's constant (`kFeatureDLSS_G`;
+  `feature 4242` for an id this build has no name for), a version as `major.minor.build`, the requirement flags by
+  their enumerators. A version of all zeros is the vendor's "none" and has no row — a feature with no NGX model, a
+  requirement nobody stated — except `versionSL`; a count of 0 is a count. One bit of the mask covers both
+  questions, so which was answered is told by the slots (`InGameAdvancedSampler.FeatureCall`), and
+  `AdvancedSources.StreamlineFeatureVersion` and `.StreamlineFeatureRequirements` say for each: `Read`;
+  `NeverCalled` — hooked, and the game did not ask after that, **the usual case, because a game asks while it
+  starts**, and the page words it so; or `NotHooked`. The slots are not emptied by a new request, so a second
+  session of a game that kept running stores what the first one read. `sl.init.preferences` stays unread (D112).
 - **D113 — three releases, because a new patch site cannot be proven in CI.** A crash in a game under the user-mode
   anti-cheat exception's trial ends that exception for good (D38), and every release already means restarting the
   game. **beta.40**: more fields of calls *already* hooked — `sl::DLSSOptions` where the game chains it into
@@ -819,6 +831,9 @@ planning, the design reviewed against the code before it was approved.
 - **What will read N/A, and says why.** Many titles set their DLSS options through `slDLSSSetOptions`, which is not
   an export (train D), so `sl.dlss.*` is filled only for a title that passes its options with the evaluate call.
   `slGetFeatureVersion` and `slGetFeatureRequirements` are calls a game makes while starting.
+- **Privacy Policy 2.18** at beta.44 (approved with that release's plan): 2.17 named two further calls and what
+  they give; Streamline's answers about a feature are in neither list, so they are named, with what of the answer
+  is never read — the lists it points to.
 - **Privacy Policy 2.17** at beta.43 (approved with that release's plan): 2.16 listed DLSS's and FSR's upscaling
   parameters by name, and Streamline's per-frame constants and the frame-generation configuration are in neither
   list, so they are named — and §4 says the two calls are intercepted only once a session with the option on has
@@ -1014,8 +1029,8 @@ that is not built — Train B), `Spike` (Trains C and D), `Refused`, `Deferred`,
 | `sl.constants.projection` | Field of view, aspect ratio, orthographic or not | SessionFact | Streamline | Game | Table |
 | `sl.constants.resets` | How often the game reset the upscaler's history | SessionFact | Streamline | Game | Count |
 | `ffx.framegen.config` | The game's FSR frame-generation configuration | SessionFact | FidelityFx | Game | Table |
-| `sl.feature.versions` | Each Streamline feature's version and its NGX model version | SessionFact | Streamline | NewHook | Table |
-| `sl.feature.requirements` | What each Streamline feature requires: operating system, driver, buffers | SessionFact | Streamline | NewHook | Table |
+| `sl.feature.versions` | Each Streamline feature's version and its NGX model version | SessionFact | Streamline | Game | Table |
+| `sl.feature.requirements` | What each Streamline feature requires: operating system, driver, buffers | SessionFact | Streamline | Game | Table |
 | `sl.init.preferences` | The preferences the game started Streamline with | SessionFact | Streamline | NewHook | Text |
 | `sl.constants.camera` | Camera position, axes and matrices | SessionFact | Streamline | PlayerState | Text |
 

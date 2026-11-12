@@ -53,6 +53,13 @@ public static class AdvancedLabels
     /// <summary>What became of one call hooked only for Advanced metrics, in a session (0.1.0-beta.43).</summary>
     public static string InGameCall(AdvancedInGameCall call) => Lookup("AdvInGameCall_" + call) ?? call.ToString();
 
+    /// <summary>
+    /// The same for a call a game makes while it starts (0.1.0-beta.44): hooked and not seen is then "the game did not
+    /// ask again after FrameLedger attached" - the usual case, and not a finding about the game.
+    /// </summary>
+    public static string InGameStartupCall(AdvancedInGameCall call) =>
+        call == AdvancedInGameCall.NeverCalled ? Strings.AdvInGameCall_NotAskedAgain : InGameCall(call);
+
     /// <summary>A token the driver's answer was mapped to; the token itself where this build has no word for it.</summary>
     public static string Token(string token) => Lookup("AdvToken_" + token) ?? token;
 

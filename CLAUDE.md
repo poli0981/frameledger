@@ -125,6 +125,9 @@ src/
                                #   Since 0.1.0-beta.43 also what the game tells Streamline each frame and how it
                                #   configures FSR frame generation, from two calls hooked only once Advanced has been
                                #   asked for; AdvancedInGameCall says of each: read, never called, or not hooked.
+                               #   Since 0.1.0-beta.44 also what Streamline answers when the game asks about a
+                               #   feature (its version, what it requires), from two more calls hooked the same
+                               #   way; a game asks while it starts, so "never called" is the usual answer there.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,

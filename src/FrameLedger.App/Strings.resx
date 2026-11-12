@@ -498,6 +498,9 @@
   <data name="Advanced_InGameCallsLine" xml:space="preserve">
     <value>What the game tells Streamline each frame: {0}. How it configures FSR frame generation: {1}.</value>
   </data>
+  <data name="Advanced_InGameFeatureCallsLine" xml:space="preserve">
+    <value>Which version each Streamline feature is: {0}. What each requires: {1}.</value>
+  </data>
   <data name="Advanced_InGameLine" xml:space="preserve">
     <value>Inside the game: {0}.</value>
   </data>
@@ -626,6 +629,9 @@
   </data>
   <data name="AdvInGameCall_NeverCalled" xml:space="preserve">
     <value>hooked - the game did not make the call</value>
+  </data>
+  <data name="AdvInGameCall_NotAskedAgain" xml:space="preserve">
+    <value>hooked - the game asks this while it starts, and did not ask again after FrameLedger attached</value>
   </data>
   <data name="AdvInGameCall_NotHooked" xml:space="preserve">
     <value>not hooked - the game did not load the library that has the call</value>

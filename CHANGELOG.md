@@ -49,8 +49,21 @@ numeric core and does not move; the heading is the full version — corrected 20
   later, will still not see the calls. Nothing is shown of them yet: the Agent and the App read them in the next
   pull request. No layout change (5), no schema change (23).
 
+- **A session shows which version each Streamline feature is, and what it requires** (Advanced metrics). Two
+  catalog entries are now read inside the game: `sl.feature.versions` and `sl.feature.requirements` — Streamline's
+  answers to the two questions a game asks about a feature, in NVIDIA's own names (`kFeatureDLSS_G · versionNGX`,
+  `kFeatureDLSS · driverVersionRequired`). The line under the session says for each of the two calls whether it was
+  read, not hooked, or — the usual case — *hooked — the game asks this while it starts, and did not ask again after
+  FrameLedger attached*. **Most sessions will show nothing here**: a game asks before FrameLedger is in it. A game
+  that asks later is read then, and a second session of a game that kept running keeps what the first read. The
+  Agent's end-to-end tests now run a Streamline target as well as an FSR one.
+
 ### Changed
 
+- **Privacy Policy 2.18**: it names what Streamline answers about a feature — the features asked about, their
+  versions, what each requires — and what of that answer is never read (the lists it points to: the buffers' names,
+  the names of Vulkan extensions and features); "two further calls" is four. The terms window shows once after the
+  update. The Disclaimer stays 2.15.
 - **Switching hooking back on starts the count of early abnormal ends again** (owner decision D126). The count was
   never set back, so a game that had once been switched off — after two ends within 60 seconds of injection — was
   switched off again by every single such end after its user switched it on, under a reason that still said

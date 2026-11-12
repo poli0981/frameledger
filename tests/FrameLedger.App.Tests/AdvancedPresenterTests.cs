@@ -241,7 +241,7 @@ public sealed class AdvancedPresenterTests
             At(live, id).Status.Should().Be(Strings.Advanced_Status_InGame);
         }
 
-        At(live, "sl.feature.versions").Status.Should().Be(AdvancedLabels.Reach(AdvancedReach.NewHook), "a hook that is not built is still a later release");
+        At(live, "sl.init.preferences").Status.Should().Be(AdvancedLabels.Reach(AdvancedReach.NewHook), "a hook that is not built is still a later release");
         live.Where(static r => r.IsRead).Should().HaveCount(AdvancedMetricCatalog.All.Count(static m => m.IsRead));
     }
 
@@ -309,6 +309,39 @@ public sealed class AdvancedPresenterTests
         }
 
         AdvancedLabels.InGameCall(AdvancedInGameCall.NeverCalled).Should().NotBe(AdvancedLabels.InGameCall(AdvancedInGameCall.NotHooked), "the two reasons a value is absent are not one");
+    }
+
+    [Fact]
+    public void ASessionsSourcesLineSaysOfTheTwoQuestionsAboutAFeatureThatAGameAsksThemWhileItStarts()
+    {
+        // 0.1.0-beta.44. A game asks which version a feature is and what it requires while it starts; a session that
+        // attached later finds the hook in and the call not made. That is said in words of its own - "did not ask
+        // again" - and not as the finding "the game did not make the call" is for a call made every frame.
+        AdvancedSources beta43 = AdvancedFixtures.Sources with
+        {
+            InGame = AdvancedInGameStatus.Reading,
+            StreamlineConstants = AdvancedInGameCall.Read,
+            FsrFrameGeneration = AdvancedInGameCall.NotHooked,
+        };
+        string before = AdvancedPresenter.SourcesLine(beta43);
+        before.Should().NotContain(Strings.AdvInGameCall_NotAskedAgain, "a row stored before says nothing of the two");
+
+        string line = AdvancedPresenter.SourcesLine(beta43 with
+        {
+            StreamlineFeatureVersion = AdvancedInGameCall.Read,
+            StreamlineFeatureRequirements = AdvancedInGameCall.NeverCalled,
+        });
+
+        line.Should().StartWith(before, "what was said before is said as before");
+        line.Should().EndWith(string.Format(
+            CultureInfo.CurrentCulture,
+            Strings.Advanced_InGameFeatureCallsLine,
+            AdvancedLabels.InGameCall(AdvancedInGameCall.Read),
+            Strings.AdvInGameCall_NotAskedAgain));
+
+        AdvancedLabels.InGameStartupCall(AdvancedInGameCall.NeverCalled).Should().NotBe(AdvancedLabels.InGameCall(AdvancedInGameCall.NeverCalled));
+        AdvancedLabels.InGameStartupCall(AdvancedInGameCall.NotHooked).Should().Be(AdvancedLabels.InGameCall(AdvancedInGameCall.NotHooked), "not hooked is not hooked, whenever the call is made");
+        AdvancedLabels.InGameStartupCall(AdvancedInGameCall.Read).Should().Be(AdvancedLabels.InGameCall(AdvancedInGameCall.Read));
     }
 
     [Fact]
