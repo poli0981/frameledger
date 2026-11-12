@@ -65,6 +65,10 @@ static_assert(fl::stub::InventoryHas("slGetNewFrameToken"),
 static_assert(fl::stub::InventoryHas("slGetFeatureVersion") && fl::stub::InventoryHas("slGetFeatureRequirements"),
               "fl_hook_inventory.h no longer contains \"slGetFeatureVersion\" or \"slGetFeatureRequirements\", so the "
               "feature fixture would exercise a row the Overlay does not install.");
+static_assert(fl::stub::InventoryHas("slIsFeatureSupported") && fl::stub::InventoryHas("slIsFeatureLoaded") &&
+                  fl::stub::InventoryHas("slSetFeatureLoaded"),
+              "fl_hook_inventory.h no longer contains one of the three feature-state rows of 0.1.0-beta.45, so the "
+              "fixture would exercise a row the Overlay does not install.");
 static_assert(fl::stub::InventoryHas("slSetConstants"),
               "fl_hook_inventory.h no longer contains \"slSetConstants\", so the constants fixture would exercise a "
               "row the Overlay does not install.");
@@ -144,9 +148,32 @@ SL_API sl::Result slSetD3DDevice(void* d3dDevice) {
     return sl::Result::eOk;
 }
 
+// An ABI marker, and since 0.1.0-beta.45 a hooked row: DLSS and everything else are loaded, PCL is not, and NIS is
+// REFUSED after the bool was written true -- a refused answer the Overlay must not keep.
 SL_API sl::Result slIsFeatureLoaded(sl::Feature feature, bool& loaded) {
+    loaded = feature != sl::kFeaturePCL;
+    return feature == sl::kFeatureNIS ? sl::Result::eErrorFeatureMissing : sl::Result::eOk;
+}
+
+// The two other rows of 0.1.0-beta.45. The numbers of the two refusals are what the injected case mirrors
+// (guard_test.cpp): a code that moved in the vendor's header would otherwise pass here and be mislabelled there.
+static_assert(static_cast<int>(sl::Result::eErrorFeatureMissing) == 31 &&
+                  static_cast<int>(sl::Result::eErrorFeatureNotSupported) == 32,
+              "sl::Result's numbering moved; guard_test.cpp states these two as 31 and 32");
+
+// DLSS and DLSS frame generation are supported, NIS is not, anything else is missing. The adapter is not looked at
+// here either; the harness hands one whose LUID pointer is wild.
+SL_API sl::Result slIsFeatureSupported(sl::Feature feature, const sl::AdapterInfo& adapterInfo) {
+    (void)adapterInfo;
+    if (feature == sl::kFeatureDLSS || feature == sl::kFeatureDLSS_G) {
+        return sl::Result::eOk;
+    }
+    return feature == sl::kFeatureNIS ? sl::Result::eErrorFeatureNotSupported : sl::Result::eErrorFeatureMissing;
+}
+
+SL_API sl::Result slSetFeatureLoaded(sl::Feature feature, bool loaded) {
     (void)feature;
-    loaded = true;
+    (void)loaded;
     return sl::Result::eOk;
 }
 

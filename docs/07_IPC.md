@@ -152,6 +152,13 @@ What the region is, as a contract between the two sides:
   does not empty them** — the one group that is a fact about the process and not about a session — and
   `FL_ADV_VALID_SL_FEATURES` stays set with them. `FL_HOOK_SL_FEATURE_VERSION` (bit 15) and
   `FL_HOOK_SL_FEATURE_REQUIREMENTS` (bit 16) are published with their patches, in a process that was asked.
+- **Word 1 of a slot carries more since 0.1.0-beta.45** (no layout change): bit 2 `slIsFeatureSupported` answered,
+  with the `sl::Result` it gave in bits 8..15 (0 is `eOk`; a refusal is kept, it is the answer; `0xFF` a code a byte
+  cannot carry); bit 3 `slIsFeatureLoaded` answered and bit 4 what it said; bit 5 the game switched the feature off
+  through `slSetFeatureLoaded`, bit 6 on. **Bits 5 and 6 are a session's and a new request clears them**; every
+  other bit of the word is a fact about the process and stays, as the slot does. A feature Streamline refused has
+  a slot with only that word in it. `FL_HOOK_SL_FEATURE_SUPPORTED` (bit 17), `FL_HOOK_SL_FEATURE_LOADED` (18) and
+  `FL_HOOK_SL_SET_FEATURE_LOADED` (19) are published with their patches.
 - The Vulkan layer never writes it. `ShmLayoutMirrorTests.TheAdvancedStateMirrorMatches` checks every member's
   offset against `fl-layout-dump`; `ShmRingReaderTests` the three reads and that the request is stored either way.
 

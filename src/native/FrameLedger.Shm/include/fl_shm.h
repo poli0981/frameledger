@@ -422,6 +422,12 @@ enum FlHookFamily : uint32_t {
     // of a frame record.
     FL_HOOK_SL_FEATURE_VERSION = 1u << 15,
     FL_HOOK_SL_FEATURE_REQUIREMENTS = 1u << 16,
+    // Three more of Streamline's questions and switches about a feature (0.1.0-beta.45, owner decisions D129-D131):
+    // slIsFeatureSupported, slIsFeatureLoaded, slSetFeatureLoaded -- a bit each, because a patch each, published only
+    // in a process that was asked for Advanced metrics at least once. None entitles a measured field of a frame record.
+    FL_HOOK_SL_FEATURE_SUPPORTED = 1u << 17,
+    FL_HOOK_SL_FEATURE_LOADED = 1u << 18,
+    FL_HOOK_SL_SET_FEATURE_LOADED = 1u << 19,
 };
 
 // FlWriterState::runtimeCensus -- which vendor RUNTIME MODULES the loader reported
@@ -978,6 +984,10 @@ enum FlAdvancedValid : uint32_t {
 // thirteenth feature is not kept.
 //   [0]      sl::Feature id PLUS ONE; 0 = an empty slot
 //   [1]      bit 0: slGetFeatureVersion answered; bit 1: slGetFeatureRequirements answered
+//            (0.1.0-beta.45) bit 2: slIsFeatureSupported answered, and bits 8..15 the sl::Result it gave (0 = eOk;
+//            0xFF = a code a byte cannot carry); bit 3: slIsFeatureLoaded answered, bit 4 what it said;
+//            bit 5: the game was seen to switch the feature OFF (slSetFeatureLoaded), bit 6: ON -- these two are a
+//            session's and are cleared by a new request; the rest are the process's and stay
 //   [2..4]   versionSL  major, minor, build        [5..7]   versionNGX
 //   [8]      FeatureRequirementFlags                [9]      maxNumCPUThreads
 //   [10]     maxNumViewports                        [11]     numRequiredTags

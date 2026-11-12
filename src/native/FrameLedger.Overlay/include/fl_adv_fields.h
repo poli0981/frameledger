@@ -197,6 +197,18 @@ struct Accumulators {
 // Word 1 of a feature slot: which of the two questions has an answer in it.
 inline constexpr uint32_t kFeatureVersionAnswered = 1u << 0;
 inline constexpr uint32_t kFeatureRequirementsAnswered = 1u << 1;
+// 0.1.0-beta.45: whether it is supported (and the sl::Result that said so, in bits 8..15), whether it is loaded (and
+// what the answer was), and whether the game was seen to switch it off or on.
+inline constexpr uint32_t kFeatureSupportAnswered = 1u << 2;
+inline constexpr uint32_t kFeatureLoadedAnswered = 1u << 3;
+inline constexpr uint32_t kFeatureLoadedValue = 1u << 4;
+inline constexpr uint32_t kFeatureSwitchedOff = 1u << 5;
+inline constexpr uint32_t kFeatureSwitchedOn = 1u << 6;
+inline constexpr uint32_t kFeatureSupportResultShift = 8u;
+inline constexpr uint32_t kFeatureSupportResultMask = 0xFFu << kFeatureSupportResultShift;
+// What of word 1 is a SESSION's -- what the game did while it was watched -- and is cleared by a new request. The
+// rest is a fact about the process (which version, what it requires, whether it is supported and loaded) and stays.
+inline constexpr uint32_t kFeatureSessionBits = kFeatureSwitchedOff | kFeatureSwitchedOn;
 
 // Whether `leaf` is the module whose calls a summary counts: the first one seen, and
 // from then on only it. A title that goes through the loader has the same call
@@ -534,6 +546,55 @@ inline void ObserveSlFeatureRequirements(uint32_t feature, const sl::FeatureRequ
     NoteBits(a.validMask, FL_ADV_VALID_SL_FEATURES);
 }
 
+// Some bits of a word replaced by others, the rest left as they are: two detours may be writing different fields of
+// the same slot's word 1.
+inline void PutBits(std::atomic<uint32_t>& word, uint32_t mask, uint32_t bits) noexcept {
+    uint32_t seen = word.load(std::memory_order_relaxed);
+    while ((seen & mask) != bits) {
+        if (word.compare_exchange_weak(seen, (seen & ~mask) | bits, std::memory_order_relaxed)) {
+            break;
+        }
+    }
+}
+
+// What slIsFeatureSupported ANSWERED about a feature (0.1.0-beta.45): the sl::Result itself, whatever it is -- a
+// refusal is the answer to this question, where for a version or a requirement it is the absence of one. The last
+// answer is the one kept. The adapter the game asked about is not an argument of this function: the detour never
+// hands it over, and nothing here could read it (owner decision D131).
+inline void ObserveSlFeatureSupported(uint32_t feature, uint32_t result, Accumulators& a) noexcept {
+    std::atomic<uint32_t>* slot = FeatureSlot(feature, a);
+    if (slot == nullptr) {
+        return;
+    }
+    const uint32_t code = result > 0xFEu ? 0xFFu : result;
+    PutBits(slot[1], kFeatureSupportResultMask | kFeatureSupportAnswered,
+            (code << kFeatureSupportResultShift) | kFeatureSupportAnswered);
+    NoteBits(a.validMask, FL_ADV_VALID_SL_FEATURES);
+}
+
+// What slIsFeatureLoaded ANSWERED (0.1.0-beta.45): the caller is the detour, after the original said OK and wrote
+// the bool. The last answer is the one kept.
+inline void ObserveSlFeatureLoaded(uint32_t feature, bool loaded, Accumulators& a) noexcept {
+    std::atomic<uint32_t>* slot = FeatureSlot(feature, a);
+    if (slot == nullptr) {
+        return;
+    }
+    PutBits(slot[1], kFeatureLoadedAnswered | kFeatureLoadedValue,
+            kFeatureLoadedAnswered | (loaded ? kFeatureLoadedValue : 0u));
+    NoteBits(a.validMask, FL_ADV_VALID_SL_FEATURES);
+}
+
+// What the game told slSetFeatureLoaded (0.1.0-beta.45): off, on, or over a session both. What the game ASKED --
+// whether Streamline did it is slIsFeatureLoaded's to say.
+inline void ObserveSlSetFeatureLoaded(uint32_t feature, bool loaded, Accumulators& a) noexcept {
+    std::atomic<uint32_t>* slot = FeatureSlot(feature, a);
+    if (slot == nullptr) {
+        return;
+    }
+    NoteBits(slot[1], loaded ? kFeatureSwitchedOn : kFeatureSwitchedOff);
+    NoteBits(a.validMask, FL_ADV_VALID_SL_FEATURES);
+}
+
 // A NEW REQUEST: the summaries start afresh, so a session's ranges, masks and
 // counts are its own and not those of the session before it in the same game.
 // THE WATCHDOG'S. A detour running beside it loses nothing that matters: what it
@@ -595,6 +656,16 @@ inline void Reset(Accumulators& a) noexcept {
     a.slAspectBits.store(FL_ADV_FLOAT_NONE, relaxed);
     a.slFlagsSeenTrue.store(0u, relaxed);
     a.slFlagsSeenFalse.store(0u, relaxed);
+    // The feature slots stay; what of their word 1 is a session's does not (0.1.0-beta.45).
+    for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS; ++i) {
+        std::atomic<uint32_t>* slot = &a.features[static_cast<size_t>(i) * FL_ADV_FEATURE_WORDS];
+        if (slot[0].load(relaxed) == 0u) {
+            break;
+        }
+        if ((slot[1].load(relaxed) & kFeatureSessionBits) != 0u) {
+            slot[1].fetch_and(~kFeatureSessionBits, relaxed);
+        }
+    }
 }
 
 // Copies the accumulators into region 5, under the request they answer. THE
