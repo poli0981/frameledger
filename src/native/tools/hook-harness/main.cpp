@@ -97,7 +97,7 @@
 //                    an FSR title does: one UPSCALE and one PREPARE (issued twice,
 //                    same frameID) per application frame, one FRAMEGENERATION per
 //                    frame at K > 1, then K presents (--presents-per-eval K)
-//   --ffx-topology 1x|2x|ue|fsr3host|fsr3host+mono
+//   --ffx-topology 1x|2x|2x-export|ue|fsr3host|fsr3host+mono
 //                    which vendor shape --hold-presenting-ffx stands in: 2x (default)
 //                    is the SDK 2.x pair of effect DLLs behind the LOADER (the game
 //                    calls the loader; the loader forwards NOT through the leaves'
@@ -3022,7 +3022,9 @@ int HoldPresentingFg(Gfx& g, int seconds, bool real, int presentsPerEval) {
 // DLL alone (its named UPSCALE export, no PREPARE, no frame generation -- the K = 1
 // double-count control for that row), fsr3host+mono = Cyberpunk 2077's measured shape:
 // the host upscales while the 1.1.x monolith prepares and generates.
-enum class FfxTopology { Monolith, Loader, Ue, Fsr3Host, Fsr3HostMonolith };
+// LoaderExport (2026-11-12, D125): the two leaves behind a loader that forwards a dispatch to their EXPORTS, as
+// Cyberpunk 2077's loader 2.3.0 was measured to -- every dispatch then reaches two hooked modules.
+enum class FfxTopology { Monolith, Loader, LoaderExport, Ue, Fsr3Host, Fsr3HostMonolith };
 
 using PfnFsr3DispatchUpscale = decltype(&fsr3host::ffxFsr3ContextDispatchUpscale);
 
@@ -3136,16 +3138,17 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
             Check(false, "the SDK 2.x leaf stubs loaded for the ffx hold");
             return 1;
         }
-        if (topology == FfxTopology::Loader) {
+        if (topology == FfxTopology::Loader || topology == FfxTopology::LoaderExport) {
             const HMODULE loader = LoadStubExactly(FL_STUB_FFX_LOADER);
             if (loader == nullptr) {
                 Check(false, "the loader stub loaded for the ffx hold");
                 return 1;
             }
-            auto bind =
-                reinterpret_cast<StubLoaderBindFn>(reinterpret_cast<void*>(GetProcAddress(loader, "FlStubLoaderBind")));
+            auto bind = reinterpret_cast<StubLoaderBindFn>(reinterpret_cast<void*>(
+                GetProcAddress(loader, topology == FfxTopology::LoaderExport ? "FlStubLoaderBindThroughExports"
+                                                                             : "FlStubLoaderBind")));
             if (bind == nullptr) {
-                Check(false, "the loader stub exports FlStubLoaderBind");
+                Check(false, "the loader stub exports its bind entry");
                 return 1;
             }
             bind(upscaler, fg);
@@ -3182,9 +3185,12 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
         return 1;
     }
     // The pre-V2 PREPARE is the 1.1.x monolith's, on both topologies that use it.
-    const bool  topology2x = topology == FfxTopology::Loader || topology == FfxTopology::Ue;
-    const char* topologyName = topology == FfxTopology::Monolith   ? "SDK 1.1.x (monolith)"
-                               : topology == FfxTopology::Loader   ? "SDK 2.x (two leaves behind the loader)"
+    const bool topology2x =
+        topology == FfxTopology::Loader || topology == FfxTopology::LoaderExport || topology == FfxTopology::Ue;
+    const char* topologyName = topology == FfxTopology::Monolith ? "SDK 1.1.x (monolith)"
+                               : topology == FfxTopology::Loader ? "SDK 2.x (two leaves behind the loader)"
+                               : topology == FfxTopology::LoaderExport
+                                   ? "SDK 2.x (two leaves behind a loader that forwards to their exports)"
                                : topology == FfxTopology::Ue       ? "UE5 (two leaves, no loader)"
                                : topology == FfxTopology::Fsr3Host ? "FSR 3.0 host DLL alone"
                                                                    : "FSR 3.0 host DLL + SDK 1.1.x monolith";
@@ -3484,6 +3490,7 @@ int main(int argc, char** argv) {
         } else if (std::strcmp(argv[i], "--ffx-topology") == 0 && i + 1 < argc) {
             const char* t = argv[++i];
             ffxTopology = std::strcmp(t, "1x") == 0              ? FfxTopology::Monolith
+                          : std::strcmp(t, "2x-export") == 0     ? FfxTopology::LoaderExport
                           : std::strcmp(t, "ue") == 0            ? FfxTopology::Ue
                           : std::strcmp(t, "fsr3host") == 0      ? FfxTopology::Fsr3Host
                           : std::strcmp(t, "fsr3host+mono") == 0 ? FfxTopology::Fsr3HostMonolith

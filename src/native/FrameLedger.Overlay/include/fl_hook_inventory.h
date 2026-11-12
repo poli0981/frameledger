@@ -183,6 +183,13 @@ static_assert((kFamilyEvaluateFeature & static_cast<uint32_t>(fl::FL_HOOK_FG_EVA
 // prints against each other (frames/upscale-drained) and the K = 1 control in the
 // fixtures are what would show a loader that re-entered a leaf's export: 2x on both.
 //
+// AND MEASURED A THIRD TIME, 2026-11-12, WITH A THIRD ANSWER: Cyberpunk 2077's loader 2.3.0 DOES hand a dispatch
+// on to the leaf's export -- its frame-generation dispatch types are logged on the loader and on the
+// frame-generation leaf. So "the leaves stay silent behind the loader" is a fact about the loader of September's
+// three titles (1.0.2), not about loaders. The rows stand as they are -- whatever module the game calls -- and
+// what a dispatch seen twice may count is decided where it is counted: PREPARE by its frame number, an UPSCALE at
+// the first source that saw one (dllmain.cpp g_ffxUpscaleOwner, owner decision D125).
+//
 // The effect-DLL split is NOT a guess about the vendor's internals: the FidelityFX
 // SDK's own getting-started text says the loader "only manages the loading of
 // effect type DLLs" and is "interface- and behavior-compatible with

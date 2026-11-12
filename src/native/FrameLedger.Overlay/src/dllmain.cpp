@@ -1256,6 +1256,23 @@ std::atomic<uint64_t> g_ffxExtent{0};
 // not say which -- so the same UPSCALE type decodes to FL_UPSCALER_FSR3 from one leaf
 // and to FL_UPSCALER_FSR_UNVERSIONED from the other (fl_shm.h says why).
 std::atomic<uint32_t> g_ffxUpscaleLeaf{0};
+// WHICH SOURCE'S UPSCALES ARE COUNTED (owner decision D125, 2026-11-12): the first one that saw an UPSCALE, and from
+// then on only it -- leaf + 1 for an ffx-api module, kFfxUpscaleSourceFsr3Host for the 3.0 host; fl::adv::Owns' slot.
+//
+// WHY. A loader that hands a dispatch on to the leaf's EXPORT delivers one UPSCALE to two hooked modules, and the
+// count below was one per module that saw it. Measured on Cyberpunk 2077's loader 2.3.0 for the frame-generation
+// dispatches (logged on the loader AND the leaf); the loader of the three titles of 2026-09-04 leaves the leaf
+// exports silent, which is why the rows were written without this. With frame generation off no PREPARE arrives, the
+// application-frame count falls back to this one, and K = 1 would read 2.0: Native FPS doubled and the factor halved,
+// which rule 6 forbids in either direction. No title run so far upscales through such a loader -- this is a
+// precaution, held by the fixture's loader bound through the exports.
+//
+// THE FIRST SOURCE, AND NOT THE OUTERMOST CALL ON THE STACK: knowing that a detour runs inside another's original
+// would take state carried across the call to the original, which every detour here makes exactly once and outside
+// its guard. The game's entry is the first to see a dispatch, so the first source IS the entry. What it gives up is
+// said in LIMITATIONS: a process whose UPSCALEs come from two unrelated sources is counted from the first alone.
+// The render size and the quality byte are NOT gated -- the same call writes the same values twice.
+std::atomic<uint32_t> g_ffxUpscaleOwner{0};
 
 using PFN_FfxDispatch = ::PfnFfxDispatch;
 PFN_FfxDispatch g_origFfxDispatch[fl::inventory::kFfxLeafCount] = {};
@@ -2014,8 +2031,12 @@ void ObserveFfxDispatch(uint32_t leaf, const ffxDispatchDescHeader* desc) noexce
         g_ffxQuality.store(
             FfxQualityOf(up->renderSize.width, up->renderSize.height, up->upscaleSize.width, up->upscaleSize.height),
             std::memory_order_release);
-        g_ffxUpscaleLeaf.store(leaf + 1u, std::memory_order_relaxed);
-        g_ffxSeen.fetch_add(fl::slseen::kCountOne, std::memory_order_relaxed);
+        // Counted once, at the first source that saw an UPSCALE (D125): a loader that forwards to the leaf's export
+        // brings the same dispatch here twice.
+        if (fl::adv::Owns(g_ffxUpscaleOwner, leaf)) {
+            g_ffxUpscaleLeaf.store(leaf + 1u, std::memory_order_relaxed);
+            g_ffxSeen.fetch_add(fl::slseen::kCountOne, std::memory_order_relaxed);
+        }
         // The rest of the same descriptor (sharpening, jitter, exposure, the depth range, the field of view, flags,
         // the frame time) - Advanced metrics, only while the Agent asked (D111). Not on the FSR 3.0 host's route:
         // its legacy descriptor is vouched for through renderSize and no further (17_HOOK_ENGINE §Which struct
@@ -2080,8 +2101,11 @@ fsr3host::FfxErrorCode Hook_FfxFsr3ContextDispatchUpscale(fsr3host::FfxFsr3Conte
     FL_HOOK_GUARD({
         if (MayObserve() && desc != nullptr) {
             NoteFfxExtent(desc->renderSize.width, desc->renderSize.height);
-            g_ffxUpscaleLeaf.store(kFfxUpscaleSourceFsr3Host, std::memory_order_relaxed);
-            g_ffxSeen.fetch_add(fl::slseen::kCountOne, std::memory_order_relaxed);
+            // The host is a source like the four leaves (D125): Owns' slot value for it is its leaf index + 1.
+            if (fl::adv::Owns(g_ffxUpscaleOwner, kFfxUpscaleSourceFsr3Host - 1u)) {
+                g_ffxUpscaleLeaf.store(kFfxUpscaleSourceFsr3Host, std::memory_order_relaxed);
+                g_ffxSeen.fetch_add(fl::slseen::kCountOne, std::memory_order_relaxed);
+            }
         }
     })
     return g_origFfxFsr3DispatchUpscale(context, desc);

@@ -6088,6 +6088,26 @@ TEST_CASE("FSR through the SDK 2.x loader: identified, extent exact, the count t
     }
 }
 
+TEST_CASE("a loader that hands a dispatch on to the leaf's export (D125): an UPSCALE is counted once, at the module "
+          "the game called",
+          "[guard][inject][shm][ffx]") {
+    // MEASURED ON CYBERPUNK 2077, 2026-11-12: its loader 2.3.0 forwards a dispatch to the leaf's EXPORT -- each
+    // frame-generation dispatch type was logged on the loader and on the frame-generation leaf -- where the loader of
+    // September's three titles left the leaf exports silent. With all four modules hooked an UPSCALE through such a
+    // loader arrives twice, and the count that stands in for application frames when no PREPARE is issued (frame
+    // generation off) was one per hooked module that saw it: K = 1 read 2.0. No title run so far upscales this way;
+    // the stub loader bound through the exports is how the rule is held. Frame generation ON is the second half:
+    // PREPARE is counted by its frame number and must read the same through either loader.
+    for (const int k : {1, 4}) {
+        CAPTURE(k);
+        FfxObservation obs;
+        REQUIRE(ObserveFfx(k, L"2x-export", /*prepare=*/k > 1, fl::FL_UPSCALER_FSR_UNVERSIONED, obs));
+        AssertFfxWindow(obs, k);
+        CHECK((obs.census & fl::FL_CENSUS_AMD_FFX_UPSCALER) != 0u);
+        CHECK((obs.census & fl::FL_CENSUS_AMD_FFX_FRAMEGENERATION) != 0u);
+    }
+}
+
 TEST_CASE("the SDK 1.1.x monolith is FSR3; with no PREPARE the count falls back to UPSCALE dispatches",
           "[guard][inject][shm][ffx]") {
     // TWO SHAPES A 1.1.x TITLE ACTUALLY HAS. Frame generation OFF: no PREPARE is ever
