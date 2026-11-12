@@ -52,6 +52,7 @@
 #include <fl_dxgi_vtable.h>
 #include <fl_hook_inventory.h>
 #include <fl_patch_check.h>
+#include <fl_patch_registry.h>
 #include <fl_ring.h>
 #include <fl_rt_accum.h>
 #include <fl_shm.h>
@@ -147,6 +148,7 @@ enum FlLogCode : uint32_t {
     kLogSupervisionLost,
     kLogTolerance,
     kLogStopFlushed,
+    kLogPatchFailed,
 };
 
 const char* LogCodeName(uint32_t code) noexcept {
@@ -175,6 +177,8 @@ const char* LogCodeName(uint32_t code) noexcept {
         return "TOLERANCE";
     case kLogStopFlushed:
         return "STOP_FLUSHED";
+    case kLogPatchFailed:
+        return "PATCH_FAILED";
     default:
         return "?";
     }
@@ -334,23 +338,55 @@ void FlushLog(bool lastFlush = false) noexcept {
 // patch this DLL installs is recorded here so the stop can ask, per patch,
 // whether the bytes at the target are still OUR jump before writing the saved
 // prologue back -- the inline-patch form of §H7's compare-and-restore.
+//
+// fl_patch_registry.h since 0.1.0-beta.42: a patch takes its slot BEFORE it is
+// created -- no slot, no patch -- and is committed before the flag is re-read,
+// so no patch can be live and unknown to the stop. The header says what the
+// array and counter this replaces let through.
+//
+// THE CAPACITY IS CHECKED AGAINST WHAT CAN BE INSTALLED: every inventory row,
+// counted by the table itself, and the seven sites that are not rows -- DXGI's
+// Present, Present1 and ResizeBuffers, kernelbase!LoadLibraryExW,
+// opengl32!wglSwapBuffers, and the two ray-tracing command-list methods. A site
+// added without raising kPatchSitesOutsideTheInventory is not caught here; it is
+// caught at run time, where a full registry refuses the patch and says so.
 // ---------------------------------------------------------------------------
-struct PatchEntry {
-    void*       target = nullptr;
-    void*       detour = nullptr;
-    const char* name = nullptr;
-};
-constexpr uint32_t    kMaxPatches = 48;
-PatchEntry            g_patches[kMaxPatches]{};
-std::atomic<uint32_t> g_patchCount{0};
+constexpr uint32_t kMaxPatches = 48;
+constexpr uint32_t kPatchSitesOutsideTheInventory = 7;
+static_assert(fl::inventory::kRowCount + kPatchSitesOutsideTheInventory <= kMaxPatches,
+              "the patch registry cannot hold every patch this DLL may install -- raise kMaxPatches with the table");
+fl::patch::Registry<kMaxPatches> g_patches;
 
-void RegisterPatch(void* target, void* detour, const char* name) noexcept {
-    const uint32_t i = g_patchCount.fetch_add(1u, std::memory_order_acq_rel);
-    if (i < kMaxPatches) {
-        g_patches[i].target = target;
-        g_patches[i].detour = detour;
-        g_patches[i].name = name;
-        LogNote(kLogHookInstalled, name, 0, reinterpret_cast<uint64_t>(target));
+// MinHook, as the engine fl::patch::Install drives.
+struct MinHookEngine {
+    static bool Create(void* target, void* detour, void** original) noexcept {
+        return MH_CreateHook(target, detour, original) == MH_OK;
+    }
+    static bool Enable(void* target) noexcept { return MH_EnableHook(target) == MH_OK; }
+    static void Disable(void* target) noexcept { MH_DisableHook(target); }
+};
+
+// A patch that did not go in, said ONCE per target and reason: the lazy installers retry every second, and a line a
+// second would push everything else out of a 256-event ring. Init and watchdog threads only, which never install at
+// the same time (the watchdog starts after the init thread's last install), so a plain table.
+struct PatchFailure {
+    const void* target = nullptr;
+    uint32_t    result = 0;
+};
+PatchFailure g_patchFailuresSeen[16]{};
+
+void NotePatchFailedOnce(const void* target, fl::patch::InstallResult result, const char* name) noexcept {
+    const auto code = static_cast<uint32_t>(result);
+    for (PatchFailure& seen : g_patchFailuresSeen) {
+        if (seen.target == target && seen.result == code) {
+            return;
+        }
+        if (seen.target == nullptr) {
+            seen.target = target;
+            seen.result = code;
+            LogNote(kLogPatchFailed, name, code, reinterpret_cast<uint64_t>(target));
+            return;
+        }
     }
 }
 
@@ -850,8 +886,11 @@ void StopObserving(uint32_t reason) noexcept {
     // reason wins -- a self-disable already in flight is not overwritten by a
     // safety stop that arrives a millisecond later, or the record of WHY we
     // stopped would depend on thread scheduling.
+    //
+    // Sequentially consistent, and the walk below reads the registry the same way: this write and that read are one
+    // half of the pair fl_patch_registry.h describes, and an installer's commit and re-read are the other.
     uint32_t expected = 1;
-    if (!g_observing.compare_exchange_strong(expected, 0, std::memory_order_acq_rel, std::memory_order_acquire)) {
+    if (!g_observing.compare_exchange_strong(expected, 0, std::memory_order_seq_cst, std::memory_order_seq_cst)) {
         return;
     }
     LogNote(kLogStop, "observing stopped", reason);
@@ -862,16 +901,14 @@ void StopObserving(uint32_t reason) noexcept {
     // is restored only while the bytes at its target are still the jump MinHook
     // wrote for us; otherwise it is left in place and our detour stays in the
     // other overlay's chain doing nothing -- g_observing is 0, every body forwards.
-    const uint32_t n = g_patchCount.load(std::memory_order_acquire);
-    for (uint32_t i = 0; i < n && i < kMaxPatches; ++i) {
-        const PatchEntry& p = g_patches[i];
-        if (fl::patch::StillOurs(p.target, p.detour)) {
-            const bool ok = MH_DisableHook(p.target) == MH_OK;
-            LogNote(kLogUnhookRestored, p.name, ok ? 1u : 0u, reinterpret_cast<uint64_t>(p.target));
+    g_patches.ForEachLive([](void* target, void* detour, const char* name) noexcept {
+        if (fl::patch::StillOurs(target, detour)) {
+            const bool ok = MH_DisableHook(target) == MH_OK;
+            LogNote(kLogUnhookRestored, name, ok ? 1u : 0u, reinterpret_cast<uint64_t>(target));
         } else {
-            LogNote(kLogUnhookDeclined, p.name, 0u, reinterpret_cast<uint64_t>(p.target));
+            LogNote(kLogUnhookDeclined, name, 0u, reinterpret_cast<uint64_t>(target));
         }
-    }
+    });
     if (g_state != nullptr) {
         std::atomic_ref<uint32_t> status{g_state->status};
         status.store(reason, std::memory_order_release);
@@ -880,6 +917,35 @@ void StopObserving(uint32_t reason) noexcept {
     // ran on a presenting thread (MayObserve), g_observing read 0 before the first line was written.
     g_stopLogged.store(1u, std::memory_order_release);
     WakeWatchdog();
+}
+
+// Patch ONE address, and close the install-after-stop window.
+//
+// STOPPING IS ONE-WAY, and fl::patch::Install is what keeps it so. StopObserving can
+// run between a caller's g_observing check and the patch, and its walk would then
+// have run BEFORE this hook existed -- leaving a hook patched in after we promised
+// the Agent there were none. Nothing false would be recorded (every body consults
+// MayObserve), but legal/DISCLAIMER.md §2 promises the part inside the game stops,
+// and a hook installed after the stop is not that. So the patch is registered
+// before the flag is re-read, and a full registry refuses it (fl_patch_registry.h).
+//
+// ONE FUNCTION ON PURPOSE, and the reason has now happened three times. It was first
+// inline in the single installer, so a second lazy installer that forgot it would
+// reopen the window silently; the ray-tracing installer WAS that second one, and it
+// cannot reuse InstallRow because its targets come from a VTABLE rather than from a
+// name; the LoadLibrary detour was the third, and until 0.1.0-beta.42 it carried a
+// copy of the sequence with the re-check left out.
+bool PatchTarget(void* target, void* detour, void** original, const char* name = "hook") noexcept {
+    const fl::patch::InstallResult result =
+        fl::patch::Install(g_patches, g_observing, MinHookEngine{}, target, detour, original, name);
+    if (result == fl::patch::InstallResult::Installed) {
+        LogNote(kLogHookInstalled, name, 0, reinterpret_cast<uint64_t>(target));
+        return true;
+    }
+    if (result != fl::patch::InstallResult::NoTarget) {
+        NotePatchFailedOnce(target, result, name);
+    }
+    return false;
 }
 
 // Returns false when we must not record this present.
@@ -1522,13 +1588,11 @@ bool InstallLoaderHook() noexcept {
     if (target == nullptr) {
         return false;
     }
-    if (MH_CreateHook(target, reinterpret_cast<void*>(&Hook_LoadLibraryExW),
-                      reinterpret_cast<void**>(&g_origLoadLibraryExW)) != MH_OK ||
-        MH_EnableHook(target) != MH_OK) {
+    if (!PatchTarget(target, reinterpret_cast<void*>(&Hook_LoadLibraryExW),
+                     reinterpret_cast<void**>(&g_origLoadLibraryExW), "kernelbase!LoadLibraryExW")) {
         LogNote(kLogLoaderDetour, "kernelbase!LoadLibraryExW", 0);
         return false;
     }
-    RegisterPatch(target, reinterpret_cast<void*>(&Hook_LoadLibraryExW), "kernelbase!LoadLibraryExW");
     g_loaderSignals.fetch_or(kLoaderInstalledBit, std::memory_order_release);
     LogNote(kLogLoaderDetour, "kernelbase!LoadLibraryExW", 1);
     return true;
@@ -2141,36 +2205,6 @@ void STDMETHODCALLTYPE Hook_BuildRtAs(ID3D12GraphicsCommandList4*               
 // slSetTag would have been detoured by the slEvaluateFeature body, which reads
 // argument 1 as a feature id. Same class of defect as the SL1 ABI break (#71),
 // reached from the other direction.
-// Patch ONE address, and close the install-after-stop window.
-//
-// STOPPING IS ONE-WAY, and the check below is what keeps it so. StopObserving can
-// run between a caller's g_observing check and here, and MH_DisableHook(MH_ALL_HOOKS)
-// would then have run BEFORE this hook existed -- leaving a hook patched in after
-// we promised the Agent there were none. Nothing false would be recorded (every
-// body consults MayObserve), but legal/DISCLAIMER.md §2 promises the part inside
-// the game stops, and a hook installed after the stop is not that.
-//
-// FACTORED OUT OF InstallRow ON PURPOSE, and the reason has now happened twice.
-// It was first inline in the single installer, so a second lazy installer that
-// forgot it would reopen the window silently; the ray-tracing installer IS that
-// second one, and it cannot reuse InstallRow because its targets come from a
-// VTABLE rather than from a name. Sharing this is what keeps the window closed in
-// one place rather than in two that can drift.
-bool PatchTarget(void* target, void* detour, void** original, const char* name = "hook") noexcept {
-    if (target == nullptr) {
-        return false;
-    }
-    if (MH_CreateHook(target, detour, original) != MH_OK || MH_EnableHook(target) != MH_OK) {
-        return false;
-    }
-    if (g_observing.load(std::memory_order_acquire) == 0) {
-        MH_DisableHook(target);
-        return false;
-    }
-    RegisterPatch(target, detour, name);
-    return true;
-}
-
 // Publish the family bit and latch. Separate from PatchTarget because a hook that
 // spans several targets must not claim its family until every one of them is in.
 void PublishHookFamily(uint32_t family, std::atomic<uint32_t>& live) noexcept {
@@ -3544,20 +3578,55 @@ bool InstallPresentHooks() noexcept {
             // so ctest fl_vtable_indices proved a fact about dxgi.dll rather
             // than about this DLL: changing an 8 here left it green
             // (20_OPEN_QUESTIONS §S29(b)).
-            ok = MH_CreateHook(vtbl[fl::dxgi::kPresentIndex], reinterpret_cast<void*>(&Hook_Present),
-                               reinterpret_cast<void**>(&g_origPresent)) == MH_OK &&
-                 MH_CreateHook(vtbl[fl::dxgi::kResizeBuffersIndex], reinterpret_cast<void*>(&Hook_ResizeBuffers),
-                               reinterpret_cast<void**>(&g_origResizeBuffers)) == MH_OK &&
-                 MH_CreateHook(vtbl[fl::dxgi::kPresent1Index], reinterpret_cast<void*>(&Hook_Present1),
-                               reinterpret_cast<void**>(&g_origPresent1)) == MH_OK &&
-                 MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
+            //
+            // THREE PATCHES, ENABLED TOGETHER -- one pass over the process's threads rather than three, and no
+            // moment in which Present is hooked and ResizeBuffers is not -- so they do not go through PatchTarget,
+            // and keep its rules by hand: a slot each BEFORE anything is created, committed before the flag is
+            // re-read, and nothing left enabled when any step fails (a partial MH_EnableHook(MH_ALL_HOOKS) used to
+            // leave what it had enabled in place, unregistered, with init reporting failure).
+            struct PresentPatch {
+                void*       target;
+                void*       detour;
+                void**      original;
+                const char* name;
+                int         slot;
+            };
+            PresentPatch patches[] = {
+                {vtbl[fl::dxgi::kPresentIndex], reinterpret_cast<void*>(&Hook_Present),
+                 reinterpret_cast<void**>(&g_origPresent), "dxgi!IDXGISwapChain::Present", -1},
+                {vtbl[fl::dxgi::kResizeBuffersIndex], reinterpret_cast<void*>(&Hook_ResizeBuffers),
+                 reinterpret_cast<void**>(&g_origResizeBuffers), "dxgi!IDXGISwapChain::ResizeBuffers", -1},
+                {vtbl[fl::dxgi::kPresent1Index], reinterpret_cast<void*>(&Hook_Present1),
+                 reinterpret_cast<void**>(&g_origPresent1), "dxgi!IDXGISwapChain1::Present1", -1},
+            };
+            ok = true;
+            for (PresentPatch& p : patches) {
+                p.slot = g_patches.Claim(p.target, p.detour, p.name);
+                ok = ok && p.slot >= 0;
+            }
+            for (const PresentPatch& p : patches) {
+                ok = ok && MH_CreateHook(p.target, p.detour, p.original) == MH_OK;
+            }
+            ok = ok && MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
             if (ok) {
-                RegisterPatch(vtbl[fl::dxgi::kPresentIndex], reinterpret_cast<void*>(&Hook_Present),
-                              "dxgi!IDXGISwapChain::Present");
-                RegisterPatch(vtbl[fl::dxgi::kResizeBuffersIndex], reinterpret_cast<void*>(&Hook_ResizeBuffers),
-                              "dxgi!IDXGISwapChain::ResizeBuffers");
-                RegisterPatch(vtbl[fl::dxgi::kPresent1Index], reinterpret_cast<void*>(&Hook_Present1),
-                              "dxgi!IDXGISwapChain1::Present1");
+                for (const PresentPatch& p : patches) {
+                    g_patches.Commit(p.slot);
+                    LogNote(kLogHookInstalled, p.name, 0, reinterpret_cast<uint64_t>(p.target));
+                }
+                if (g_observing.load(std::memory_order_seq_cst) == 0u) {
+                    // A stop arrived while they went in (FlRequestUnhook, or a present that read the Agent's
+                    // request): out again, here, whether or not its walk saw them.
+                    for (const PresentPatch& p : patches) {
+                        MH_DisableHook(p.target);
+                        g_patches.Retire(p.slot);
+                    }
+                    ok = false;
+                }
+            } else {
+                for (const PresentPatch& p : patches) {
+                    MH_DisableHook(p.target);    // a no-op for one never created or never enabled
+                    g_patches.Release(p.slot);
+                }
             }
         }
     }
@@ -3628,8 +3697,10 @@ DWORD WINAPI InitThread(LPVOID) noexcept {
         // Hooking failed, so nothing will ever be recorded. Staying at INIT says
         // exactly that; READY would be a claim about a capture side that does not
         // exist, and the Agent's degradation path is what should run instead.
+        //
+        // NOTHING IS STORED: the status is INIT already -- unless a stop arrived while the present hooks went in, and
+        // then it holds the stop's reason, which a store of INIT here would overwrite (0.1.0-beta.42).
         LogNote(kLogPresentHooks, "MinHook init or the DXGI present hooks FAILED", 0);
-        status.store(FL_STATUS_INIT, std::memory_order_release);
         FlushLog();
         return 1;
     }
@@ -3658,7 +3729,11 @@ DWORD WINAPI InitThread(LPVOID) noexcept {
     // for one that maps it later.
     InstallOpenGlHook();
 
-    status.store(FL_STATUS_READY, std::memory_order_release);
+    // INIT -> READY and nothing else -> READY. The present hooks are live from InstallPresentHooks on, so a stop can
+    // already have written its reason here (a present that read the Agent's request, FlRequestUnhook); a plain
+    // store would put READY over it, and the Agent would read a capture side with no hook in as ready.
+    uint32_t stillInit = FL_STATUS_INIT;
+    status.compare_exchange_strong(stillInit, FL_STATUS_READY, std::memory_order_acq_rel, std::memory_order_acquire);
 
     // AFTER the hooks, deliberately. The watchdog's only job is to take them out
     // again, so starting it earlier would create a window in which it could

@@ -714,6 +714,33 @@ Every hook body is wrapped:
 > foreign one in ctest `fl_unhook_inline` (the vtable form stays in `fl_unhook_preserves_foreign`), and
 > against the injected Overlay in ctest `fl_guard` `[log]`, where every patch reads `UNHOOK_RESTORED`
 > because the harness is alone in its process.
+>
+> **The registry refuses what it cannot hold, and a patch is registered before it can run (0.1.0-beta.42,
+> `fl_patch_registry.h`).** The registry was an array and a counter, and two things were wrong with it — found by
+> reading the code for the plan of the next two hooks, not by a failure. **Full meant silent:** `RegisterPatch`
+> wrote its entry only while it fitted, after `PatchTarget` had already enabled the hook, so a 49th patch would
+> have been live and unknown to the stop, with no line anywhere. (Twenty patch sites exist; the rule no longer
+> depends on that count being right, and a `static_assert` now checks the capacity against the inventory's own row
+> count plus the seven sites that are not rows.) **Enabled before registered:** `PatchTarget` enabled the hook,
+> re-read `g_observing`, and registered last; a stop between the re-read and the registration walked a table
+> that did not hold the patch yet, and the patch stayed in after "stopped". The DXGI three and the loader detour
+> registered after enabling too, with no re-read at all.
+>
+> One sequence now, `fl::patch::Install`: **take a slot — no slot, no patch, nothing created — create, enable,
+> commit the slot, then re-read the flag.** The stop clears the flag and then walks the committed slots. Each side
+> writes and then reads what the other wrote, sequentially consistent, so at least one sees the other: the walk
+> restores the patch, or the installer finds the flag clear and takes its own patch out (and retires the slot,
+> so the walk does not report it as somebody else's). A slot whose patch failed is free again; one that was ever
+> live is never reused — the walk reads it without a lock. Nothing is created once observing is off. A patch
+> that did not go in is logged once per target and reason, `PATCH_FAILED a=<reason>` (`2` stopped, `3` registry
+> full, `4` create failed, `5` enable failed, `6` the stop arrived meanwhile); until now every such failure was
+> silent. The three DXGI patches are still enabled together and keep the same rules by hand; when any step of
+> theirs fails, whatever a partial enable left in is taken out — it used to stay, unregistered, with init
+> reporting failure. And two stores that could overwrite a stop's reason no longer do: `READY` is written only
+> over `INIT`, and init's failure path stores nothing. No hook body changed. ctest `fl_unhook_inline` drives
+> the shipped sequence against real MinHook patches: a full registry leaves the target's bytes untouched and
+> MinHook unasked; a stop arranged between the enable and the re-read ends with the function unpatched; a failed
+> patch gives its slot back; a slot is invisible to the walk until committed.
 
 ~~`FlRequestUnhook()` (or the control flag) ⇒ `MH_DisableHook(MH_ALL_HOOKS)`, restore vtable entries **only where they are still ours**, flush the ring, set status.~~ *(Corrected 2026-10-04: both reach `StopObserving` — compare-and-restore per patch as the note above says, then the status; there is no `MH_ALL_HOOKS`, no vtable entry and no ring flush. The watchdog flushes the native log on its way out.)* **The DLL is not `FreeLibrary`'d from the live process** — a thread could still be inside a trampoline. It goes dormant and unloads with the process. This is deliberate and documented.
 
@@ -758,8 +785,9 @@ No logging in hook bodies. A small fixed-size in-memory ring of structured event
 > `__func__` — never from a hook body. Codes: `RING_CREATED`, `PRESENT_HOOKS`, `HOOK_INSTALLED` (one per
 > patch, with the target address), `SYMBOL_MISSING` (once per pair, and only when the module IS mapped),
 > `FAULT`, `STOP` (the reason), `UNHOOK_RESTORED` / `UNHOOK_DECLINED` (one per patch), `LOADER_DETOUR`,
-> `SUPERVISION_LOST`, and since beta.24 `STOP_FLUSHED` (the last line after a stop: `a=1` when the stop had finished
-> writing). **Three flush points, none on a present path:** the end of `InitThread` (so the
+> `SUPERVISION_LOST`, since beta.24 `STOP_FLUSHED` (the last line after a stop: `a=1` when the stop had finished
+> writing), and since beta.42 `PATCH_FAILED` (a patch that did not go in, once per target and reason — §Unhooking).
+> **Three flush points, none on a present path:** the end of `InitThread` (so the
 > file exists from the start of the session and a crash mid-session still leaves it), the watchdog when
 > `FlControlBlock.logFlushRequested` changes (a counter the Agent bumps at session end; nothing clears it),
 > and the watchdog on its way out after any stop. Appended, never recreated; events overwritten before a

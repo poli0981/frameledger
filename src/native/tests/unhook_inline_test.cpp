@@ -17,10 +17,12 @@
 
 #include <windows.h>
 
+#include <atomic>
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 #include <cstring>
 #include <fl_patch_check.h>
+#include <fl_patch_registry.h>
 #include <MinHook.h>
 
 namespace {
@@ -93,6 +95,92 @@ void RepointJump(void* target, const void* relay, std::int32_t* savedRel) {
     FlushInstructionCache(GetCurrentProcess(), p, 5);
 }
 
+// --- the registry's cases (0.1.0-beta.42) ---------------------------------------------------------------------------
+// Three more real functions, each with a body of its own so the linker cannot fold them into one address.
+__declspec(noinline) int First(int x) {
+    volatile int acc = x;
+    for (int i = 0; i < 3; ++i) {
+        acc = acc * 5 + i;
+    }
+    return acc;
+}
+__declspec(noinline) int Second(int x) {
+    volatile int acc = x;
+    for (int i = 0; i < 4; ++i) {
+        acc = acc * 7 - i;
+    }
+    return acc;
+}
+__declspec(noinline) int Third(int x) {
+    volatile int acc = x;
+    for (int i = 0; i < 5; ++i) {
+        acc = acc * 11 + 2 * i;
+    }
+    return acc;
+}
+
+TargetFn g_origFirst = nullptr;
+TargetFn g_origSecond = nullptr;
+TargetFn g_origThird = nullptr;
+
+int DetourFirst(int x) {
+    return g_origFirst(x) + 1000000;
+}
+int DetourSecond(int x) {
+    return g_origSecond(x) + 2000000;
+}
+int DetourThird(int x) {
+    return g_origThird(x) + 3000000;
+}
+
+// MinHook, exactly as the Overlay hands it to fl::patch::Install (dllmain.cpp's MinHookEngine).
+struct RealMinHook {
+    static bool Create(void* target, void* detour, void** original) noexcept {
+        return MH_CreateHook(target, detour, original) == MH_OK;
+    }
+    static bool Enable(void* target) noexcept { return MH_EnableHook(target) == MH_OK; }
+    static void Disable(void* target) noexcept { MH_DisableHook(target); }
+};
+
+// The same engine with one thing arranged: a stop that arrives between the enable and the installer's re-read.
+struct StopArrivesWhileEnabling {
+    std::atomic<std::uint32_t>* observing;
+    static bool                 Create(void* target, void* detour, void** original) noexcept {
+        return RealMinHook::Create(target, detour, original);
+    }
+    bool Enable(void* target) const noexcept {
+        const bool ok = RealMinHook::Enable(target);
+        observing->store(0u);
+        return ok;
+    }
+    static void Disable(void* target) noexcept { RealMinHook::Disable(target); }
+};
+
+// An engine that fails at a chosen step and counts what it was asked: nothing may be created once a patch is refused.
+struct FailingEngine {
+    bool createOk;
+    bool enableOk;
+    int* created;
+    bool Create(void*, void*, void**) const noexcept {
+        ++*created;
+        return createOk;
+    }
+    bool        Enable(void*) const noexcept { return enableOk; }
+    static void Disable(void*) noexcept {}
+};
+
+// The stop's walk, as StopObserving writes it: restore each patch that is still ours.
+template <std::uint32_t N>
+int RestoreEveryLivePatch(const fl::patch::Registry<N>& registry) {
+    int restored = 0;
+    registry.ForEachLive([&restored](void* target, void* detour, const char*) noexcept {
+        if (fl::patch::StillOurs(target, detour) && MH_DisableHook(target) == MH_OK) {
+            ++restored;
+        }
+    });
+    return restored;
+}
+
 void RestoreJump(void* target, std::int32_t savedRel) {
     auto* p = static_cast<std::uint8_t*>(target);
     DWORD old = 0;
@@ -159,4 +247,123 @@ TEST_CASE("garbage at the target is 'not ours', never a fault", "[unhook][inline
     CHECK_FALSE(fl::patch::StillOurs(nullptr, reinterpret_cast<void*>(&Detour)));
     CHECK_FALSE(fl::patch::StillOurs(page, nullptr));
     VirtualFree(page, 0, MEM_RELEASE);
+}
+
+TEST_CASE("a full registry refuses the patch: nothing is created and the target's bytes are untouched",
+          "[unhook][registry]") {
+    using fl::patch::InstallResult;
+    fl::patch::Registry<2>     registry;
+    std::atomic<std::uint32_t> observing{1u};
+    void*                      first = reinterpret_cast<void*>(&First);
+    void*                      second = reinterpret_cast<void*>(&Second);
+    void*                      third = reinterpret_cast<void*>(&Third);
+    const int                  firstPlain = First(3);
+    const int                  secondPlain = Second(3);
+    const int                  thirdPlain = Third(3);
+
+    std::uint8_t before[16]{};
+    std::memcpy(before, third, sizeof(before));
+
+    REQUIRE(MH_Initialize() == MH_OK);
+    CHECK(fl::patch::Install(registry, observing, RealMinHook{}, first, reinterpret_cast<void*>(&DetourFirst),
+                             reinterpret_cast<void**>(&g_origFirst), "first") == InstallResult::Installed);
+    CHECK(fl::patch::Install(registry, observing, RealMinHook{}, second, reinterpret_cast<void*>(&DetourSecond),
+                             reinterpret_cast<void**>(&g_origSecond), "second") == InstallResult::Installed);
+    CHECK(First(3) == firstPlain + 1000000);
+    CHECK(Second(3) == secondPlain + 2000000);
+    CHECK(registry.LiveCount() == 2u);
+
+    // The third has no slot. The array and counter this replaced patched it anyway and forgot it.
+    g_origThird = nullptr;
+    CHECK(fl::patch::Install(registry, observing, RealMinHook{}, third, reinterpret_cast<void*>(&DetourThird),
+                             reinterpret_cast<void**>(&g_origThird), "third") == InstallResult::Full);
+    CHECK(std::memcmp(before, third, sizeof(before)) == 0);
+    CHECK(Third(3) == thirdPlain);
+    CHECK(g_origThird == nullptr);    // MinHook was never asked: no trampoline exists for it
+    CHECK(MH_EnableHook(third) == MH_ERROR_NOT_CREATED);
+    CHECK(registry.LiveCount() == 2u);
+
+    // And the stop takes out every patch that did go in -- which is now every patch there is.
+    observing.store(0u);
+    CHECK(RestoreEveryLivePatch(registry) == 2);
+    CHECK(First(3) == firstPlain);
+    CHECK(Second(3) == secondPlain);
+
+    // Stopping is one-way: after it, nothing is created at all.
+    CHECK(fl::patch::Install(registry, observing, RealMinHook{}, third, reinterpret_cast<void*>(&DetourThird),
+                             reinterpret_cast<void**>(&g_origThird), "third") == InstallResult::Stopped);
+    CHECK(MH_EnableHook(third) == MH_ERROR_NOT_CREATED);
+    MH_Uninitialize();
+}
+
+TEST_CASE("a patch that goes in while the stop runs is taken out by its installer, and its slot is never reused",
+          "[unhook][registry]") {
+    using fl::patch::InstallResult;
+    fl::patch::Registry<1>     registry;
+    std::atomic<std::uint32_t> observing{1u};
+    void*                      first = reinterpret_cast<void*>(&First);
+    const int                  firstPlain = First(4);
+
+    REQUIRE(MH_Initialize() == MH_OK);
+    // The window the old order left open: the flag read 1, the stop ran -- its walk found nothing, the patch was not
+    // registered yet -- and the patch was then enabled and registered, live after "stopped".
+    CHECK(fl::patch::Install(registry, observing, StopArrivesWhileEnabling{&observing}, first,
+                             reinterpret_cast<void*>(&DetourFirst), reinterpret_cast<void**>(&g_origFirst),
+                             "first") == InstallResult::StoppedDuring);
+    CHECK(First(4) == firstPlain);    // not left in
+    CHECK_FALSE(fl::patch::StillOurs(first, reinterpret_cast<void*>(&DetourFirst)));
+    CHECK(registry.LiveCount() == 0u);    // and not left for a walk to report as somebody else's
+    CHECK(registry.Claim(first, first, "again") == -1);
+    MH_Uninitialize();
+}
+
+TEST_CASE("a patch that failed gives its slot back, and a slot is not seen by the walk until it is committed",
+          "[unhook][registry]") {
+    using fl::patch::InstallResult;
+    fl::patch::Registry<1>     registry;
+    std::atomic<std::uint32_t> observing{1u};
+    int                        target = 0;
+    int                        detour = 0;
+    void*                      original = nullptr;
+    int                        created = 0;
+
+    CHECK(fl::patch::Install(registry, observing, FailingEngine{false, true, &created}, &target, &detour, &original,
+                             "x") == InstallResult::CreateFailed);
+    CHECK(fl::patch::Install(registry, observing, FailingEngine{true, false, &created}, &target, &detour, &original,
+                             "x") == InstallResult::EnableFailed);
+    CHECK(created == 2);
+    CHECK(registry.LiveCount() == 0u);
+    CHECK(fl::patch::Install(registry, observing, FailingEngine{true, true, &created}, nullptr, &detour, &original,
+                             "x") == InstallResult::NoTarget);
+    CHECK(created == 2);
+
+    // Both failures gave the one slot back, so it can still be claimed -- and a claimed slot is nobody's yet.
+    const int slot = registry.Claim(&target, &detour, "x");
+    REQUIRE(slot == 0);
+    CHECK(registry.LiveCount() == 0u);
+    CHECK(registry.Claim(&target, &detour, "y") == -1);
+    CHECK(fl::patch::Install(registry, observing, FailingEngine{true, true, &created}, &target, &detour, &original,
+                             "x") == InstallResult::Full);
+    CHECK(created == 2);    // refused before the engine was asked for anything
+
+    registry.Commit(slot);
+    const void* seenTarget = nullptr;
+    const char* seenName = nullptr;
+    registry.ForEachLive([&seenTarget, &seenName](void* t, void*, const char* name) noexcept {
+        seenTarget = t;
+        seenName = name;
+    });
+    CHECK(seenTarget == &target);
+    CHECK(seenName != nullptr);
+    CHECK(registry.LiveCount() == 1u);
+
+    // Release is for a slot that was never committed: on a live one it changes nothing.
+    registry.Release(slot);
+    CHECK(registry.LiveCount() == 1u);
+    registry.Retire(slot);
+    CHECK(registry.LiveCount() == 0u);
+    registry.Commit(-1);
+    registry.Release(7);
+    registry.Retire(-3);
+    CHECK(registry.LiveCount() == 0u);
 }
