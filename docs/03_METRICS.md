@@ -687,6 +687,18 @@ From the upscaler hooks we get, per frame:
   > Measured on the hook harness with the vendor stub answering as the SDK documents (`fl_guard` "FSR's quality
   > mode", by size through the SDK 2.x loader and by ratio through the 1.1.x monolith); a real title is owner-only
   > item 21 (Lies of P at Quality, then Performance).
+- **One technology's name, quality and size** *(2026-11-12, owner decision D120)*. A session's — and a segment's —
+  upscaler is **the technology named on the most samples of the dominant stream** (a tie goes to the lower value, as
+  the quality byte's does), not the first one any record names. While a session names one technology, its quality
+  and render size are read from the whole stream as before: under frame generation the name sits on one present in
+  N. When it names **more than one**, the quality and the size are read **only from the samples that name the
+  chosen one**, a quality byte of the other family is withheld (`UpscalerChoice.QualityFor`), and the session is
+  marked "settings changed during session". The session this was found on (Dying Light: The Beast, 81 seconds:
+  DLSS evaluated for most of it, an FSR dispatch for a few seconds) had been stored as "DLSS" with FSR's Balanced
+  byte and FSR's render size — three true readings of two technologies under one name. What the chosen technology
+  did not say stays N/A (rule 7). `Domain.Metrics.UpscalerChoice`; the live card still names the first technology
+  the session saw (`FgLadder.UpscalerIdentity`), which for a session in progress is a different question and was
+  not changed.
 - Resolution changes mid-session (user changed settings, or dynamic resolution scaling) produce **segments**: the session stores a segment list `(startFrame, renderW/H, outputW/H, upscaler, quality)`. Aggregates report the dominant segment plus a "settings changed during session" flag — averaging across a settings change is the classic way benchmark numbers become meaningless.
 
   > **Two segmentation axes exist, they compose in ONE order, and neither document said so until
