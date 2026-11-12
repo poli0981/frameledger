@@ -814,7 +814,8 @@ planning, the design reviewed against the code before it was approved.
 - **D116 — "never the camera" is a build check**, as "never a setter" is (D108): `tools/overlay-fields-check.ps1` —
   every read of a vendor struct in one header, each allowed member named and used, the camera's names refused
   anywhere in the Overlay and the Vulkan layer, no copy of `sl::Constants` by value. *(Built 2026-11-12:
-  twenty-eight members on `tools/overlay-allowed-fields.txt`; `12_BUILD` gate 14f.)*
+  twenty-eight members on `tools/overlay-allowed-fields.txt`; `12_BUILD` gate 14f. Fifty-six since 0.1.0-beta.44,
+  with the two answers about a feature.)*
 - **What will read N/A, and says why.** Many titles set their DLSS options through `slDLSSSetOptions`, which is not
   an export (train D), so `sl.dlss.*` is filled only for a title that passes its options with the evaluate call.
   `slGetFeatureVersion` and `slGetFeatureRequirements` are calls a game makes while starting.

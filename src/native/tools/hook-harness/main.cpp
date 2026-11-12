@@ -121,7 +121,12 @@
 //                    the camera's position and axes - which the Overlay never reads - set to loud, changing values;
 //                    and the ffx hold calls ffxConfigure every frame with a frame-generation configuration
 //                    (kAdvFfxFg*) and with a key-value one, the swapchain, the contexts, the HUD-less resource and
-//                    the frame id - never read either - loud and changing
+//                    the frame id - never read either - loud and changing.
+//                    Since 0.1.0-beta.44 the upscaled hold also asks the stub slGetFeatureVersion and
+//                    slGetFeatureRequirements every sixteenth frame - a real game asks while it starts; this one asks
+//                    again so that a hook installed later sees an answer - about DLSS and DLSS frame generation
+//                    (answered), NIS (refused, with loud numbers left in the struct) and PCL with a struct whose GUID
+//                    is broken (answered, and not to be kept)
 //   --churn-module <dll>
 //                    load and free the module in a loop on a thread of its own, for the life of the process: a
 //                    module list that keeps changing under whoever reads it (the guard's D123, 2026-11-12)
@@ -2019,6 +2024,26 @@ bool ObserveSlConstantsFaults(const void* constants, fl::adv::Accumulators& a) {
     }
 }
 
+// The same for the two answers about a feature (0.1.0-beta.44).
+bool ObserveSlFeatureRequirementsFaults(const void* requirements, fl::adv::Accumulators& a) {
+    __try {
+        fl::adv::ObserveSlFeatureRequirements(sl::kFeatureDLSS,
+                                              *static_cast<const sl::FeatureRequirements*>(requirements), a);
+        return false;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return true;
+    }
+}
+
+bool ObserveSlFeatureVersionFaults(const void* version, fl::adv::Accumulators& a) {
+    __try {
+        fl::adv::ObserveSlFeatureVersion(sl::kFeatureDLSS, *static_cast<const sl::FeatureVersion*>(version), a);
+        return false;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return true;
+    }
+}
+
 bool ProbeAdvFields() {
     g_failures = 0;
     const auto bitsOf = [](float v) { return std::bit_cast<uint32_t>(v); };
@@ -2315,7 +2340,7 @@ bool ProbeAdvFields() {
         for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS; ++i) {
             untouched = untouched && region->features[i] == 0u;
         }
-        Check(untouched, "what a later release fills stays zero");
+        Check(untouched, "what no call wrote stays zero: the configure, the constants, every feature slot");
 
         // A NEW REQUEST: a second session of a game that kept running. Its summaries are its own.
         fl::adv::Reset(a);
@@ -2459,6 +2484,125 @@ bool ProbeAdvFields() {
                   "a version-1 struct at the end of readable memory is read without a fault");
             Check(edge.slNearBits.load() == bitsOf(0.1f) && edge.slFlagsSeenTrue.load() != 0u,
                   "and what it carries is read: the last member version 1 has is the last one read");
+            VirtualFree(pages, 0, MEM_RELEASE);
+        }
+    }
+
+    // --- slGetFeatureVersion and slGetFeatureRequirements: Streamline's answers about a feature (0.1.0-beta.44) -----
+    {
+        fl::adv::Accumulators a;
+        sl::FeatureVersion    v;
+        v.versionSL = sl::Version(2, 14, 1);
+        v.versionNGX = sl::Version(310, 4, 0);
+        fl::adv::ObserveSlFeatureVersion(sl::kFeatureDLSS, v, a);
+        sl::FeatureRequirements r;
+        r.flags = sl::FeatureRequirementFlags::eD3D12Supported | sl::FeatureRequirementFlags::eVSyncOffRequired;
+        r.maxNumCPUThreads = 2;
+        r.maxNumViewports = 32;
+        r.numRequiredTags = 3;
+        r.osVersionDetected = sl::Version(10, 0, 26100);
+        r.osVersionRequired = sl::Version(10, 0, 19041);
+        r.driverVersionDetected = sl::Version(591, 44, 0);
+        r.driverVersionRequired = sl::Version(512, 15, 0);
+        fl::adv::ObserveSlFeatureRequirements(sl::kFeatureDLSS_G, r, a);
+        fl::adv::ObserveSlFeatureRequirements(sl::kFeatureDLSS, r, a);
+
+        const auto word = [&a](uint32_t slot, uint32_t i) {
+            return a.features[static_cast<size_t>(slot) * FL_ADV_FEATURE_WORDS + i].load();
+        };
+        Check(word(0, 0) == sl::kFeatureDLSS + 1u && word(1, 0) == sl::kFeatureDLSS_G + 1u && word(2, 0) == 0u,
+              "a slot per feature, in the order first asked about, the id plus one; the next slot is empty");
+        Check(word(0, 1) == (fl::adv::kFeatureVersionAnswered | fl::adv::kFeatureRequirementsAnswered) &&
+                  word(1, 1) == fl::adv::kFeatureRequirementsAnswered,
+              "word 1 says which question has an answer: both for DLSS, the requirements alone for frame generation");
+        Check(word(0, 2) == 2u && word(0, 3) == 14u && word(0, 4) == 1u && word(0, 5) == 310u && word(0, 6) == 4u &&
+                  word(0, 7) == 0u,
+              "the two versions: major, minor, build");
+        Check(word(1, 2) == 0u && word(1, 5) == 0u, "a version nobody asked for is not there");
+        Check(word(1, 8) == 10u && word(1, 9) == 2u && word(1, 10) == 32u && word(1, 11) == 3u,
+              "the flags (D3D12 | V-Sync off required), the threads, the viewports, the number of required tags");
+        Check(word(1, 12) == 10u && word(1, 14) == 26100u && word(1, 15) == 10u && word(1, 17) == 19041u &&
+                  word(1, 18) == 591u && word(1, 19) == 44u && word(1, 21) == 512u && word(1, 22) == 15u,
+              "Windows and the driver: what was found, then what is required");
+        Check((a.validMask.load() & fl::FL_ADV_VALID_SL_FEATURES) != 0u, "and the group is marked as read");
+
+        // The last answer about a feature is the one kept, in the slot it already has.
+        v.versionNGX = sl::Version(310, 5, 2);
+        fl::adv::ObserveSlFeatureVersion(sl::kFeatureDLSS, v, a);
+        Check(word(0, 6) == 5u && word(0, 7) == 2u && word(2, 0) == 0u, "asked again: the same slot, the newer answer");
+
+        // A NEW REQUEST KEEPS THEM: a fact about the process, and a game asks once.
+        fl::adv::Reset(a);
+        auto* region = new fl::FlAdvancedState{};
+        fl::adv::Publish(a, region, 9u, 1u);
+        Check(region->features[0] == sl::kFeatureDLSS + 1u && region->features[FL_ADV_FEATURE_WORDS + 8u] == 10u &&
+                  region->validMask == static_cast<uint32_t>(fl::FL_ADV_VALID_SL_FEATURES),
+              "a new request publishes the slots as they were, and their bit of the mask with them - alone");
+        delete region;
+
+        // TWELVE SLOTS: a thirteenth feature is not kept, and the id that cannot be stored plus one is refused.
+        fl::adv::Accumulators full;
+        for (uint32_t f = 0; f < FL_ADV_FEATURE_SLOTS + 1u; ++f) {
+            fl::adv::ObserveSlFeatureVersion(100u + f, v, full);
+        }
+        fl::adv::ObserveSlFeatureVersion(0xFFFFFFFFu, v, full);
+        bool twelve = true;
+        for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS; ++i) {
+            twelve = twelve && full.features[static_cast<size_t>(i) * FL_ADV_FEATURE_WORDS].load() == 101u + i;
+        }
+        Check(twelve,
+              "twelve features fill the twelve slots in order; the thirteenth and feature 0xFFFFFFFF are dropped");
+
+        // WHERE THE MEMBERS ARE, by this build's own struct: everything read lies before the Vulkan members, and the
+        // pointer to the tag list sits between two members that are read.
+        const auto at = [&r](const void* member) {
+            return static_cast<size_t>(static_cast<const unsigned char*>(member) -
+                                       reinterpret_cast<const unsigned char*>(&r));
+        };
+        Check(at(&r.flags) == 32u && at(&r.numRequiredTags) == 44u && at(&r.requiredTags) == 48u &&
+                  at(&r.osVersionDetected) == 56u && at(&r.driverVersionRequired) == 92u &&
+                  at(&r.vkNumComputeQueuesRequired) == 104u,
+              "the flags at 32, the tag count at 44, its pointer at 48, the four versions at 56..103, Vulkan from 104");
+
+        // NOTHING OF THE POINTERS OR THE VULKAN MEMBERS REACHES WHAT IS PUBLISHED: two structs alike in what is read
+        // and different in every byte that is not come out the same.
+        sl::FeatureRequirements p = r;
+        sl::FeatureRequirements q = r;
+        std::memset(reinterpret_cast<unsigned char*>(&p) + 48u, 0x11, 8u);
+        std::memset(reinterpret_cast<unsigned char*>(&q) + 48u, 0xEE, 8u);
+        std::memset(reinterpret_cast<unsigned char*>(&p) + 104u, 0x11, sizeof(p) - 104u);
+        std::memset(reinterpret_cast<unsigned char*>(&q) + 104u, 0xEE, sizeof(q) - 104u);
+        auto*                 regionP = new fl::FlAdvancedState{};
+        auto*                 regionQ = new fl::FlAdvancedState{};
+        fl::adv::Accumulators ap;
+        fl::adv::Accumulators aq;
+        fl::adv::ObserveSlFeatureRequirements(sl::kFeatureDLSS, p, ap);
+        fl::adv::ObserveSlFeatureRequirements(sl::kFeatureDLSS, q, aq);
+        fl::adv::Publish(ap, regionP, 5u, 1u);
+        fl::adv::Publish(aq, regionQ, 5u, 1u);
+        Check(std::memcmp(regionP, regionQ, sizeof(fl::FlAdvancedState)) == 0 && regionP->features[11] == 3u,
+              "two answers that differ only in the pointers and the Vulkan members publish the same bytes");
+        delete regionP;
+        delete regionQ;
+
+        // A STRUCT CUT OFF RIGHT AFTER THE LAST MEMBER READ, against a page that cannot be read: read whole, no fault.
+        auto* pages =
+            static_cast<unsigned char*>(VirtualAlloc(nullptr, 8192, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+        DWORD old = 0;
+        if (pages == nullptr || !VirtualProtect(pages + 4096, 4096, PAGE_NOACCESS, &old)) {
+            Check(false, "two pages, the second unreadable, for the cut-off answers");
+        } else {
+            unsigned char* cut = pages + 4096 - 104u;
+            std::memcpy(cut, &r, 104u);
+            fl::adv::Accumulators edge;
+            Check(!ObserveSlFeatureRequirementsFaults(cut, edge) && edge.features[21].load() == 512u,
+                  "requirements that end where the Vulkan members begin are read without a fault, to the last member");
+            const size_t   versionSize = sizeof(sl::FeatureVersion);
+            unsigned char* whole = pages + 4096 - versionSize;
+            std::memcpy(whole, &v, versionSize);
+            fl::adv::Accumulators edgeVersion;
+            Check(!ObserveSlFeatureVersionFaults(whole, edgeVersion) && edgeVersion.features[2].load() == 2u,
+                  "a version answer at the end of readable memory is read without a fault");
             VirtualFree(pages, 0, MEM_RELEASE);
         }
     }
@@ -3133,6 +3277,17 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
         Check(false, "the stub exports slSetConstants");
         return 1;
     }
+    // --advanced, 0.1.0-beta.44: the two questions about a feature, through the stub's exports.
+    using StubGetFeatureVersionFn = sl::Result(STDMETHODCALLTYPE*)(sl::Feature, sl::FeatureVersion&);
+    using StubGetFeatureRequirementsFn = sl::Result(STDMETHODCALLTYPE*)(sl::Feature, sl::FeatureRequirements&);
+    auto getFeatureVersion =
+        reinterpret_cast<StubGetFeatureVersionFn>(reinterpret_cast<void*>(GetProcAddress(stub, "slGetFeatureVersion")));
+    auto getFeatureRequirements = reinterpret_cast<StubGetFeatureRequirementsFn>(
+        reinterpret_cast<void*>(GetProcAddress(stub, "slGetFeatureRequirements")));
+    if (advanced && (getFeatureVersion == nullptr || getFeatureRequirements == nullptr)) {
+        Check(false, "the stub exports slGetFeatureVersion and slGetFeatureRequirements");
+        return 1;
+    }
     sl::Constants      constants;
     sl::Constants      otherConstants;
     sl::ViewportHandle otherViewport{kAdvSlOtherViewport};
@@ -3188,6 +3343,18 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
             constants.cameraFwd = {loud + 19.0f, loud + 20.0f, loud + 21.0f};
             setConstants(constants, g_dummyFrameToken, viewport);
             setConstants(otherConstants, g_dummyFrameToken, otherViewport);
+            if ((evaluated % 16) == 3) {
+                for (const sl::Feature asked : {sl::kFeatureDLSS, sl::kFeatureDLSS_G, sl::kFeatureNIS}) {
+                    sl::FeatureVersion      version;
+                    sl::FeatureRequirements requirements;
+                    getFeatureVersion(asked, version);
+                    getFeatureRequirements(asked, requirements);
+                }
+                // A struct that is not the one the headers describe: the stub answers, and nothing may be kept.
+                sl::FeatureVersion broken;
+                broken.structType = sl::StructType{};
+                getFeatureVersion(sl::kFeaturePCL, broken);
+            }
         }
         // ONE EVALUATION PER PRESENT, which is what a real upscaled title does
         // and what makes the drained record's identity checkable frame by frame.

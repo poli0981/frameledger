@@ -62,6 +62,9 @@ StubFrameToken g_tokenPool[8];
 static_assert(fl::stub::InventoryHas("slGetNewFrameToken"),
               "fl_hook_inventory.h no longer contains \"slGetNewFrameToken\", so the frame-token fixture would "
               "exercise a row the Overlay does not install.");
+static_assert(fl::stub::InventoryHas("slGetFeatureVersion") && fl::stub::InventoryHas("slGetFeatureRequirements"),
+              "fl_hook_inventory.h no longer contains \"slGetFeatureVersion\" or \"slGetFeatureRequirements\", so the "
+              "feature fixture would exercise a row the Overlay does not install.");
 static_assert(fl::stub::InventoryHas("slSetConstants"),
               "fl_hook_inventory.h no longer contains \"slSetConstants\", so the constants fixture would exercise a "
               "row the Overlay does not install.");
@@ -155,6 +158,72 @@ SL_API sl::Result slSetConstants(const sl::Constants& values, const sl::FrameTok
     (void)frame;
     (void)viewport;
     return sl::Result::eOk;
+}
+
+// The two questions a game asks about a feature (0.1.0-beta.44). Signatures from the vendored header. The stub
+// ANSWERS for DLSS and for DLSS frame generation with fixed numbers the injected case mirrors (guard_test.cpp
+// kAdvFeature*), answers for PCL too -- the harness asks about that one with a struct whose GUID it has broken, which
+// the Overlay must not keep -- and REFUSES every other feature after writing loud numbers into the struct, as a
+// refusal that leaves rubbish behind: a detour that kept a refused answer would publish 99s.
+SL_API sl::Result slGetFeatureVersion(sl::Feature feature, sl::FeatureVersion& version) {
+    if (feature == sl::kFeatureDLSS) {
+        version.versionSL = sl::Version(2, 14, 1);
+        version.versionNGX = sl::Version(310, 4, 0);
+        return sl::Result::eOk;
+    }
+    if (feature == sl::kFeatureDLSS_G) {
+        version.versionSL = sl::Version(2, 14, 1);
+        version.versionNGX = sl::Version(310, 4, 1);
+        return sl::Result::eOk;
+    }
+    if (feature == sl::kFeaturePCL) {
+        version.versionSL = sl::Version(7, 7, 7);
+        version.versionNGX = sl::Version(7, 7, 7);
+        return sl::Result::eOk;
+    }
+    version.versionSL = sl::Version(99, 99, 99);
+    version.versionNGX = sl::Version(99, 99, 99);
+    return sl::Result::eErrorFeatureMissing;
+}
+
+// THE POINTERS ARE WILD ON PURPOSE: the Overlay keeps the count of required tags and never the list, and nothing of
+// the Vulkan members. An address of 1 is not readable in any process; a detour that followed either would fault, and
+// the injected case asserts that none was counted.
+SL_API sl::Result slGetFeatureRequirements(sl::Feature feature, sl::FeatureRequirements& requirements) {
+    requirements.requiredTags = reinterpret_cast<const sl::BufferType*>(static_cast<uintptr_t>(1));
+    requirements.vkNumDeviceExtensions = 3;
+    requirements.vkDeviceExtensions = reinterpret_cast<const char**>(static_cast<uintptr_t>(1));
+    requirements.vkNumInstanceExtensions = 2;
+    requirements.vkInstanceExtensions = reinterpret_cast<const char**>(static_cast<uintptr_t>(1));
+    requirements.osVersionDetected = sl::Version(10, 0, 26100);
+    requirements.osVersionRequired = sl::Version(10, 0, 19041);
+    requirements.driverVersionDetected = sl::Version(591, 44, 0);
+    if (feature == sl::kFeatureDLSS) {
+        requirements.flags = sl::FeatureRequirementFlags::eD3D11Supported |
+                             sl::FeatureRequirementFlags::eD3D12Supported |
+                             sl::FeatureRequirementFlags::eVulkanSupported;
+        requirements.maxNumCPUThreads = 2;
+        requirements.maxNumViewports = 32;
+        requirements.numRequiredTags = 3;
+        requirements.driverVersionRequired = sl::Version(512, 15, 0);
+        return sl::Result::eOk;
+    }
+    if (feature == sl::kFeatureDLSS_G) {
+        requirements.flags = sl::FeatureRequirementFlags::eD3D12Supported |
+                             sl::FeatureRequirementFlags::eVSyncOffRequired |
+                             sl::FeatureRequirementFlags::eHardwareSchedulingRequired;
+        requirements.maxNumCPUThreads = 1;
+        requirements.maxNumViewports = 1;
+        requirements.numRequiredTags = 4;
+        requirements.driverVersionRequired = sl::Version(551, 23, 0);
+        return sl::Result::eOk;
+    }
+    requirements.flags = sl::FeatureRequirementFlags::eAll;
+    requirements.maxNumCPUThreads = 99;
+    requirements.maxNumViewports = 99;
+    requirements.numRequiredTags = 99;
+    requirements.driverVersionRequired = sl::Version(99, 99, 99);
+    return sl::Result::eErrorFeatureMissing;
 }
 
 SL_API sl::Result slGetNewFrameToken(sl::FrameToken*& token, const uint32_t* frameIndex) {

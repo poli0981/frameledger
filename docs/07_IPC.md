@@ -145,6 +145,13 @@ What the region is, as a contract between the two sides:
   the last generation rectangle as left, top, width, height — **four `-1` for a rectangle with a negative side or
   one past 32,767**, never a clipped one. `FL_HOOK_FFX_CONFIGURE` (bit 14) is published when every ffx-api module
   the process loaded has its `ffxConfigure` patched.
+- **The feature slots are written since 0.1.0-beta.44**: `features` is twelve slots of twenty-four words — word 0
+  the `sl::Feature` id plus one (0 is an empty slot), word 1 which of the two questions has an answer (bit 0 the
+  version, bit 1 the requirements), then the two versions, the flags, three counts and four more versions, as
+  `fl_shm.h` lays them out. Slots fill from 0 in the order the game first asked about each feature; **a new request
+  does not empty them** — the one group that is a fact about the process and not about a session — and
+  `FL_ADV_VALID_SL_FEATURES` stays set with them. `FL_HOOK_SL_FEATURE_VERSION` (bit 15) and
+  `FL_HOOK_SL_FEATURE_REQUIREMENTS` (bit 16) are published with their patches, in a process that was asked.
 - The Vulkan layer never writes it. `ShmLayoutMirrorTests.TheAdvancedStateMirrorMatches` checks every member's
   offset against `fl-layout-dump`; `ShmRingReaderTests` the three reads and that the request is stored either way.
 

@@ -1175,7 +1175,16 @@ std::atomic<uint32_t>  g_frameTokensLive{0};
 using PFN_SlSetConstants = ::PFun_slSetConstants*;
 PFN_SlSetConstants    g_origSlSetConstants = nullptr;
 std::atomic<uint32_t> g_slConstantsLive{0};
-std::atomic<uint32_t> g_frameTokens{0};
+
+// slGetFeatureVersion and slGetFeatureRequirements (0.1.0-beta.44, Advanced metrics): patched only in a process that
+// was asked for Advanced metrics at least once, as slSetConstants is. A patch, a trampoline and a latch each.
+using PFN_SlGetFeatureVersion = ::PFun_slGetFeatureVersion*;
+using PFN_SlGetFeatureRequirements = ::PFun_slGetFeatureRequirements*;
+PFN_SlGetFeatureVersion      g_origSlGetFeatureVersion = nullptr;
+PFN_SlGetFeatureRequirements g_origSlGetFeatureRequirements = nullptr;
+std::atomic<uint32_t>        g_slFeatureVersionLive{0};
+std::atomic<uint32_t>        g_slFeatureRequirementsLive{0};
+std::atomic<uint32_t>        g_frameTokens{0};
 // The HIGHEST frame index seen so far, tagged in bit 32 so that index 0 is
 // distinct from "no frame yet". Measured 2026-09-03 on Cyberpunk 2077
 // (20_OPEN_QUESTIONS §S31, row P4): the title asks for a token 3 to 4.6 times per
@@ -1758,6 +1767,37 @@ sl::Result STDMETHODCALLTYPE Hook_SlSetConstants(const sl::Constants& values, co
     })
     // ALWAYS exactly once, on every path including the fault path, with every argument forwarded untouched.
     return g_origSlSetConstants(values, frame, viewport);
+}
+
+// What Streamline answers when the game asks which version a feature is (0.1.0-beta.44). THE ORIGINAL RUNS FIRST,
+// exactly once, on every path, with both arguments forwarded untouched: what is read is its ANSWER, in the struct the
+// game passed, and only when it said OK -- a refusal leaves the struct as the game made it, which is not an answer.
+// Then the same three conditions as slSetConstants: the Agent is asking, observing has not stopped, and the struct is
+// the one these headers describe (its GUID and a version of at least 1, checked on this call). The read itself is in
+// fl_adv_fields.h.
+sl::Result STDMETHODCALLTYPE Hook_SlGetFeatureVersion(sl::Feature feature, sl::FeatureVersion& version) {
+    const sl::Result result = g_origSlGetFeatureVersion(feature, version);
+    FL_HOOK_GUARD({
+        if (result == sl::Result::eOk && g_advancedRequested.load(std::memory_order_relaxed) != 0u && MayObserve() &&
+            fl::slinputs::IsReadable<sl::FeatureVersion>(&version)) {
+            fl::adv::ObserveSlFeatureVersion(static_cast<uint32_t>(feature), version, g_adv);
+        }
+    })
+    return result;
+}
+
+// What Streamline answers when the game asks what a feature requires (0.1.0-beta.44): the same shape. The answer
+// carries pointers -- the required buffer tags, the names of Vulkan extensions and features -- and fl_adv_fields.h
+// follows none of them.
+sl::Result STDMETHODCALLTYPE Hook_SlGetFeatureRequirements(sl::Feature feature, sl::FeatureRequirements& requirements) {
+    const sl::Result result = g_origSlGetFeatureRequirements(feature, requirements);
+    FL_HOOK_GUARD({
+        if (result == sl::Result::eOk && g_advancedRequested.load(std::memory_order_relaxed) != 0u && MayObserve() &&
+            fl::slinputs::IsReadable<sl::FeatureRequirements>(&requirements)) {
+            fl::adv::ObserveSlFeatureRequirements(static_cast<uint32_t>(feature), requirements, g_adv);
+        }
+    })
+    return result;
 }
 
 // slSetTagForFrame: the FrameToken first, then the same list slSetTag takes. The
@@ -2513,6 +2553,20 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         }
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlSetConstants),
                           reinterpret_cast<void**>(&g_origSlSetConstants), g_slConstantsLive, name);
+    }
+    if (family == fl::inventory::kFamilySlFeatureVersion) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlGetFeatureVersion),
+                          reinterpret_cast<void**>(&g_origSlGetFeatureVersion), g_slFeatureVersionLive, name);
+    }
+    if (family == fl::inventory::kFamilySlFeatureRequirements) {
+        if (g_advancedSeen == 0u) {
+            return false;
+        }
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlGetFeatureRequirements),
+                          reinterpret_cast<void**>(&g_origSlGetFeatureRequirements), g_slFeatureRequirementsLive, name);
     }
     if (family == fl::inventory::kFamilyFfxConfigure) {
         if (g_advancedSeen == 0u) {
