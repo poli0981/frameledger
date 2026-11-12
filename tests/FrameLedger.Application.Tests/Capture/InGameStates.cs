@@ -33,6 +33,15 @@ internal static class InGameStates
         FfxFarBits = FlAdvancedState.FloatNone,
         FfxFovMinBits = FlAdvancedState.FloatNone,
         FfxFovMaxBits = FlAdvancedState.FloatNone,
+        SlJitterMaxXBits = FlAdvancedState.FloatNone,
+        SlJitterMaxYBits = FlAdvancedState.FloatNone,
+        SlMvecScaleXBits = FlAdvancedState.FloatNone,
+        SlMvecScaleYBits = FlAdvancedState.FloatNone,
+        SlNearBits = FlAdvancedState.FloatNone,
+        SlFarBits = FlAdvancedState.FloatNone,
+        SlFovMinBits = FlAdvancedState.FloatNone,
+        SlFovMaxBits = FlAdvancedState.FloatNone,
+        SlAspectBits = FlAdvancedState.FloatNone,
     };
 
     /// <summary>The DLSS options <c>hook-harness --advanced</c> chains into its evaluation, as the vendor's values plus one.</summary>
@@ -77,6 +86,57 @@ internal static class InGameStates
         FfxMemoryAliasableBytes = 32UL * 1024 * 1024,
         FfxMemoryQueries = 60 * samples,
     };
+
+    /// <summary>
+    /// What <c>hook-harness --advanced</c> hands <c>slSetConstants</c> for its first viewport (0.1.0-beta.43), beside the
+    /// DLSS options of the same target. Bits in the vendor header's order: depthInverted 0, cameraMotionIncluded 1,
+    /// motionVectors3D 2, reset 3, orthographicProjection 4, motionVectorsDilated 5, motionVectorsJittered 6.
+    /// </summary>
+    public static FlAdvancedState Streamline(uint samples = 1, uint resets = 1) => Dlss(samples) with
+    {
+        ValidMask = FlAdvancedValid.DlssOptions | FlAdvancedValid.SlConstants,
+        SlConstantsCalls = 120 * samples,
+        SlResets = resets,
+        SlJitterMaxXBits = Bits(0.3125f),
+        SlJitterMaxYBits = Bits(0.4375f),
+        SlMvecScaleXBits = Bits(0.5f),
+        SlMvecScaleYBits = Bits(0.25f),
+        SlNearBits = Bits(0.25f),
+        SlFarBits = Bits(4000f),
+        SlFovMinBits = Bits(0.8f),
+        SlFovMaxBits = Bits(1.2f),
+        SlAspectBits = Bits(1.75f),
+        SlFlagsSeenTrue = (1u << 0) | (1u << 1) | (1u << 3) | (1u << 6),
+        SlFlagsSeenFalse = (1u << 2) | (1u << 3) | (1u << 4) | (1u << 5),
+    };
+
+    /// <summary>The frame-generation configuration the same harness hands <c>ffxConfigure</c> (0.1.0-beta.43), beside its FSR dispatch.</summary>
+    public static FlAdvancedState FrameGeneration(uint samples = 1) => WithRect(
+        Ffx(samples) with
+        {
+            ValidMask = FlAdvancedValid.FfxUpscale | FlAdvancedValid.FfxMemory | FlAdvancedValid.FfxFgConfig,
+            FfxFgConfigures = 60 * samples,
+            FfxFgEnabledSeen = 2,
+            FfxFgAsyncSeen = 1,
+            FfxFgOnlyGeneratedSeen = 1,
+            FfxFgFlagsSeen = 1u << 4,
+        },
+        0,
+        0,
+        1920,
+        1080);
+
+    /// <summary>The generation rectangle - left, top, width, height: a fixed buffer, set through the struct's bytes.</summary>
+    public static FlAdvancedState WithRect(FlAdvancedState state, int left, int top, int width, int height)
+    {
+        int at = (int)Marshal.OffsetOf<FlAdvancedState>(nameof(FlAdvancedState.FfxFgRect));
+        Span<int> sides = MemoryMarshal.Cast<byte, int>(MemoryMarshal.AsBytes(new Span<FlAdvancedState>(ref state)).Slice(at, 16));
+        sides[0] = left;
+        sides[1] = top;
+        sides[2] = width;
+        sides[3] = height;
+        return state;
+    }
 
     /// <summary>The six preset bytes, DLAA first: a fixed buffer, set through the struct's bytes so no test needs unsafe code.</summary>
     public static FlAdvancedState WithPresets(FlAdvancedState state, params ReadOnlySpan<byte> plusOne)

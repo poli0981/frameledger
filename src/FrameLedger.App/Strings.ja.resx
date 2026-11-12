@@ -653,6 +653,10 @@
     <value>詳細メトリクス</value>
     <comment>review</comment>
   </data>
+  <data name="Advanced_InGameCallsLine" xml:space="preserve">
+    <value>ゲームが毎フレーム Streamline に伝える内容: {0}。FSR フレーム生成の設定方法: {1}。</value>
+    <comment>review</comment>
+  </data>
   <data name="Advanced_InGameLine" xml:space="preserve">
     <value>ゲーム内: {0}。</value>
     <comment>review</comment>
@@ -818,6 +822,22 @@
     <comment>review</comment>
   </data>
   <data name="AdvInGame_Unknown" xml:space="preserve">
+    <value>不明</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvInGameCall_NeverCalled" xml:space="preserve">
+    <value>フック済み - ゲームはこの呼び出しを行いませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvInGameCall_NotHooked" xml:space="preserve">
+    <value>未フック - この呼び出しを持つライブラリをゲームが読み込みませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvInGameCall_Read" xml:space="preserve">
+    <value>読み取りました</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvInGameCall_Unknown" xml:space="preserve">
     <value>不明</value>
     <comment>review</comment>
   </data>
@@ -1438,7 +1458,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_Advanced_Body" xml:space="preserve">
-    <value>セッション中にグラフィックス ドライバーとハードウェア センサーからさらに多くを読み取り、セッションと一緒に保存します - グラフィックス カードのメモリと負荷の詳細、各ファンと電圧、ディスプレイの対応機能、ゲームに対するドライバーの設定など。FrameLedger が内部から計測するゲームでは、ゲームが DLSS と FSR に渡す内容 (サイズ、プリセット、シャープニング、露出) も読み取ります - カメラの位置は決して読み取りません。オフ: ゲーム内も含め、追加の読み取りも保存も行いません。次のセッションから適用され、オフの間に記録したセッションが後から補われることはありません。</value>
+    <value>セッション中にグラフィックス ドライバーとハードウェア センサーからさらに多くを読み取り、セッションと一緒に保存します - グラフィックス カードのメモリと負荷の詳細、各ファンと電圧、ディスプレイの対応機能、ゲームに対するドライバーの設定など。FrameLedger が内部から計測するゲームでは、ゲームが DLSS、Streamline、FSR に渡す内容 (サイズ、プリセット、シャープニング、露出、深度範囲、フレーム生成の設定) も読み取ります - カメラの位置は決して読み取りません。オフ: ゲーム内も含め、追加の読み取りも保存も行いません。次のセッションから適用され、オフの間に記録したセッションが後から補われることはありません。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_Advanced_Label" xml:space="preserve">

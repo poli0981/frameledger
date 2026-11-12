@@ -22,6 +22,16 @@ public sealed record AdvancedSources(
     /// </summary>
     public AdvancedInGameStatus? InGame { get; init; }
 
+    /// <summary>
+    /// What became of what the game tells Streamline about each frame (<c>slSetConstants</c>, the
+    /// <c>sl.constants.</c> entries) in the session this describes (0.1.0-beta.43); null where that is not a
+    /// question - the machine's live state, a session not measured inside the game - and in every row stored before.
+    /// </summary>
+    public AdvancedInGameCall? StreamlineConstants { get; init; }
+
+    /// <summary>The same for how the game configures FSR frame generation (<c>ffxConfigure</c>, <c>ffx.framegen.config</c>).</summary>
+    public AdvancedInGameCall? FsrFrameGeneration { get; init; }
+
     /// <summary>Nothing asked yet.</summary>
     public static AdvancedSources Unknown { get; } = new(AdvancedSourceStatus.Unknown, NvapiCode: null, AdvancedSourceStatus.Unknown, AdvancedSourceStatus.Unknown);
 }

@@ -45,9 +45,23 @@ also keeps what the game itself handed to DLSS and FSR:
 - **FSR** — sharpening (on or off, and how strong), the largest jitter offset, the exposure, the near and far planes,
   the **range** of the field of view over the session, the flags of the call, the frame time the game reported, and
   FSR's own video memory at the moments the game asked for it.
+- **Streamline** (NVIDIA's library that games use for DLSS; since 0.1.0-beta.43) — what the game tells it about
+  each frame: the largest jitter offset, the motion-vector scale and how the motion vectors are stored, the near and
+  far planes and whether depth is inverted, the **range** of the field of view, the aspect ratio, whether the
+  projection is orthographic, and how many times the game reset the upscaler's history (a camera cut, a loading
+  screen). Where a game draws several views, these are the first view's.
+- **FSR frame generation** (since 0.1.0-beta.43) — how the game configured it: on or off, whether it may run
+  asynchronously, its flags, whether only generated frames are presented, and the part of the picture it generates
+  in. A setting the game changed during the session reads *on and off*. This is what the game **asked for**; how
+  many frames were generated is in the session's summary, as before.
 
 These are the game's own words to the upscaler, shown in the vendor's notation (`preExposure`, preset `K`).
 FrameLedger does not check what the upscaler did with them.
+
+The last two are read from calls FrameLedger hooks **only for Advanced metrics**: in a game where no session has
+been recorded with the option on since it started, those two hooks are not there. The line under the session says,
+for each of the two, whether it was *read*, *hooked — the game did not make the call*, or *not hooked — the game did
+not load the library that has the call*.
 
 **Many games will show nothing here**, and the line under the session says why: *the game made none of the calls
 these are read from* — most games set their DLSS options through a call FrameLedger cannot see, and only games that

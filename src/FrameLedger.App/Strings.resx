@@ -495,6 +495,9 @@
   <data name="Advanced_Header" xml:space="preserve">
     <value>Advanced metrics</value>
   </data>
+  <data name="Advanced_InGameCallsLine" xml:space="preserve">
+    <value>What the game tells Streamline each frame: {0}. How it configures FSR frame generation: {1}.</value>
+  </data>
   <data name="Advanced_InGameLine" xml:space="preserve">
     <value>Inside the game: {0}.</value>
   </data>
@@ -619,6 +622,18 @@
     <value>read from the game's own calls</value>
   </data>
   <data name="AdvInGame_Unknown" xml:space="preserve">
+    <value>not known</value>
+  </data>
+  <data name="AdvInGameCall_NeverCalled" xml:space="preserve">
+    <value>hooked - the game did not make the call</value>
+  </data>
+  <data name="AdvInGameCall_NotHooked" xml:space="preserve">
+    <value>not hooked - the game did not load the library that has the call</value>
+  </data>
+  <data name="AdvInGameCall_Read" xml:space="preserve">
+    <value>read</value>
+  </data>
+  <data name="AdvInGameCall_Unknown" xml:space="preserve">
     <value>not known</value>
   </data>
   <data name="AdvReach_Deferred" xml:space="preserve">
@@ -1084,7 +1099,7 @@
     <value>The agent did not answer the rules update.</value>
   </data>
   <data name="Settings_Advanced_Body" xml:space="preserve">
-    <value>Read more from the graphics driver and the hardware sensors during a session - the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game - and, in a game FrameLedger measures from inside, what the game tells DLSS and FSR (sizes, presets, sharpening, exposure - never where the camera is). All of it is stored with the session. Off: nothing more is read or stored, inside a game either. It applies from the next session, and a session recorded while it was off is not filled in later.</value>
+    <value>Read more from the graphics driver and the hardware sensors during a session - the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game - and, in a game FrameLedger measures from inside, what the game tells DLSS, Streamline and FSR (sizes, presets, sharpening, exposure, the depth range, how frame generation is configured - never where the camera is). All of it is stored with the session. Off: nothing more is read or stored, inside a game either. It applies from the next session, and a session recorded while it was off is not filled in later.</value>
   </data>
   <data name="Settings_Advanced_Label" xml:space="preserve">
     <value>Advanced metrics</value>

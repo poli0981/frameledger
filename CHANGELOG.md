@@ -37,6 +37,23 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Added
 
+- **Advanced metrics: a session now shows what the game told Streamline each frame and how it configured FSR frame
+  generation.** For a game FrameLedger measures from inside, a session recorded with **Advanced metrics** on keeps
+  — beside what the game told DLSS and FSR — the largest jitter offset, the motion-vector scale and how motion
+  vectors are stored, the near and far planes and whether depth is inverted, the range of the field of view, the
+  aspect ratio, whether the projection is orthographic and how often the game reset the upscaler's history
+  (Streamline); and whether FSR frame generation was configured on, whether it may run asynchronously, its flags,
+  whether only generated frames are presented, and the part of the picture it generates in. A setting the game
+  changed during the session reads *on and off*. The line under the session now also says, for each of the two,
+  whether it was read, hooked and never called by the game, or not hooked because the game did not load the
+  library — so an empty page says which it is. These are what the game asked for, not a check of what happened;
+  neither has been confirmed on a real game yet. Never read: where the camera is, which way it looks, its
+  matrices.
+
+- **The terms are shown once after this update: Privacy Policy 2.17.** It names the two new readings above and says
+  that the two calls they come from are intercepted in a game only once a session with Advanced metrics on has
+  started there. Nothing is sent anywhere, as before.
+
 - **Advanced metrics, inside the game: how the game configures FSR frame generation** (the part inside the game;
   what a session shows of it comes with the same release). With **Advanced metrics** on, FrameLedger now also
   reads, from the call a game makes to configure AMD's frame generation, whether generation is on, whether it may

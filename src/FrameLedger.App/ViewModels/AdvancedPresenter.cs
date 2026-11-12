@@ -188,9 +188,24 @@ public static class AdvancedPresenter
 
         // A session's row also says what became of the entries read inside the game; the machine's live state and a
         // row stored before 0.1.0-beta.40 do not, and then the sentence is not there.
-        return sources.InGame is { } inGame
-            ? line + " " + string.Format(CultureInfo.CurrentCulture, Strings.Advanced_InGameLine, AdvancedLabels.InGame(inGame))
-            : line;
+        if (sources.InGame is { } inGame)
+        {
+            line += " " + string.Format(CultureInfo.CurrentCulture, Strings.Advanced_InGameLine, AdvancedLabels.InGame(inGame));
+        }
+
+        // The two calls hooked only for Advanced metrics (0.1.0-beta.43): for each, whether it was read, hooked and
+        // never made, or not hooked - so that "nothing here" says which of the two it is. A row stored before, and a
+        // session not measured inside the game, carry neither.
+        if (sources.StreamlineConstants is { } streamline && sources.FsrFrameGeneration is { } frameGeneration)
+        {
+            line += " " + string.Format(
+                CultureInfo.CurrentCulture,
+                Strings.Advanced_InGameCallsLine,
+                AdvancedLabels.InGameCall(streamline),
+                AdvancedLabels.InGameCall(frameGeneration));
+        }
+
+        return line;
     }
 
     private static string StatusOf(AdvancedMetric metric, AdvancedSources? now)

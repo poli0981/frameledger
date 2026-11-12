@@ -105,7 +105,13 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         /// <summary>What each publication carries; null publishes nothing. The count of publications goes in.</summary>
         public Func<uint, FlAdvancedState>? Publish { get; init; }
 
+        /// <summary>The hook families the capture side says are in: the present hook alone unless a test says more.</summary>
+        public FlHookFamily Hooks { get; init; } = FlHookFamily.Present;
+
         public List<bool> Asked { get; } = [];
+
+        /// <summary>How many publications were handed out.</summary>
+        public uint Published => _published;
 
         /// <summary>A new publication on every read, as if the watchdog ticked as often as the test's loop.</summary>
         public FlAdvancedState? Next() => Publish?.Invoke(++_published);
@@ -119,7 +125,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
         public void SetAdvancedRequested(bool requested) => inGame?.Asked.Add(requested);
 
-        public FlWriterState WriterState => new() { Status = (uint)FlStatus.Ready, HooksInstalledMask = 1, RuntimeCensus = 0x8000_0000 };
+        public FlWriterState WriterState => new() { Status = (uint)FlStatus.Ready, HooksInstalledMask = (uint)(inGame?.Hooks ?? FlHookFamily.Present), RuntimeCensus = 0x8000_0000 };
 
         public FlShmHandshake Handshake => new() { AdapterLuid = adapterLuid };
 
@@ -876,6 +882,10 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         facts.Single(static f => string.Equals(f.Id, "ffx.upscale.depth", StringComparison.Ordinal)).Value.Rows!.Select(static x => x.Value).Should().Contain("0.9 – 1.1 rad (51.6° – 63°)");
         sources.InGame.Should().Be(AdvancedInGameStatus.Reading);
         sources.Nvapi.Should().Be(AdvancedSourceStatus.Reading, "the Agent's own sources are said as before");
+        // The two calls hooked only for Advanced metrics: this game made neither, and the capture side said neither
+        // hook was in - "not hooked", which is not "the game never called".
+        sources.StreamlineConstants.Should().Be(AdvancedInGameCall.NotHooked);
+        sources.FsrFrameGeneration.Should().Be(AdvancedInGameCall.NotHooked);
 
         // The two series, beside whatever the Agent's own reader gave the same tick.
         stored.Sensors.Select(static b => b.Series).Should().Contain([InGameAdvancedSampler.FrameTimeSeries, InGameAdvancedSampler.MemorySeries]);
@@ -885,6 +895,56 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         stats[InGameAdvancedSampler.MemorySeries].Max.Should().BeApproximately(256.0, 1e-3);
         h.Partials.Created[r.Row.SessionGuid].AdvancedContexts.Should().NotBeEmpty("a recovered session keeps what the game said too");
         r.Row.Tier.Should().Be(CaptureTier.Hooked);
+    }
+
+    [Fact]
+    public async Task TheTwoCallsHookedOnlyForAdvancedMetricsAreEachReadOrHookedAndNeverMade()
+    {
+        // 0.1.0-beta.43. A game that configures FSR frame generation and does not use Streamline's constants, with
+        // both hooks in: the configuration is read and stored; of slSetConstants the row says the hook was in and
+        // the game never made the call - which says something about the game, where "not hooked" would not.
+        var script = new InGameScript
+        {
+            Publish = static n => InGameStates.FrameGeneration(n),
+            Hooks = FlHookFamily.Present | FlHookFamily.SlConstants | FlHookFamily.FfxConfigure,
+        };
+        Harness h = await MakeAsync(advanced: new FakeAdvanced { Latest = FakeAdvanced.Snapshot() }, advancedOn: true, inGame: script);
+
+        await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        AdvancedSessionRow row = h.Sessions.Stored.Single().Advanced.Should().BeOfType<AdvancedSessionRow>().Subject;
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        sources.InGame.Should().Be(AdvancedInGameStatus.Reading);
+        sources.FsrFrameGeneration.Should().Be(AdvancedInGameCall.Read);
+        sources.StreamlineConstants.Should().Be(AdvancedInGameCall.NeverCalled);
+        facts.Single(static f => string.Equals(f.Id, "ffx.framegen.config", StringComparison.Ordinal)).Value.Rows!
+            .Select(static x => x.Name + "=" + x.Value)
+            .Should().Contain(["frameGenerationEnabled=on", "generationRect=1920 × 1080 at 0, 0"]);
+        facts.Should().NotContain(static f => f.Id.StartsWith("sl.constants.", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task WhatTheGameToldStreamlineIsStoredWithItsCountAsOfTheEndOfTheSession()
+    {
+        // The resets are a count, and a count does not rewrite the session's context while it runs: the stored fact is
+        // the count of the LAST publication, brought up to date when the session concludes.
+        var script = new InGameScript
+        {
+            Publish = static n => InGameStates.Streamline(n, resets: n),
+            Hooks = FlHookFamily.Present | FlHookFamily.SlConstants,
+        };
+        Harness h = await MakeAsync(advanced: new FakeAdvanced { Latest = FakeAdvanced.Snapshot() }, advancedOn: true, inGame: script);
+
+        await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        AdvancedSessionRow row = h.Sessions.Stored.Single().Advanced.Should().BeOfType<AdvancedSessionRow>().Subject;
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        sources.StreamlineConstants.Should().Be(AdvancedInGameCall.Read);
+        sources.FsrFrameGeneration.Should().Be(AdvancedInGameCall.NotHooked);
+        facts.Select(static f => f.Id).Should().Contain(["sl.constants.jitter", "sl.constants.motion_vectors", "sl.constants.depth", "sl.constants.projection", "sl.constants.resets"]);
+        double resets = facts.Single(static f => string.Equals(f.Id, "sl.constants.resets", StringComparison.Ordinal)).Value.Number!.Value;
+        resets.Should().BeGreaterThan(1, "more than one publication was taken, each with a higher count");
+        resets.Should().Be(script.Published, "the count stored is the last publication's, not the first's");
     }
 
     [Fact]
@@ -920,6 +980,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
         facts.Should().NotContain(static f => f.Id.StartsWith("ffx.", StringComparison.Ordinal) || f.Id.StartsWith("sl.", StringComparison.Ordinal));
         sources.InGame.Should().Be(AdvancedInGameStatus.NotHooked);
+        sources.StreamlineConstants.Should().BeNull("a session not measured inside the game has no hook to speak of");
+        sources.FsrFrameGeneration.Should().BeNull();
     }
 
     [Fact]
@@ -936,7 +998,14 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         row.MachineFactsJson.Should().BeNull();
         (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
         facts.Should().BeEmpty("a read that threw costs the session its facts, not itself");
-        sources.Should().Be(AdvancedSources.Unknown with { InGame = AdvancedInGameStatus.NothingSeen }, "the Agent's sources never answered; the game was measured from inside and made none of the calls");
+        sources.Should().Be(
+            AdvancedSources.Unknown with
+            {
+                InGame = AdvancedInGameStatus.NothingSeen,
+                StreamlineConstants = AdvancedInGameCall.NotHooked,
+                FsrFrameGeneration = AdvancedInGameCall.NotHooked,
+            },
+            "the Agent's sources never answered; the game was measured from inside, made none of the calls, and the capture side published neither of the two hooks that are installed only for Advanced metrics");
         hub.Released.Should().Be(1);
     }
 

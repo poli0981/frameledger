@@ -50,6 +50,9 @@ public static class AdvancedLabels
     /// <summary>What became, in one session, of the entries read inside the game (0.1.0-beta.40).</summary>
     public static string InGame(AdvancedInGameStatus status) => Lookup("AdvInGame_" + status) ?? status.ToString();
 
+    /// <summary>What became of one call hooked only for Advanced metrics, in a session (0.1.0-beta.43).</summary>
+    public static string InGameCall(AdvancedInGameCall call) => Lookup("AdvInGameCall_" + call) ?? call.ToString();
+
     /// <summary>A token the driver's answer was mapped to; the token itself where this build has no word for it.</summary>
     public static string Token(string token) => Lookup("AdvToken_" + token) ?? token;
 

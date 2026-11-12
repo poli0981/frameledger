@@ -761,7 +761,10 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > 0.1.0-beta.40 (train B) the same row holds what the game told its upscaler** — the session facts of the entries
 > whose reach is `Game`, after the driver's, and `sources.inGame` (`Reading`, `NothingSeen`, `NotHooked`; absent in
 > a row beta.39 wrote, which reads as "not said") — and its two series are `adv.ffx.upscale.frame_time_delta` and
-> `adv.ffx.memory_usage` in `sensor_blobs`. No column and no script: schema 23 as it was. A session deleted
+> `adv.ffx.memory_usage` in `sensor_blobs`. **Since 0.1.0-beta.43** `sources` may also hold `streamlineConstants`
+> and `fsrFrameGeneration` (`Read`, `NeverCalled`, `NotHooked`; `Application.Advanced.AdvancedInGameCall`) — what
+> became, in that session, of the two calls hooked only for Advanced metrics; both absent in a row written before,
+> and in a session not measured inside the game. No column and no script: schema 23 as it was. A session deleted
 > takes its row with it; a profile no session points to is left, as a hardware snapshot is; the retention sweep
 > removes a session's `adv.` series with its other raw series and keeps its row. Written by the Agent only, in the
 > session's own transaction (`SqliteSessionRepository.InsertAdvancedAsync`). `LatestVersion` is 23;

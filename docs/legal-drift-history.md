@@ -63,6 +63,24 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.17 of the Privacy Policy changed (0.1.0-beta.43)
+
+**Two more calls read inside the game, only while Advanced metrics is on** (train B's second step, owner decisions
+D122–D125; the wording approved with the plan of 0.1.0-beta.43). Version 2.16 named what a session stores of DLSS and
+of FSR's upscaling item by item, and neither list holds what this release reads, so the version moves rather than
+the words being stretched. §1's item on Advanced metrics gains **what the game told NVIDIA Streamline about each
+frame** — the size of the jitter, the motion-vector scale, the depth range and whether depth is inverted, the lowest
+and highest field of view, the aspect ratio, whether the projection is orthographic, how its motion vectors are
+stored and how often it reset the upscaler's history — and **how it configured FSR frame generation** — on or off,
+whether it may run asynchronously, its flags, whether only generated frames are presented, and the rectangle it
+generates in. The sentence on what is never read (where the camera is, which way it looks, its matrices) stands as
+it was: those sit in the same data as Streamline's constants, and a check in the build refuses code that names them.
+§4 says what is new about *how*: until now every parameter read was of a call FrameLedger intercepted anyway; these
+two calls are intercepted in a game **only once a session with the option on has started there**, and with the
+option off nothing in the game is touched for them. The accuracy block's item on what a game tells its upscaler
+names the two, and no longer says none of it was read from a real game — FSR's upscaling values were, on
+0.1.0-beta.41 and beta.42. The Disclaimer stays 2.15, as before. §2 is unchanged: nothing is sent.
+
 ### What version 2.16 of the Privacy Policy changed (0.1.0-beta.40)
 
 **Advanced metrics inside the game** (train B, owner decisions D111–D116; the content approved with the plan, once

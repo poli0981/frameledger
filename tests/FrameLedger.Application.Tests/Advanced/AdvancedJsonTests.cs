@@ -145,7 +145,7 @@ public sealed class AdvancedJsonTests
             new("nvapi.gpu.board_serial", Instance: null, AdvancedValue.OfText("0123456789")),
             new("nvapi.display.edid", "1", AdvancedValue.OfText("00ffffffffffff00")),
             new("sl.constants.camera", Instance: null, AdvancedValue.OfText("1.0 2.0 3.0")),
-            new("sl.constants.jitter", Instance: null, AdvancedValue.OfText("0.25 0.25")),
+            new("sl.feature.versions", Instance: null, AdvancedValue.OfText("DLSS 3.7.0")),
             new("sl.dlss.presets", Instance: null, AdvancedValue.OfRows([new AdvancedRow("DLAA", "K")])),
             new("no.such.metric", Instance: null, AdvancedValue.Of(1)),
             new("lhm.board.model", Instance: null, AdvancedValue.OfText("ASUS ROG STRIX Z790-E")),
@@ -169,6 +169,30 @@ public sealed class AdvancedJsonTests
         sources.Nvapi.Should().Be(AdvancedSourceStatus.Reading);
         sources.ElevatedSensors.Should().Be(AdvancedSourceStatus.NotElevated);
         sources.InGame.Should().BeNull("a row that never said is not a row that said no");
+    }
+
+    [Fact]
+    public void WhatBecameOfTheTwoCallsHookedOnlyForAdvancedMetricsSurvivesTheLedgerAndAnOlderRowSaysNothingOfThem()
+    {
+        AdvancedSources written = AdvancedSources.Unknown with
+        {
+            InGame = AdvancedInGameStatus.Reading,
+            StreamlineConstants = AdvancedInGameCall.NeverCalled,
+            FsrFrameGeneration = AdvancedInGameCall.Read,
+        };
+
+        string json = AdvancedJson.OfSession([], written);
+        (_, AdvancedSources read) = AdvancedJson.ParseSession(json);
+
+        json.Should().Contain("\"streamlineConstants\":\"NeverCalled\"").And.Contain("\"fsrFrameGeneration\":\"Read\"");
+        read.Should().Be(written);
+
+        // 0.1.0-beta.42 wrote exactly this: the in-game state and neither of the two.
+        const string beta42 = """{"facts":[],"sources":{"nvapi":"Reading","sensors":"Reading","elevatedSensors":"Reading","inGame":"Reading"}}""";
+        (_, AdvancedSources older) = AdvancedJson.ParseSession(beta42);
+        older.InGame.Should().Be(AdvancedInGameStatus.Reading);
+        older.StreamlineConstants.Should().BeNull("a row that never said is not a row that said the hook was not in");
+        older.FsrFrameGeneration.Should().BeNull();
     }
 
     [Theory]

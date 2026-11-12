@@ -302,6 +302,19 @@ public sealed class AgentEndToEndTests : IDisposable
         facts.Single(static f => string.Equals(f.Id, "ffx.upscale.flags", StringComparison.Ordinal)).Value.Tokens.Should().Equal("non_linear_color_pq");
         facts.Should().NotContain(static f => f.Id.StartsWith("sl.", StringComparison.Ordinal), "this target chains no DLSS options");
 
+        // 0.1.0-beta.43: the frame-generation configuration the harness sends through ffxConfigure before each frame
+        // (kAdvFfxFg*), read by a hook that was not in the game during the first session - nothing had asked - and
+        // was installed when this one did. Streamline's library is not in this target at all, and the row says that
+        // rather than "the game never called".
+        Rows("ffx.framegen.config").Should().Equal(
+            "frameGenerationEnabled=on",
+            "allowAsyncWorkloads=off",
+            "onlyPresentGenerated=off",
+            "flags=DRAW_DEBUG_PACING_LINES",
+            "generationRect=1920 × 1080 at 0, 0");
+        sources.FsrFrameGeneration.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
+        sources.StreamlineConstants.Should().Be(AdvancedInGameCall.NotHooked, row.FactsJson);
+
         IReadOnlyDictionary<string, Application.Recording.SensorSeriesStats> stats = AdvancedJson.ParseStats(row.StatsJson);
         stats.Should().ContainKey(InGameAdvancedSampler.FrameTimeSeries, row.StatsJson);
         stats[InGameAdvancedSampler.FrameTimeSeries].Mean.Should().BeApproximately(16.0, 0.01, "every dispatch states 16 ms");

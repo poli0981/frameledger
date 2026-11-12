@@ -162,16 +162,18 @@ public static class AdvancedMetricCatalog
         Sampled("ffx.upscale.frame_time_delta", FidelityFx, Game, Milliseconds, Upscaling, "The frame time the game reported to FSR"),
         Sampled("ffx.memory_usage", FidelityFx, Game, Mebibytes, Upscaling, "FSR's own video memory, when the game asks it"),
 
+        // ---- Inside the game: two hooks of their own (0.1.0-beta.43), installed only where Advanced metrics was asked for
+        Session("sl.constants.jitter", Streamline, Game, Table, Upscaling, "The jitter offsets the game gave Streamline"),
+        Session("sl.constants.motion_vectors", Streamline, Game, Table, Upscaling, "Motion-vector scale, and whether they are 3D, dilated, jittered"),
+        Session("sl.constants.depth", Streamline, Game, Table, Upscaling, "Near and far planes, and whether depth is inverted"),
+        Session("sl.constants.projection", Streamline, Game, Table, Upscaling, "Field of view, aspect ratio, orthographic or not"),
+        Session("sl.constants.resets", Streamline, Game, Count, Upscaling, "How often the game reset the upscaler's history"),
+        Session("ffx.framegen.config", FidelityFx, Game, Table, FrameGeneration, "The game's FSR frame-generation configuration"),
+
         // ---- Inside the game: hooks that are not built ----------------------------------------------------------
-        Session("sl.constants.jitter", Streamline, NewHook, Text, Upscaling, "The jitter offsets the game gave Streamline"),
-        Session("sl.constants.motion_vectors", Streamline, NewHook, Text, Upscaling, "Motion-vector scale, and whether they are 3D, dilated, jittered"),
-        Session("sl.constants.depth", Streamline, NewHook, Text, Upscaling, "Near and far planes, and whether depth is inverted"),
-        Session("sl.constants.projection", Streamline, NewHook, Text, Upscaling, "Field of view, aspect ratio, orthographic or not"),
-        Session("sl.constants.resets", Streamline, NewHook, Count, Upscaling, "How often the game reset the upscaler's history"),
         Session("sl.feature.versions", Streamline, NewHook, Table, Upscaling, "Each Streamline feature's version and its NGX model version"),
         Session("sl.feature.requirements", Streamline, NewHook, Table, Upscaling, "What each Streamline feature requires: operating system, driver, buffers"),
         Session("sl.init.preferences", Streamline, NewHook, Text, Upscaling, "The preferences the game started Streamline with"),
-        Session("ffx.framegen.config", FidelityFx, NewHook, Text, FrameGeneration, "The game's FSR frame-generation configuration"),
         Session("sl.constants.camera", Streamline, PlayerState, Text, Upscaling, "Camera position, axes and matrices"),
 
         // ---- Inside the game: routes a spike decides ------------------------------------------------------------

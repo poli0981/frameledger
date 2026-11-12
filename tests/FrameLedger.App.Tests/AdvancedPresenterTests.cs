@@ -241,7 +241,7 @@ public sealed class AdvancedPresenterTests
             At(live, id).Status.Should().Be(Strings.Advanced_Status_InGame);
         }
 
-        At(live, "ffx.framegen.config").Status.Should().Be(AdvancedLabels.Reach(AdvancedReach.NewHook), "a hook that is not built is still a later release");
+        At(live, "sl.feature.versions").Status.Should().Be(AdvancedLabels.Reach(AdvancedReach.NewHook), "a hook that is not built is still a later release");
         live.Where(static r => r.IsRead).Should().HaveCount(AdvancedMetricCatalog.All.Count(static m => m.IsRead));
     }
 
@@ -279,6 +279,36 @@ public sealed class AdvancedPresenterTests
             line.Should().StartWith(before, "the three sources are said as before");
             line.Should().EndWith(string.Format(CultureInfo.CurrentCulture, Strings.Advanced_InGameLine, AdvancedLabels.InGame(status)));
         }
+    }
+
+    [Fact]
+    public void ASessionsSourcesLineSaysForEachCallHookedOnlyForAdvancedMetricsWhichOfThreeThingsHappened()
+    {
+        // 0.1.0-beta.43: read, hooked and never made by the game, or not hooked. A row stored before has neither
+        // member, and a session not measured inside the game has none to speak of: the sentence is not there.
+        AdvancedSources hooked = AdvancedFixtures.Sources with { InGame = AdvancedInGameStatus.Reading };
+        string before = AdvancedPresenter.SourcesLine(hooked);
+        before.Should().NotContain(AdvancedLabels.InGameCall(AdvancedInGameCall.NeverCalled)).And.NotContain(AdvancedLabels.InGameCall(AdvancedInGameCall.NotHooked));
+
+        string line = AdvancedPresenter.SourcesLine(hooked with
+        {
+            StreamlineConstants = AdvancedInGameCall.NeverCalled,
+            FsrFrameGeneration = AdvancedInGameCall.Read,
+        });
+
+        line.Should().StartWith(before, "what was said before is said as before");
+        line.Should().EndWith(string.Format(
+            CultureInfo.CurrentCulture,
+            Strings.Advanced_InGameCallsLine,
+            AdvancedLabels.InGameCall(AdvancedInGameCall.NeverCalled),
+            AdvancedLabels.InGameCall(AdvancedInGameCall.Read)));
+
+        foreach (AdvancedInGameCall call in Enum.GetValues<AdvancedInGameCall>())
+        {
+            AdvancedLabels.InGameCall(call).Should().NotBe(call.ToString(), "every state has words of its own in every language");
+        }
+
+        AdvancedLabels.InGameCall(AdvancedInGameCall.NeverCalled).Should().NotBe(AdvancedLabels.InGameCall(AdvancedInGameCall.NotHooked), "the two reasons a value is absent are not one");
     }
 
     [Fact]
