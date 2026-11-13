@@ -7416,6 +7416,7 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     }
 
     // ---- 2. ASKED: the patches go in on the tick that sees the request, and the next publications carry the groups.
+    const ULONGLONG askedAt = GetTickCount64();
     SetAdvancedRequest(r, 1u);
     REQUIRE(WaitForHookFamily(r.st, slConstants));
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION)));
@@ -7426,6 +7427,9 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_ALLOCATE_RESOURCES)));
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_FREE_RESOURCES)));
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_SL_SHUTDOWN)));
+    // Measured, not asserted: a tick's wait (up to a second) and then the nine patches. Printed so that a pull request
+    // which changes how patches go in can say what it did to this (0.1.0-beta.46).
+    WARN("asked -> the nine Advanced-only families published: " << (GetTickCount64() - askedAt) << " ms");
     REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
     CHECK(std::memcmp(pristine, now, sizeof(now)) != 0);    // patched now
     for (int i = 0; i < kFeatureExports; ++i) {
@@ -7557,12 +7561,15 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     // ---- 4. STOPPED: the export's first bytes are the file's again, and the log says which patch was restored.
     // The status is written after the last patch is restored, and a restore is some 160 ms: fifteen patches in this
     // target since 0.1.0-beta.45, so the wait is ten seconds where three were enough for twelve.
+    const ULONGLONG stopAt = GetTickCount64();
     r.ctl->unhookRequested = 1;
-    for (int i = 0; i < 200 && r.st->status != fl::FL_STATUS_UNHOOKED; ++i) {
+    for (int i = 0; i < 1000 && r.st->status != fl::FL_STATUS_UNHOOKED; ++i) {
         ++r.ctl->guardTicks;
-        Sleep(50);
+        Sleep(10);
     }
     REQUIRE(r.st->status == fl::FL_STATUS_UNHOOKED);
+    // Measured, not asserted: the request is read within a frame, then every patch is restored.
+    WARN("unhook requested -> UNHOOKED: " << (GetTickCount64() - stopAt) << " ms");
     std::wstring log;
     std::string  text;
     for (int i = 0; i < 100; ++i) {
@@ -7587,4 +7594,56 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     }
     CHECK(text.find("UNHOOK_DECLINED") == std::string::npos);
     CHECK(text.find("PATCH_FAILED") == std::string::npos);
+
+    // 0.1.0-beta.46 (owner decision D134): the rows go in by the batch -- one stop of the target's threads for the rows
+    // a tick found, not one a row -- and the stop takes every patch out under one. The log says so: a PATCH_BATCH line
+    // an apply, `b` the number of patches it covered. Counted from the log, not written here as numbers: the rows
+    // that install unasked go in on an earlier tick than the nine that wait for the request, so there are at least two
+    // install lines, and every HOOK_INSTALLED that is not one of init's own (DXGI, the loader, OpenGL) is under one.
+    const auto eachLine = [&text](const char* needle, const auto& visit) {
+        std::size_t at = 0;
+        while ((at = text.find(needle, at)) != std::string::npos) {
+            const std::size_t end = text.find('\n', at);
+            visit(text.substr(at, end == std::string::npos ? std::string::npos : end - at));
+            at = end == std::string::npos ? text.size() : end;
+        }
+    };
+    const auto field = [](const std::string& line, const char* key, int base) {
+        const std::size_t at = line.find(key);
+        return at == std::string::npos ? 0ull : std::strtoull(line.c_str() + at + std::strlen(key), nullptr, base);
+    };
+    unsigned long long installBatches = 0;
+    unsigned long long installedByBatch = 0;
+    unsigned long long restoreBatches = 0;
+    unsigned long long restoredByBatch = 0;
+    unsigned long long restoreMicros = 0;
+    unsigned long long installedLazily = 0;
+    unsigned long long restoredLines = 0;
+    eachLine("PATCH_BATCH      install", [&](const std::string& line) {
+        ++installBatches;
+        installedByBatch += field(line, " b=0x", 16);
+        WARN("an install batch put " << field(line, " b=0x", 16) << " patches in, in " << field(line, " a=", 10)
+                                     << " us");
+    });
+    eachLine("PATCH_BATCH      restore", [&](const std::string& line) {
+        ++restoreBatches;
+        restoredByBatch += field(line, " b=0x", 16);
+        restoreMicros += field(line, " a=", 10);
+    });
+    eachLine("HOOK_INSTALLED   ", [&](const std::string& line) {
+        if (line.find("dxgi!") == std::string::npos && line.find("kernelbase!") == std::string::npos &&
+            line.find("opengl32!") == std::string::npos) {
+            ++installedLazily;
+        }
+    });
+    eachLine("UNHOOK_RESTORED  ", [&](const std::string&) { ++restoredLines; });
+    CHECK(installBatches >= 2u);
+    CHECK(installedByBatch == installedLazily);
+    CHECK(installedLazily >= 10u);    // slSetConstants and the eight feature exports among them
+    CHECK(restoreBatches == 1u);
+    CHECK(restoredByBatch == restoredLines);
+    // One stop of the threads, not one a patch: restoring these one by one took 1.3 s to 1.5 s on the development PC
+    // (0.1.0-beta.45, eighteen patches). A bound a slow runner still meets, and the old way did not.
+    WARN("the stop's one apply restored " << restoredByBatch << " patches in " << restoreMicros << " us");
+    CHECK(restoreMicros < 1000000ull);
 }

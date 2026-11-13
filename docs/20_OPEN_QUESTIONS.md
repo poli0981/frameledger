@@ -1549,6 +1549,13 @@ probe never showed a deadlock.
 > real-game leg — a title that pulls Streamline or D3D12 in lazily, hooked through the wake — which the
 > `loader detour:` report line will show as a non-zero wake count with the family present from the first
 > bucket.
+>
+> **0.1.0-beta.46 (owner decision D134): one suspension for a batch, and the rule is as it was.** The rows a
+> watchdog tick finds are enabled under one `MH_ApplyQueued` — one stop of the threads where there was one a row
+> (`17_HOOK_ENGINE` §Unhooking, Batches). Still only on the watchdog, never from the detour and never on a game's
+> thread; the gate around the queue is not held across a symbol lookup, so it is never held with the loader's lock
+> wanted. What a stop of the threads costs in a real game was read from the owner's logs of 2026-11-13: 57 to
+> 215 ms, thirteen times over for a Streamline title until this release.
 
 ### H11 ◐ · XeFG and FSR3-FG identity — **AMD built 2026-09-04 through the ffx-api leaves, complete 2026-09-06; Intel closed by licence; FSR 3.0 host route built 2026-09-05**
 
