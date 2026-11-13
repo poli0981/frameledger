@@ -438,11 +438,21 @@ struct Model {
         return i >= 0 && enabled[i];
     }
     void Set(int i, bool on) noexcept {
+        if (i < 0 || i >= count) {
+            return;
+        }
         if (!on && enabled[i] && foreign[i]) {
             wroteOverAForeignPatch = true;    // our saved bytes over their jump: what §H7 forbids
         }
         enabled[i] = on;
         marked[i] = on;
+    }
+    // Somebody else patched over the hook at `t`.
+    void PatchOver(const void* t) noexcept {
+        const int i = Find(t);
+        if (i >= 0) {
+            foreign[i] = true;
+        }
     }
 };
 
@@ -775,7 +785,7 @@ TEST_CASE("the stop marks only what is still ours: a foreign patch is not writte
     batch.Commit(registry, observing, engine, ModelOurs{&model});
     REQUIRE(registry.LiveCount() == 3u);
 
-    model.foreign[model.Find(&g_a)] = true;    // a: somebody patched over us
+    model.PatchOver(&g_a);    // a: somebody patched over us
     // c: committed, and already taken out -- an installer between its own disable and its Retire. The draft that
     // marked everything and then un-marked what it must not restore marked THIS one for enabling, and the stop's own
     // apply put the patch back in after the stop.

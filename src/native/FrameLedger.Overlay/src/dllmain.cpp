@@ -453,11 +453,18 @@ struct MinHookEngine {
     }
 };
 
-// Microseconds since `from`, for a PATCH_BATCH line; saturating, because the line's field is 32 bits.
-uint32_t MicrosSince(const LARGE_INTEGER& from) noexcept {
-    LARGE_INTEGER now{};
+// The performance counter, as a number. QuadPart is named in the initialiser so that it is the member the union
+// holds when it is read back (SonarCloud's cpp:S6232 on a `{}` that initialises the other half).
+int64_t QpcNow() noexcept {
+    LARGE_INTEGER now{.QuadPart = 0};
     QueryPerformanceCounter(&now);
-    const uint64_t ticks = now.QuadPart > from.QuadPart ? static_cast<uint64_t>(now.QuadPart - from.QuadPart) : 0u;
+    return now.QuadPart;
+}
+
+// Microseconds since `fromTicks` (QpcNow), for a PATCH_BATCH line; saturating, because the line's field is 32 bits.
+uint32_t MicrosSince(int64_t fromTicks) noexcept {
+    const int64_t  now = QpcNow();
+    const uint64_t ticks = now > fromTicks ? static_cast<uint64_t>(now - fromTicks) : 0u;
     const uint64_t micros = g_logQpcFreq != 0u ? ticks * 1000000ull / g_logQpcFreq : 0u;
     return micros > 0xFFFFFFFFull ? 0xFFFFFFFFu : static_cast<uint32_t>(micros);
 }
@@ -1003,9 +1010,8 @@ void StopObserving(uint32_t reason) noexcept {
     // patch: about 160 ms each, two to three seconds for a Streamline title, possibly on the thread that presents.
     // RestoreAll marks the patches that are still ours and applies the marks together (fl_patch_registry.h says what
     // may and may not be marked, and why). The lines below are written after the gate is released.
-    LARGE_INTEGER began{};
-    QueryPerformanceCounter(&began);
-    uint32_t restored = 0;
+    const int64_t began = QpcNow();
+    uint32_t      restored = 0;
     fl::patch::RestoreAll(
         g_patches, MinHookEngine{},
         [](const void* target, const void* detour) noexcept { return fl::patch::StillOurs(target, detour); },
@@ -1087,8 +1093,7 @@ void CommitPatchBatch() noexcept {
     if (count == 0u) {
         return;
     }
-    LARGE_INTEGER began{};
-    QueryPerformanceCounter(&began);
+    const int64_t began = QpcNow();
     g_batch.Commit(g_patches, g_observing, MinHookEngine{}, [](const void* target, const void* detour) noexcept {
         return fl::patch::StillOurs(target, detour);
     });

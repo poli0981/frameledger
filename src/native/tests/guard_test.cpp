@@ -32,6 +32,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -7608,9 +7609,9 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
             at = end == std::string::npos ? text.size() : end;
         }
     };
-    const auto field = [](const std::string& line, const char* key, int base) {
+    const auto field = [](const std::string& line, std::string_view key, int base) {
         const std::size_t at = line.find(key);
-        return at == std::string::npos ? 0ull : std::strtoull(line.c_str() + at + std::strlen(key), nullptr, base);
+        return at == std::string::npos ? 0ull : std::strtoull(line.c_str() + at + key.size(), nullptr, base);
     };
     unsigned long long installBatches = 0;
     unsigned long long installedByBatch = 0;
