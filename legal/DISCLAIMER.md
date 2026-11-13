@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.15 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.16 · **Effective:** {{RELEASE_DATE}}
 
 ## 0. This is pre-release software
 
@@ -43,11 +43,11 @@ Be precise about what that does and does not promise, because the shorter versio
 
 Install it somewhere only you can write to, and verify the published SHA-256 checksums.
 
-**What it observes inside the game:** arguments the game passes to graphics APIs we intercept (presentation, upscaling, ray tracing, pipeline creation).
+**What it observes inside the game:** arguments the game passes to graphics APIs we intercept (presentation, upscaling, ray tracing, pipeline creation) — and, only while Advanced metrics is on, one thing that is not an argument: the graphics driver's own report of how long the stages of the game's last frames took, which the component asks NVIDIA's driver for itself (§2 says exactly how).
 
 **What it reads about the game from outside it, in every session:** the game process's own memory use — its dedicated and shared video memory and its working sets, the figures Windows' Task Manager shows — from Windows' performance counters and process-memory information. For a game it does not inject into, FrameLedger opens the game's process for this with the least access Windows offers, once a second, and closes it again; it reads nothing inside the process.
 
-> **What of that list is observed today is stated once, in §4 below** (the block `legal/ACCURACY.md` carries, dated). The list here describes what the software is designed to observe, and the boundary — API arguments and nothing else — holds for all of it.
+> **What of that list is observed today is stated once, in §4 below** (the block `legal/ACCURACY.md` carries, dated). The list here describes what the software is designed to observe, and the boundary — API arguments, and the one report asked of the graphics driver that the line above names; nothing of the game's own memory — holds for all of it.
 
 **What it never does:** read or write the game's memory outside those API arguments; read save files, input, chat, or network traffic; modify game behavior; hide itself from any security software; or install a kernel driver of its own.
 
@@ -72,7 +72,11 @@ FrameLedger is designed to reduce that risk substantially:
   the game exits.
 - FrameLedger contains **no evasion techniques of any kind** — it does not hide, rename, obfuscate, or disguise itself. It is intended to be plainly identifiable to any security software that looks.
 
-  For completeness about what it *does* run inside the game: besides the intercepted calls themselves, the component starts **one background thread**. It wakes once a second, or when the game loads a library, and then: checks FrameLedger's own shared memory for a request to stop and for the heartbeat of the safety scan described above; asks Windows, by name, whether the graphics, upscaling and frame-generation libraries it knows about are loaded, and puts its interception into the ones that are (for ray tracing it creates one command list on the game's own Direct3D 12 device, to find the functions to intercept); writes its counters to FrameLedger's shared memory; and writes FrameLedger's own log file. It does not scan the game's memory, list the modules or processes on the system, or query Windows services — deliberately, because software that does those things from inside a game process looks like the thing this tool is trying not to be mistaken for.
+  For completeness about what it *does* run inside the game: besides the intercepted calls themselves, the component starts **one background thread**. It wakes once a second, or when the game loads a library, and then: checks FrameLedger's own shared memory for a request to stop and for the heartbeat of the safety scan described above; asks Windows, by name, whether the graphics, upscaling and frame-generation libraries it knows about are loaded, and puts its interception into the ones that are (for ray tracing it creates one command list on the game's own Direct3D 12 device, to find the functions to intercept); writes its counters to FrameLedger's shared memory; and writes FrameLedger's own log file.
+
+  **One call it makes itself, into the graphics driver — only while Advanced metrics is on.** In a Direct3D 12 game that had already loaded NVIDIA's driver library (`nvapi64.dll`), the component asks that library — by name, among what the game loaded; it never loads it — for two of the driver's read-only functions, and keeps the library and the driver file those functions are in from being unloaded for as long as the game runs. Then, about once a second, **on the game's own thread that presents its frames**, right after a frame has been handed over, it calls them: one returns the driver's report of how long the stages of the last frames took, the other the driver's low-latency state. It calls no function that sets, marks or delays anything. A library of that name sitting in the game's own folder is not the driver's and is not called. What this costs the game is the length of that call, once a second — a few millionths of a second where it was measured. A call that faults is caught, counted once, and not repeated; a call that takes two thousandths of a second or more is the last one until the game is closed. **A call that never returns would hold the game's presenting thread, and FrameLedger cannot stop it** — it has not happened in any test, and it is said here because it is the one thing in this component whose length FrameLedger's own code does not bound. With Advanced metrics off — the default — none of this happens.
+
+  It does not scan the game's memory, list the modules or processes on the system, or query Windows services — deliberately, because software that does those things from inside a game process looks like the thing this tool is trying not to be mistaken for.
 - FrameLedger injects into a game only after you enable that game individually. For every other game — and for any game where the safety checks refuse — it records the session's start, end and duration together with whatever hardware sensor readings your machine provides and the game's own memory use as Windows reports it (§1), and reports every other measurement as not available. **There is no measurement mode that works without injecting**; an earlier version of this document described one, and it was never built. FrameLedger never estimates a value it could not measure, and it always shows which of the two modes produced a session. Neither mode requires administrator rights.
 
 **However, these protections cannot be complete:**
@@ -195,8 +199,15 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   mean, median and peak. The game's other processes (launchers, helpers) are not counted.
 > - **Video memory:** in use on the whole graphics card, recorded from Windows and GPU-driver telemetry
 >   and charted. **Not measured at all:** the video-memory budget Windows gives a game, which frame
->   spikes were shader compilation, PC latency (Reflex), and HDR. Stutter count and stutter time are
+>   spikes were shader compilation, end-to-end PC latency, and HDR. Stutter count and stutter time are
 >   measured from frame times.
+> - **NVIDIA's latency report (only with Advanced metrics on; Direct3D 12; a game that uses NVIDIA Reflex):** how
+>   long the driver says each stage of a frame took — simulation, render submit, present, driver, the operating
+>   system's queue, the graphics card — read from the graphics driver about once a second and shown as the driver
+>   reported it: **the driver's numbers, not a measurement by FrameLedger**, an average of the frames of one read,
+>   never checked against another tool, and not the delay from a click to the screen. Read with a test program
+>   against one driver and one card; **no real game had been read when this was written**. A game that does not use
+>   Reflex has none. The session summary's latency fields stay N/A.
 > - **Pacing, VSync and the graphics card (since beta.14):** the share of the time below 30 FPS, below 60 FPS and below
 >   the monitor's refresh rate, measured from frame times with small margins so that a game held at its limit is not
 >   counted as below it (a rate less than 2 % under the line reads partly as at it), and how much one frame's time

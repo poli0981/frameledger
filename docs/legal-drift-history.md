@@ -63,6 +63,23 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.20 of the Privacy Policy and 2.16 of the Disclaimer changed (train C; the release after 0.1.0-beta.46)
+
+**The part inside a game makes a call of its own** (owner decisions D132, D136, D138–D141; the wording's main
+points approved with the plan of 2026-11-13). Every earlier version could say that the component reads only what a
+game passes to the graphics calls it intercepts. With Advanced metrics on, in a Direct3D 12 game that had loaded
+NVIDIA's driver library, it now also asks the driver, about once a second, for the driver's report of the last
+frames' stages and its low-latency state. So: the **Privacy Policy** (2.20) names what a session stores of it —
+durations and five switches, never a time of day, never the moment of an input — in §1's item on Advanced metrics
+and in §4's list of what the component observes. The **Disclaimer** (2.16) changes three places: "What it observes
+inside the game" names the report; the sentence "API arguments and nothing else" is replaced by what is true; and
+§2, after the paragraph on the background thread, gains the paragraph on this call — that it is made on the game's
+presenting thread, through a library the game loaded and FrameLedger never loads, that two files are kept loaded
+for it, that it calls nothing that sets or delays, what ends it, and **that a call which never returned could not be
+stopped**. The accuracy statement loses "PC latency (Reflex)" from "not measured at all" — end-to-end latency
+still is not measured — and gains the item saying these are the driver's numbers, read from no real game when it
+was written.
+
 ### What version 2.19 of the Privacy Policy changed (0.1.0-beta.45)
 
 **Six more calls read inside the game, only while Advanced metrics is on** (train B's fourth step, owner decisions

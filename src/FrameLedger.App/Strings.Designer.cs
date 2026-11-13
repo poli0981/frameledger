@@ -263,6 +263,7 @@ public static class Strings
         nameof(Advanced_Facts_Header),
         nameof(Advanced_Header),
         nameof(Advanced_InGameCallsLine),
+        nameof(Advanced_InGameDriverLine),
         nameof(Advanced_InGameFeatureCallsLine),
         nameof(Advanced_InGameLine),
         nameof(Advanced_InGameMoreCallsLine),
@@ -286,12 +287,24 @@ public static class Strings
         nameof(Advanced_State_Viewer),
         nameof(Advanced_State_Waiting),
         nameof(Advanced_Status_InGame),
+        nameof(Advanced_Status_InGameDriver),
         nameof(Advanced_Status_Read),
         nameof(Advanced_Status_Readable),
         nameof(Advanced_Status_SourceSilent),
         nameof(Advanced_Tab_Machine),
         nameof(Advanced_Tab_Session),
         nameof(Advanced_Tab_Sources),
+        nameof(AdvDriverRead_Error),
+        nameof(AdvDriverRead_Faulted),
+        nameof(AdvDriverRead_NoDirect3D12),
+        nameof(AdvDriverRead_NoGetter),
+        nameof(AdvDriverRead_NoModule),
+        nameof(AdvDriverRead_NothingReported),
+        nameof(AdvDriverRead_Read),
+        nameof(AdvDriverRead_Refused),
+        nameof(AdvDriverRead_Slow),
+        nameof(AdvDriverRead_Stalled),
+        nameof(AdvDriverRead_Unknown),
         nameof(AdvGroup_Board),
         nameof(AdvGroup_Cpu),
         nameof(AdvGroup_Display),
@@ -322,6 +335,7 @@ public static class Strings
         nameof(AdvReach_NotInHeaders),
         nameof(AdvReach_PlayerState),
         nameof(AdvReach_Refused),
+        nameof(AdvReach_RefusedRoute),
         nameof(AdvReach_Spike),
         nameof(AdvScope_MachineFact),
         nameof(AdvScope_Series),
@@ -340,10 +354,12 @@ public static class Strings
         nameof(AdvToken_discrete),
         nameof(AdvToken_dolby_vision),
         nameof(AdvToken_draw_debug_view),
+        nameof(AdvToken_driver),
         nameof(AdvToken_driver_default),
         nameof(AdvToken_edr),
         nameof(AdvToken_fpci),
         nameof(AdvToken_game_ready),
+        nameof(AdvToken_gpu_render),
         nameof(AdvToken_gsync_module),
         nameof(AdvToken_hdr10),
         nameof(AdvToken_hdr10_plus),
@@ -360,13 +376,18 @@ public static class Strings
         nameof(AdvToken_off),
         nameof(AdvToken_on),
         nameof(AdvToken_on_and_off),
+        nameof(AdvToken_os_queue),
         nameof(AdvToken_pci),
         nameof(AdvToken_pci_express),
+        nameof(AdvToken_present),
+        nameof(AdvToken_render_submit),
         nameof(AdvToken_rtx_new_feature),
         nameof(AdvToken_rtx_production),
         nameof(AdvToken_scrgb_linear),
+        nameof(AdvToken_simulation),
         nameof(AdvToken_srgb),
         nameof(AdvToken_studio),
+        nameof(AdvToken_total),
         nameof(AdvToken_ulmb),
         nameof(AdvToken_usable_now),
         nameof(AdvToken_user_set),
@@ -2006,6 +2027,8 @@ public static class Strings
 
     public static string Advanced_InGameCallsLine => ResourceManager.GetString(nameof(Advanced_InGameCallsLine), Culture) ?? nameof(Advanced_InGameCallsLine);
 
+    public static string Advanced_InGameDriverLine => ResourceManager.GetString(nameof(Advanced_InGameDriverLine), Culture) ?? nameof(Advanced_InGameDriverLine);
+
     public static string Advanced_InGameFeatureCallsLine => ResourceManager.GetString(nameof(Advanced_InGameFeatureCallsLine), Culture) ?? nameof(Advanced_InGameFeatureCallsLine);
 
     public static string Advanced_InGameLine => ResourceManager.GetString(nameof(Advanced_InGameLine), Culture) ?? nameof(Advanced_InGameLine);
@@ -2052,6 +2075,8 @@ public static class Strings
 
     public static string Advanced_Status_InGame => ResourceManager.GetString(nameof(Advanced_Status_InGame), Culture) ?? nameof(Advanced_Status_InGame);
 
+    public static string Advanced_Status_InGameDriver => ResourceManager.GetString(nameof(Advanced_Status_InGameDriver), Culture) ?? nameof(Advanced_Status_InGameDriver);
+
     public static string Advanced_Status_Read => ResourceManager.GetString(nameof(Advanced_Status_Read), Culture) ?? nameof(Advanced_Status_Read);
 
     public static string Advanced_Status_Readable => ResourceManager.GetString(nameof(Advanced_Status_Readable), Culture) ?? nameof(Advanced_Status_Readable);
@@ -2063,6 +2088,28 @@ public static class Strings
     public static string Advanced_Tab_Session => ResourceManager.GetString(nameof(Advanced_Tab_Session), Culture) ?? nameof(Advanced_Tab_Session);
 
     public static string Advanced_Tab_Sources => ResourceManager.GetString(nameof(Advanced_Tab_Sources), Culture) ?? nameof(Advanced_Tab_Sources);
+
+    public static string AdvDriverRead_Error => ResourceManager.GetString(nameof(AdvDriverRead_Error), Culture) ?? nameof(AdvDriverRead_Error);
+
+    public static string AdvDriverRead_Faulted => ResourceManager.GetString(nameof(AdvDriverRead_Faulted), Culture) ?? nameof(AdvDriverRead_Faulted);
+
+    public static string AdvDriverRead_NoDirect3D12 => ResourceManager.GetString(nameof(AdvDriverRead_NoDirect3D12), Culture) ?? nameof(AdvDriverRead_NoDirect3D12);
+
+    public static string AdvDriverRead_NoGetter => ResourceManager.GetString(nameof(AdvDriverRead_NoGetter), Culture) ?? nameof(AdvDriverRead_NoGetter);
+
+    public static string AdvDriverRead_NoModule => ResourceManager.GetString(nameof(AdvDriverRead_NoModule), Culture) ?? nameof(AdvDriverRead_NoModule);
+
+    public static string AdvDriverRead_NothingReported => ResourceManager.GetString(nameof(AdvDriverRead_NothingReported), Culture) ?? nameof(AdvDriverRead_NothingReported);
+
+    public static string AdvDriverRead_Read => ResourceManager.GetString(nameof(AdvDriverRead_Read), Culture) ?? nameof(AdvDriverRead_Read);
+
+    public static string AdvDriverRead_Refused => ResourceManager.GetString(nameof(AdvDriverRead_Refused), Culture) ?? nameof(AdvDriverRead_Refused);
+
+    public static string AdvDriverRead_Slow => ResourceManager.GetString(nameof(AdvDriverRead_Slow), Culture) ?? nameof(AdvDriverRead_Slow);
+
+    public static string AdvDriverRead_Stalled => ResourceManager.GetString(nameof(AdvDriverRead_Stalled), Culture) ?? nameof(AdvDriverRead_Stalled);
+
+    public static string AdvDriverRead_Unknown => ResourceManager.GetString(nameof(AdvDriverRead_Unknown), Culture) ?? nameof(AdvDriverRead_Unknown);
 
     public static string AdvGroup_Board => ResourceManager.GetString(nameof(AdvGroup_Board), Culture) ?? nameof(AdvGroup_Board);
 
@@ -2124,6 +2171,8 @@ public static class Strings
 
     public static string AdvReach_Refused => ResourceManager.GetString(nameof(AdvReach_Refused), Culture) ?? nameof(AdvReach_Refused);
 
+    public static string AdvReach_RefusedRoute => ResourceManager.GetString(nameof(AdvReach_RefusedRoute), Culture) ?? nameof(AdvReach_RefusedRoute);
+
     public static string AdvReach_Spike => ResourceManager.GetString(nameof(AdvReach_Spike), Culture) ?? nameof(AdvReach_Spike);
 
     public static string AdvScope_MachineFact => ResourceManager.GetString(nameof(AdvScope_MachineFact), Culture) ?? nameof(AdvScope_MachineFact);
@@ -2160,6 +2209,8 @@ public static class Strings
 
     public static string AdvToken_draw_debug_view => ResourceManager.GetString(nameof(AdvToken_draw_debug_view), Culture) ?? nameof(AdvToken_draw_debug_view);
 
+    public static string AdvToken_driver => ResourceManager.GetString(nameof(AdvToken_driver), Culture) ?? nameof(AdvToken_driver);
+
     public static string AdvToken_driver_default => ResourceManager.GetString(nameof(AdvToken_driver_default), Culture) ?? nameof(AdvToken_driver_default);
 
     public static string AdvToken_edr => ResourceManager.GetString(nameof(AdvToken_edr), Culture) ?? nameof(AdvToken_edr);
@@ -2167,6 +2218,8 @@ public static class Strings
     public static string AdvToken_fpci => ResourceManager.GetString(nameof(AdvToken_fpci), Culture) ?? nameof(AdvToken_fpci);
 
     public static string AdvToken_game_ready => ResourceManager.GetString(nameof(AdvToken_game_ready), Culture) ?? nameof(AdvToken_game_ready);
+
+    public static string AdvToken_gpu_render => ResourceManager.GetString(nameof(AdvToken_gpu_render), Culture) ?? nameof(AdvToken_gpu_render);
 
     public static string AdvToken_gsync_module => ResourceManager.GetString(nameof(AdvToken_gsync_module), Culture) ?? nameof(AdvToken_gsync_module);
 
@@ -2200,9 +2253,15 @@ public static class Strings
 
     public static string AdvToken_on_and_off => ResourceManager.GetString(nameof(AdvToken_on_and_off), Culture) ?? nameof(AdvToken_on_and_off);
 
+    public static string AdvToken_os_queue => ResourceManager.GetString(nameof(AdvToken_os_queue), Culture) ?? nameof(AdvToken_os_queue);
+
     public static string AdvToken_pci => ResourceManager.GetString(nameof(AdvToken_pci), Culture) ?? nameof(AdvToken_pci);
 
     public static string AdvToken_pci_express => ResourceManager.GetString(nameof(AdvToken_pci_express), Culture) ?? nameof(AdvToken_pci_express);
+
+    public static string AdvToken_present => ResourceManager.GetString(nameof(AdvToken_present), Culture) ?? nameof(AdvToken_present);
+
+    public static string AdvToken_render_submit => ResourceManager.GetString(nameof(AdvToken_render_submit), Culture) ?? nameof(AdvToken_render_submit);
 
     public static string AdvToken_rtx_new_feature => ResourceManager.GetString(nameof(AdvToken_rtx_new_feature), Culture) ?? nameof(AdvToken_rtx_new_feature);
 
@@ -2210,9 +2269,13 @@ public static class Strings
 
     public static string AdvToken_scrgb_linear => ResourceManager.GetString(nameof(AdvToken_scrgb_linear), Culture) ?? nameof(AdvToken_scrgb_linear);
 
+    public static string AdvToken_simulation => ResourceManager.GetString(nameof(AdvToken_simulation), Culture) ?? nameof(AdvToken_simulation);
+
     public static string AdvToken_srgb => ResourceManager.GetString(nameof(AdvToken_srgb), Culture) ?? nameof(AdvToken_srgb);
 
     public static string AdvToken_studio => ResourceManager.GetString(nameof(AdvToken_studio), Culture) ?? nameof(AdvToken_studio);
+
+    public static string AdvToken_total => ResourceManager.GetString(nameof(AdvToken_total), Culture) ?? nameof(AdvToken_total);
 
     public static string AdvToken_ulmb => ResourceManager.GetString(nameof(AdvToken_ulmb), Culture) ?? nameof(AdvToken_ulmb);
 

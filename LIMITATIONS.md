@@ -124,8 +124,13 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 - **Ray tracing** is *Yes*, *No* or *N/A* — measured from the game's ray-tracing calls on Direct3D 12, and
   N/A where FrameLedger could not look. **Path tracing is never stated as a fact**: there is no API signal
   for it. You can correct any of these by hand, and your correction is labelled as yours.
-- HDR output, NVIDIA Reflex latency, the video-memory budget Windows gives a game, and shader-compilation
-  stutter are **not measured yet** — they read N/A. ([Accuracy](legal/ACCURACY.md))
+- HDR output, end-to-end latency (click to screen), the video-memory budget Windows gives a game, and
+  shader-compilation stutter are **not measured yet** — they read N/A. ([Accuracy](legal/ACCURACY.md))
+- **NVIDIA's own latency report** is read only with *Advanced metrics* on, only on an NVIDIA card, only in a
+  Direct3D 12 game that uses NVIDIA Reflex: how long the driver says each stage of a frame took, about once a
+  second. They are the driver's numbers, not FrameLedger's measurement. FrameLedger asks the driver for them from
+  inside the game; a read that is slow or faults is switched off until the game is closed, and the session says so.
+  ([Advanced metrics](guide/12-advanced-metrics.md))
 
 ## The game's memory
 

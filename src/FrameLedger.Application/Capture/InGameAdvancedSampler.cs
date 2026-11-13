@@ -38,7 +38,19 @@ public sealed class InGameAdvancedSampler
     /// <summary>FSR's own video memory as it answered the game, in mebibytes — a point for each second the game asked.</summary>
     public const string MemorySeries = AdvancedMetric.SeriesPrefix + "ffx.memory_usage";
 
+    /// <summary>
+    /// The stem of the seven series of the driver's latency report (train C): <c>adv.nvapi.reflex.frame_report.</c>
+    /// and one of <see cref="LatencySpans"/>. Each point is the mean, in microseconds, of the frames one read summed.
+    /// </summary>
+    public const string LatencySeriesStem = AdvancedMetric.SeriesPrefix + "nvapi.reflex.frame_report.";
+
     private const double _mebibyte = 1024.0 * 1024.0;
+
+    // The spans of a frame the driver reports, in the order the capture side publishes their sums.
+    private static readonly string[] _latencySpans = ["simulation", "render_submit", "present", "driver", "os_queue", "gpu_render", "total"];
+
+    // NV_GET_SLEEP_STATUS_PARAMS's five switches, by bit: the vendor's own names, shown as they are.
+    private static readonly string[] _sleepSwitches = ["bLowLatencyMode", "bFsVrr", "bCplVsyncOn", "bUseGameSleep", "bFullscreenIFlip"];
 
     // What the second row of a field of view over pi says (owner decision D128).
     private const string _notRadians = "not_radians";
@@ -79,9 +91,15 @@ public sealed class InGameAdvancedSampler
     /// switch seen over a session, the flags of the dispatch that have a name, "none", and what a field of view
     /// that cannot be radians is said to be (D128). A flag bit nobody named is <c>bit_N</c> and is shown as it is.
     /// </summary>
-    public static IReadOnlyList<string> Tokens { get; } = ["on", "off", "on_and_off", "none", _notRadians, .. _flagTokens];
+    public static IReadOnlyList<string> Tokens { get; } = ["on", "off", "on_and_off", "none", _notRadians, .. _flagTokens, .. _latencySpans];
+
+    /// <summary>The seven spans of a frame, as the last part of a series' name; the App translates each (<c>AdvToken_*</c>).</summary>
+    public static IReadOnlyList<string> LatencySpans => _latencySpans;
 
     private InGameAdvanced? _last;
+    private FlLatencyState _latencyState;
+    private bool _latencyFrames;
+    private uint _latencySlowestUs;
     private uint _memoryQueries;
     private FactKey _key;
     private uint _builtResets;
@@ -97,6 +115,37 @@ public sealed class InGameAdvancedSampler
     /// <summary>What a session stores as its in-game state: <paramref name="hooked"/> is whether it was measured inside the game.</summary>
     public AdvancedInGameStatus Status(bool hooked) =>
         !hooked ? AdvancedInGameStatus.NotHooked : SawAnything ? AdvancedInGameStatus.Reading : AdvancedInGameStatus.NothingSeen;
+
+    /// <summary>
+    /// What became of the driver's latency report (train C), for a session measured inside the game: null when it
+    /// was not, and when the capture side said nothing about it - a game it publishes no Advanced metrics for.
+    /// "Reported frames" wins over an error or a stop that came later: the series are there up to it, and the
+    /// stops say themselves.
+    /// </summary>
+    public AdvancedDriverRead? DriverRead(bool hooked)
+    {
+        if (!hooked)
+        {
+            return null;
+        }
+
+        return _latencyState switch
+        {
+            FlLatencyState.NoDevice => AdvancedDriverRead.NoDirect3D12,
+            FlLatencyState.NoModule => AdvancedDriverRead.NoModule,
+            FlLatencyState.Refused => AdvancedDriverRead.Refused,
+            FlLatencyState.NoGetter => AdvancedDriverRead.NoGetter,
+            FlLatencyState.Reading => _latencyFrames ? AdvancedDriverRead.Read : AdvancedDriverRead.NothingReported,
+            FlLatencyState.Error => _latencyFrames ? AdvancedDriverRead.Read : AdvancedDriverRead.Error,
+            FlLatencyState.Slow => AdvancedDriverRead.Slow,
+            FlLatencyState.Faulted => AdvancedDriverRead.Faulted,
+            FlLatencyState.Stalled => AdvancedDriverRead.Stalled,
+            _ => null,
+        };
+    }
+
+    /// <summary>The slowest call into the driver the publications carried, in microseconds; null while none was made.</summary>
+    public int? DriverSlowestUs => _latencySlowestUs == 0 ? null : (int)_latencySlowestUs;
 
     /// <summary>
     /// What became of the entries read from one call hooked only for Advanced metrics (0.1.0-beta.43):
@@ -156,12 +205,17 @@ public sealed class InGameAdvancedSampler
 
         _last = published;
         ref readonly FlAdvancedState s = ref published.State;
+
+        // The driver's latency report first, and whatever the mask says: where that read stands is published even
+        // when nothing was read, and it is not one of "the game's calls".
+        List<AdvancedReading>? readings = TakeLatency(published);
         if (s.ValidMask == FlAdvancedValid.None)
         {
-            return null;
+            return readings;
         }
 
-        SawAnything = true;
+        // "The game's calls were read" is about the game's calls: the driver's report is not one of them.
+        SawAnything |= (s.ValidMask & ~FlAdvancedValid.Latency) != FlAdvancedValid.None;
         _everValid |= s.ValidMask;
         if (s.ValidMask.HasFlag(FlAdvancedValid.SlFeatures))
         {
@@ -179,7 +233,7 @@ public sealed class InGameAdvancedSampler
             _builtResets = s.SlResets;
         }
 
-        var readings = new List<AdvancedReading>(2);
+        readings ??= new List<AdvancedReading>(2);
         // The pair is drained by each publication: the dispatches of the second before it. A sum that saturated its
         // word is not a mean of anything.
         if (s.ValidMask.HasFlag(FlAdvancedValid.FfxUpscale) && s.FfxFrameTimeCount != 0 && s.FfxFrameTimeSumUs != uint.MaxValue)
@@ -195,6 +249,39 @@ public sealed class InGameAdvancedSampler
         }
 
         return readings.Count == 0 ? null : readings;
+    }
+
+    // The ten latency words of a publication (07_IPC, region 5): the state and the slowest call are kept; the frames
+    // and the sums are of ONE read and become one point a span - the mean over the frames that read summed. A span
+    // some summed frame did not report has no point: without a sleep mode the driver reports no driver span at all.
+    private List<AdvancedReading>? TakeLatency(InGameAdvanced published)
+    {
+        ref readonly FlAdvancedState s = ref published.State;
+        var state = (FlLatencyState)(s.LatState & FlAdvancedState.LatStateMask);
+        if (state != FlLatencyState.None)
+        {
+            _latencyState = state;
+        }
+
+        _latencySlowestUs = Math.Max(_latencySlowestUs, s.LatReads >> 16);
+        uint frames = s.LatFrames & 0xFFFFu;
+        if (!s.ValidMask.HasFlag(FlAdvancedValid.Latency) || frames == 0)
+        {
+            return null;
+        }
+
+        _latencyFrames = true;
+        uint[] sums = [s.LatSimulationSumUs, s.LatSubmitSumUs, s.LatPresentSumUs, s.LatDriverSumUs, s.LatOsQueueSumUs, s.LatGpuSumUs, s.LatTotalSumUs];
+        var readings = new List<AdvancedReading>(sums.Length);
+        for (int span = 0; span < sums.Length; span++)
+        {
+            if (sums[span] != FlAdvancedState.LatSumNone)
+            {
+                readings.Add(new AdvancedReading(LatencySeriesStem + _latencySpans[span], sums[span] / (double)frames));
+            }
+        }
+
+        return readings;
     }
 
     private static List<AdvancedFact> Build(InGameAdvanced published)
@@ -230,7 +317,42 @@ public sealed class InGameAdvancedSampler
             AddStreamlineFeatureState(published, facts);
         }
 
+        if (published.State.ValidMask.HasFlag(FlAdvancedValid.Latency))
+        {
+            AddDriverSleepStatus(published, facts);
+        }
+
         return facts;
+    }
+
+    // The driver's sleep status (train C): its five switches as seen over the session, by the vendor's own names, and
+    // the frame-generation multiplier it last gave. THE DRIVER'S WORDS: on the driver the probe ran against,
+    // bLowLatencyMode read off for a device whose game had just switched low latency on (spike-notes §31) - so this
+    // is never worded as "the game uses Reflex".
+    private static void AddDriverSleepStatus(InGameAdvanced published, List<AdvancedFact> facts)
+    {
+        ref readonly FlAdvancedState s = ref published.State;
+        uint on = (s.LatState >> FlAdvancedState.LatSleepSeenOnShift) & FlAdvancedState.LatSleepBits;
+        uint off = (s.LatState >> FlAdvancedState.LatSleepSeenOffShift) & FlAdvancedState.LatSleepBits;
+        if ((on | off) == 0)
+        {
+            return;    // the report was read and the status never was
+        }
+
+        var rows = new List<AdvancedRow>(_sleepSwitches.Length + 1);
+        for (int bit = 0; bit < _sleepSwitches.Length; bit++)
+        {
+            // Bit 0 seen off, bit 1 seen on: the two bits AddSwitch reads.
+            AddSwitch(rows, _sleepSwitches[bit], ((off >> bit) & 1u) | (((on >> bit) & 1u) << 1));
+        }
+
+        uint multiplier = s.LatState >> FlAdvancedState.LatFgMultiplierShift;
+        if (multiplier != 0)
+        {
+            rows.Add(new AdvancedRow("fgMultiplier", multiplier.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        facts.Add(Fact("nvapi.reflex.sleep_status", AdvancedValue.OfRows(rows)));
     }
 
     // Whether Streamline says each feature is supported and loaded, and what the game did with it while the session
@@ -724,7 +846,8 @@ public sealed class InGameAdvancedSampler
         ulong SlFov,
         uint SlAspect,
         ulong SlFlags,
-        ulong SlFeatures)
+        ulong SlFeatures,
+        uint DriverSleep)
     {
         public static FactKey Of(InGameAdvanced published)
         {
@@ -765,7 +888,9 @@ public sealed class InGameAdvancedSampler
                 Pair(s.SlFovMinBits, s.SlFovMaxBits),
                 s.SlAspectBits,
                 Pair(s.SlFlagsSeenTrue, s.SlFlagsSeenFalse),
-                FeaturesHash(published));
+                FeaturesHash(published),
+                // The driver's sleep status as seen and its multiplier: what the one latency fact is made of.
+                s.ValidMask.HasFlag(FlAdvancedValid.Latency) ? s.LatState >> FlAdvancedState.LatSleepSeenOnShift : 0u);
         }
 
         // The feature slots as one number (FNV-1a over the words of the slots in use): an answer that arrives, or one

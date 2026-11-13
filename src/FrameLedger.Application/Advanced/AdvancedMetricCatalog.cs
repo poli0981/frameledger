@@ -182,10 +182,15 @@ public static class AdvancedMetricCatalog
         Session("sl.init.preferences", Streamline, BeforeAttach, Text, Upscaling, "The preferences the game started Streamline with"),
         Session("sl.constants.camera", Streamline, PlayerState, Text, Upscaling, "Camera position, axes and matrices"),
 
+        // ---- Inside the game: what the driver reports, asked for by the part inside the game itself (train C) ------
+        // Not an argument of a hooked call: two read-only getters of the driver, about once a second (D132, D136).
+        // What the GAME asked of Reflex - the mode, boost, the limit - is an argument of a function that is not an
+        // export: reading it needs a patch at an address learned at run time, the class refused on 2026-08-09.
+        Session("nvapi.reflex.mode", Nvapi, RefusedRoute, Text, Latency, "Reflex: low-latency mode, boost, the frame-rate limit"),
+        Session("nvapi.reflex.sleep_status", Nvapi, GameDriver, Table, Latency, "What the driver's low-latency state is"),
+        SampledFamily("nvapi.reflex.frame_report", Nvapi, GameDriver, Microseconds, Latency, "Latency per frame: simulation, render submit, present, driver, OS queue, GPU render"),
+
         // ---- Inside the game: routes a spike decides ------------------------------------------------------------
-        Session("nvapi.reflex.mode", Nvapi, Spike, Text, Latency, "Reflex: low-latency mode, boost, the frame-rate limit"),
-        Session("nvapi.reflex.sleep_status", Nvapi, Spike, Text, Latency, "What the driver's low-latency state is"),
-        SampledFamily("nvapi.reflex.frame_report", Nvapi, Spike, Microseconds, Latency, "Latency per frame: simulation, render submit, present, driver, OS queue, GPU render"),
         Session("sl.dlss.optimal_settings", Streamline, Spike, Text, Upscaling, "The render size and sharpness DLSS recommends"),
         Sampled("sl.dlss.vram_estimate", Streamline, Spike, Mebibytes, Upscaling, "DLSS's own estimate of its video memory"),
         Session("sl.dlssg.options", Streamline, Spike, Text, FrameGeneration, "DLSS frame generation: mode, frames to generate"),
@@ -195,7 +200,9 @@ public static class AdvancedMetricCatalog
         Session("sl.dlssd.options", Streamline, Spike, Text, Upscaling, "Ray reconstruction's options"),
         Session("sl.nis.options", Streamline, Spike, Text, Upscaling, "NVIDIA Image Scaling's options"),
         Session("sl.deepdvc.options", Streamline, Spike, Text, Upscaling, "RTX Dynamic Vibrance's options"),
-        Session("sl.reflex.state", Streamline, Spike, Table, Latency, "Reflex through Streamline: availability and its frame reports"),
+        // A refused route (owner decision D133): the Overlay calling slReflexGetState itself breaks the thread
+        // contract the vendor's header states.
+        Session("sl.reflex.state", Streamline, RefusedRoute, Table, Latency, "Reflex through Streamline: availability and its frame reports"),
         Sampled("sl.pcl.markers", Streamline, Spike, Count, Latency, "PC-latency markers the game sets"),
 
         // ---- Closed by a licence --------------------------------------------------------------------------------

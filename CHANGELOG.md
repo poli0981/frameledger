@@ -60,8 +60,12 @@ numeric core and does not move; the heading is the full version — corrected 20
   queue, the graphics card - and for its low-latency state. It is a call FrameLedger makes itself, on the thread
   that presents the game's frames, through NVIDIA's `nvapi64.dll` only where the game had already loaded it;
   Direct3D 12 only. A copy of that library sitting in the game's own folder is refused. A call that faults or takes
-  two milliseconds is the last one until the game is closed. Nothing shows these numbers yet: the Agent and the App
-  come next, with the legal texts.
+  two milliseconds is the last one until the game is closed. **The Advanced page shows it** under *Latency*: seven
+  lines, one a stage, and a table of the driver's low-latency state; the line under a session says what became of
+  the read - read, the driver reported no frame, not read and why, or stopped and why. They are the driver's
+  numbers, not a measurement by FrameLedger, and no real game had been read when this was written. **Privacy
+  Policy 2.20 and Disclaimer 2.16** say what is stored and what the part inside a game now does; the terms window
+  will show once.
 
 - **For developers: room in the shared memory for NVIDIA Reflex latency** (owner decisions D136, D138). Ten reserved
   words of the block that carries Advanced metrics from a game are now named for the driver's latency report -

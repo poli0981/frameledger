@@ -63,6 +63,16 @@ public static class AdvancedLabels
     /// <summary>A token the driver's answer was mapped to; the token itself where this build has no word for it.</summary>
     public static string Token(string token) => Lookup("AdvToken_" + token) ?? token;
 
+    /// <summary>
+    /// What became of the driver's latency report in a session, in words. A read stopped for being slow says how
+    /// slow: <paramref name="slowestUs"/> is the session's slowest call into the driver, in microseconds.
+    /// </summary>
+    public static string DriverRead(AdvancedDriverRead read, int? slowestUs)
+    {
+        string text = Lookup("AdvDriverRead_" + read) ?? read.ToString();
+        return read == AdvancedDriverRead.Slow ? string.Format(CultureInfo.CurrentCulture, text, slowestUs ?? 0) : text;
+    }
+
     /// <summary>A number in its unit. A flag is yes or no; a count has no unit.</summary>
     public static string Number(double value, AdvancedUnit unit)
     {

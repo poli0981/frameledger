@@ -521,6 +521,8 @@ public sealed class SessionRecorder : ISessionRecorder
                     StreamlineAllocateResources = calls.AllocateResources,
                     StreamlineFreeResources = calls.FreeResources,
                     StreamlineShutdown = calls.Shutdown,
+                    DriverLatency = calls.Driver,
+                    DriverLatencySlowestUs = calls.DriverSlowestUs,
                 }));
         }
 
@@ -548,7 +550,9 @@ public sealed class SessionRecorder : ISessionRecorder
                 _inGame.FeatureCall(InGameAdvancedSampler.FeatureSwitched, hooks.HasFlag(FlHookFamily.SlSetFeatureLoaded)),
                 _inGame.FeatureCall(InGameAdvancedSampler.FeatureAllocated, hooks.HasFlag(FlHookFamily.SlAllocateResources)),
                 _inGame.FeatureCall(InGameAdvancedSampler.FeatureFreed, hooks.HasFlag(FlHookFamily.SlFreeResources)),
-                _inGame.Call(FlAdvancedValid.SlShutdown, hooks.HasFlag(FlHookFamily.SlShutdown)));
+                _inGame.Call(FlAdvancedValid.SlShutdown, hooks.HasFlag(FlHookFamily.SlShutdown)),
+                _inGame.DriverRead(hooked: true),
+                _inGame.DriverSlowestUs);
         }
 
         /// <summary>The ten calls' states, compared as one value when deciding whether the session's context moved.</summary>
@@ -563,7 +567,9 @@ public sealed class SessionRecorder : ISessionRecorder
             AdvancedInGameCall? SetFeatureLoaded,
             AdvancedInGameCall? AllocateResources,
             AdvancedInGameCall? FreeResources,
-            AdvancedInGameCall? Shutdown);
+            AdvancedInGameCall? Shutdown,
+            AdvancedDriverRead? Driver,
+            int? DriverSlowestUs);
 
         /// <summary>
         /// What the row says of the entries read inside the game: read, measured inside the game with none of their

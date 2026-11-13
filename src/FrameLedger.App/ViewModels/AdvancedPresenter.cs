@@ -90,7 +90,9 @@ public static class AdvancedPresenter
             }
         }
 
-        return owner is null ? (null, series) : (owner, AdvancedLabels.Member(AdvancedLabels.Of(owner), id[(owner.Id.Length + 1)..]));
+        // The member's own name, translated where it is one of ours (the spans of the driver's latency report) and
+        // shown as it is where it is the hardware's.
+        return owner is null ? (null, series) : (owner, AdvancedLabels.Member(AdvancedLabels.Of(owner), AdvancedLabels.Token(id[(owner.Id.Length + 1)..])));
     }
 
     /// <summary>Every series as it reads now, in the catalog's order: its value in its unit and the time it was read at.</summary>
@@ -223,6 +225,17 @@ public static class AdvancedPresenter
             line += " " + more;
         }
 
+        // The driver's latency report (train C): not one of the game's calls, so a sentence of its own - what became
+        // of the read FrameLedger makes itself, with the microseconds when it was stopped for being slow. A row
+        // stored before, and a session that says nothing about it, do not carry it.
+        if (sources.DriverLatency is { } driver && driver != AdvancedDriverRead.Unknown)
+        {
+            line += " " + string.Format(
+                CultureInfo.CurrentCulture,
+                Strings.Advanced_InGameDriverLine,
+                AdvancedLabels.DriverRead(driver, sources.DriverLatencySlowestUs));
+        }
+
         return line;
     }
 
@@ -267,6 +280,12 @@ public static class AdvancedPresenter
         {
             // Not a state of the PC: it is read inside a game being measured, when that game makes the call.
             return Strings.Advanced_Status_InGame;
+        }
+
+        if (metric.Reach == AdvancedReach.GameDriver)
+        {
+            // Nor this: read inside a game being measured, by a call FrameLedger makes into the driver itself.
+            return Strings.Advanced_Status_InGameDriver;
         }
 
         AdvancedSourceStatus? state = now is null ? null : (metric.Source, metric.Reach) switch

@@ -499,6 +499,9 @@
   <data name="Advanced_InGameCallsLine" xml:space="preserve">
     <value>Những gì game báo cho Streamline mỗi khung hình: {0}. Cách game cấu hình frame generation của FSR: {1}.</value>
   </data>
+  <data name="Advanced_InGameDriverLine" xml:space="preserve">
+    <value>Báo cáo độ trễ của NVIDIA, do FrameLedger hỏi driver đồ họa ngay bên trong game: {0}.</value>
+  </data>
   <data name="Advanced_InGameFeatureCallsLine" xml:space="preserve">
     <value>Mỗi tính năng Streamline là phiên bản nào: {0}. Mỗi tính năng cần gì: {1}.</value>
   </data>
@@ -568,6 +571,9 @@
   <data name="Advanced_Status_InGame" xml:space="preserve">
     <value>Được đọc bên trong game mà FrameLedger đo, khi game thực hiện lời gọi đó</value>
   </data>
+  <data name="Advanced_Status_InGameDriver" xml:space="preserve">
+    <value>Được đọc bên trong game mà FrameLedger đo, từ driver đồ họa: FrameLedger hỏi khoảng mỗi giây một lần</value>
+  </data>
   <data name="Advanced_Status_Read" xml:space="preserve">
     <value>Đang đọc</value>
   </data>
@@ -585,6 +591,39 @@
   </data>
   <data name="Advanced_Tab_Sources" xml:space="preserve">
     <value>Nguồn</value>
+  </data>
+  <data name="AdvDriverRead_Error" xml:space="preserve">
+    <value>driver trả về lỗi</value>
+  </data>
+  <data name="AdvDriverRead_Faulted" xml:space="preserve">
+    <value>đã dừng cho tới khi đóng game - một lời gọi vào driver gặp lỗi (fault)</value>
+  </data>
+  <data name="AdvDriverRead_NoDirect3D12" xml:space="preserve">
+    <value>không đọc - game không hiển thị qua Direct3D 12</value>
+  </data>
+  <data name="AdvDriverRead_NoGetter" xml:space="preserve">
+    <value>không đọc - thư viện không trả về hai hàm cần gọi</value>
+  </data>
+  <data name="AdvDriverRead_NoModule" xml:space="preserve">
+    <value>không đọc - game chưa nạp nvapi64.dll của NVIDIA, và FrameLedger không bao giờ nạp nó</value>
+  </data>
+  <data name="AdvDriverRead_NothingReported" xml:space="preserve">
+    <value>đã hỏi, driver không báo khung hình nào - game không dùng NVIDIA Reflex</value>
+  </data>
+  <data name="AdvDriverRead_Read" xml:space="preserve">
+    <value>đã đọc</value>
+  </data>
+  <data name="AdvDriverRead_Refused" xml:space="preserve">
+    <value>không đọc - nvapi64.dll trong game nằm ở chính thư mục của game, không phải của driver</value>
+  </data>
+  <data name="AdvDriverRead_Slow" xml:space="preserve">
+    <value>đã dừng cho tới khi đóng game - một lời gọi vào driver mất {0:N0} µs, và lời gọi từ 2.000 µs trở lên là lời gọi cuối</value>
+  </data>
+  <data name="AdvDriverRead_Stalled" xml:space="preserve">
+    <value>đã dừng - một lời gọi vào driver không trả về</value>
+  </data>
+  <data name="AdvDriverRead_Unknown" xml:space="preserve">
+    <value>không được ghi</value>
   </data>
   <data name="AdvGroup_Board" xml:space="preserve">
     <value>Bo mạch chủ</value>
@@ -676,6 +715,9 @@
   <data name="AdvReach_Refused" xml:space="preserve">
     <value>Không đọc: việc này khiến thư viện cảm biến dò mọi thiết bị USB</value>
   </data>
+  <data name="AdvReach_RefusedRoute" xml:space="preserve">
+    <value>Không đọc: việc đó cần vá mã tại một địa chỉ chỉ tìm được khi game đang chạy, hoặc một lời gọi mà nhà cung cấp cấm thực hiện từ ngoài luồng của game - cả hai đều bị từ chối</value>
+  </data>
   <data name="AdvReach_Spike" xml:space="preserve">
     <value>Đang nghiên cứu; chưa quyết định</value>
   </data>
@@ -727,6 +769,9 @@
   <data name="AdvToken_dolby_vision" xml:space="preserve">
     <value>Dolby Vision</value>
   </data>
+  <data name="AdvToken_driver" xml:space="preserve">
+    <value>driver</value>
+  </data>
   <data name="AdvToken_driver_default" xml:space="preserve">
     <value>Mặc định của driver</value>
   </data>
@@ -741,6 +786,9 @@
   </data>
   <data name="AdvToken_game_ready" xml:space="preserve">
     <value>Game Ready</value>
+  </data>
+  <data name="AdvToken_gpu_render" xml:space="preserve">
+    <value>GPU vẽ</value>
   </data>
   <data name="AdvToken_gsync_module" xml:space="preserve">
     <value>Mô-đun G-SYNC</value>
@@ -790,11 +838,20 @@
   <data name="AdvToken_on_and_off" xml:space="preserve">
     <value>Lúc bật, lúc tắt</value>
   </data>
+  <data name="AdvToken_os_queue" xml:space="preserve">
+    <value>hàng đợi vẽ của hệ điều hành</value>
+  </data>
   <data name="AdvToken_pci" xml:space="preserve">
     <value>PCI</value>
   </data>
   <data name="AdvToken_pci_express" xml:space="preserve">
     <value>PCI Express</value>
+  </data>
+  <data name="AdvToken_present" xml:space="preserve">
+    <value>present</value>
+  </data>
+  <data name="AdvToken_render_submit" xml:space="preserve">
+    <value>gửi lệnh vẽ</value>
   </data>
   <data name="AdvToken_rtx_new_feature" xml:space="preserve">
     <value>Nhánh RTX tính năng mới</value>
@@ -805,11 +862,17 @@
   <data name="AdvToken_scrgb_linear" xml:space="preserve">
     <value>scRGB (tuyến tính)</value>
   </data>
+  <data name="AdvToken_simulation" xml:space="preserve">
+    <value>mô phỏng</value>
+  </data>
   <data name="AdvToken_srgb" xml:space="preserve">
     <value>sRGB</value>
   </data>
   <data name="AdvToken_studio" xml:space="preserve">
     <value>Studio</value>
+  </data>
+  <data name="AdvToken_total" xml:space="preserve">
+    <value>tổng, từ đầu mô phỏng tới khi GPU vẽ xong</value>
   </data>
   <data name="AdvToken_ulmb" xml:space="preserve">
     <value>ULMB</value>
@@ -1115,7 +1178,7 @@
     <value>Agent không phản hồi yêu cầu cập nhật quy tắc.</value>
   </data>
   <data name="Settings_Advanced_Body" xml:space="preserve">
-    <value>Đọc thêm từ driver đồ hoạ và các cảm biến phần cứng trong lúc ghi phiên - bộ nhớ và tải của card đồ hoạ ở mức chi tiết, từng quạt và điện áp, khả năng của màn hình, thiết lập của driver cho game - và, với game mà FrameLedger đo từ bên trong, những gì game đưa cho DLSS, Streamline và FSR (kích thước, preset, làm nét, phơi sáng, khoảng độ sâu, cách cấu hình frame generation - không bao giờ là vị trí camera). Tất cả được lưu cùng phiên. Tắt: không đọc và không lưu thêm gì, kể cả bên trong game. Áp dụng từ phiên kế tiếp; phiên đã ghi lúc tắt sẽ không được bổ sung về sau.</value>
+    <value>Đọc thêm từ driver đồ hoạ và các cảm biến phần cứng trong lúc ghi phiên - bộ nhớ và tải của card đồ hoạ ở mức chi tiết, từng quạt và điện áp, khả năng của màn hình, thiết lập của driver cho game - và, với game mà FrameLedger đo từ bên trong, những gì game đưa cho DLSS, Streamline và FSR (kích thước, preset, làm nét, phơi sáng, khoảng độ sâu, cách cấu hình frame generation - không bao giờ là vị trí camera). Với card NVIDIA, trong game Direct3D 12 có dùng thư viện của NVIDIA, FrameLedger còn hỏi driver đồ hoạ khoảng mỗi giây một lần, ngay bên trong game, xem từng chặng của một khung hình mất bao lâu - đây là lời gọi do chính FrameLedger thực hiện trên luồng hiển thị khung hình của game. Tất cả được lưu cùng phiên. Tắt: không đọc và không lưu thêm gì, kể cả bên trong game. Áp dụng từ phiên kế tiếp; phiên đã ghi lúc tắt sẽ không được bổ sung về sau.</value>
   </data>
   <data name="Settings_Advanced_Label" xml:space="preserve">
     <value>Thông số nâng cao</value>

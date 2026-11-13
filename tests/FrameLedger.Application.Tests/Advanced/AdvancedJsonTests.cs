@@ -233,6 +233,8 @@ public sealed class AdvancedJsonTests
             StreamlineAllocateResources = AdvancedInGameCall.Read,
             StreamlineFreeResources = AdvancedInGameCall.NotHooked,
             StreamlineShutdown = AdvancedInGameCall.NeverCalled,
+            DriverLatency = AdvancedDriverRead.Slow,
+            DriverLatencySlowestUs = 2400,
         };
 
         string json = AdvancedJson.OfSession([], written);
@@ -248,6 +250,8 @@ public sealed class AdvancedJsonTests
         older.StreamlineFeatureRequirements.Should().Be(AdvancedInGameCall.Read);
         older.StreamlineFeatureSupported.Should().BeNull("a row that never said is not a row that said the hook was not in");
         older.StreamlineShutdown.Should().BeNull();
+        older.DriverLatency.Should().BeNull("a row stored before train C says nothing about the driver's report");
+        older.DriverLatencySlowestUs.Should().BeNull();
     }
 
     [Theory]
