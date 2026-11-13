@@ -98,3 +98,37 @@ the record of why it was within reach.
 **Answered 2026-11-13 (owner decision D136): go, to a plan.** The title is Cyberpunk 2077. No code before the plan
 is approved, and no release that carries the calls before a stop while a game runs has been exercised on
 0.1.0-beta.46 (owner-only item 44 (d)).
+
+### The leg with a sleep (owner decision D139) — the table, written before the run
+
+The plan's review found the largest thing the runs above never touched: **no run set a sleep mode or called
+`NvAPI_D3D_Sleep`**, and a game that uses Reflex does both, every frame. If the driver makes a getter wait behind
+the game's sleep, a read on the presenting thread holds a present for as long as the sleep lasts. The owner said:
+measure it in the probe first (D139). The probe plays the game's part once more — `NvAPI_D3D_SetSleepMode` (low
+latency on, a minimum interval of 4 166 µs, markers used) and `NvAPI_D3D_Sleep` at the start of every frame, on its
+own Direct3D 12 device, in its own process. **Both are writes**, as the markers were; no shipped binary contains
+either, and the sleep mode is switched back off before the device is released.
+
+| # | What is measured | What it decides |
+|---|---|---|
+| S1 | The sleep mode takes: `SetSleepMode` returns OK, the sleep status then reads low-latency on, and a frame takes about the interval | Not OK, or the status does not change → the leg did not exercise a sleep; said so, nothing concluded from S2–S4. |
+| S2 | The two getters on the thread that sleeps and presents: one `GetLatency` after each of 2000 frames, and 2000 calls back to back | **Median above 60 µs → stop** (NFR-1 at 60 presents a second). **Any call of 2 ms or more → stop**: on a presenting thread that is the latch of D141, in every game that uses Reflex. |
+| S3 | The getters on **another** thread four times a second for 20 s, and without a pause for 10 s, while the first thread sleeps and presents — against the same two runs on the same device **before** the sleep mode was set | **A fault → stop** (§30). Reads of 2 ms or more that the control does not have → the getter waits behind the sleep: **stop**, and the note says the route reads only games that do not sleep. Reads of 1 ms or more at the same rate as the control → the scheduler, not the sleep. |
+| S4 | What the report holds once the game sleeps: frames with anything, and the sleep status's fields | Recorded: it is what a real title's report would look like more closely than M5's. An empty report → a sleep mode changes what markers alone gave; recorded, the reader's "nothing reported" covers it. |
+
+A stop here means no Overlay code is written and the owner is asked again.
+
+### The leg with a sleep — results
+
+Three runs of `fl-probe-reflex --real 10` on 2026-11-13 (RTX 5080, driver 32.0.16.2114), the leg after R5.
+**No stop condition fired.**
+
+| # | What was seen | Reading |
+|---|---|---|
+| S1 | `SetSleepMode` returned OK in all three runs. A frame then took 4 159 µs (the interval asked for is 4 166), 4 037–4 041 of them inside `NvAPI_D3D_Sleep`; no sleep error. The sleep status afterwards: interval 4 166 µs, `bUseGameSleep` 1 — and **`bLowLatencyMode` 0**, although the mode was set with it on. | The sleep was exercised: the thread stood inside it 97 % of the time. **The status's low-latency field is not the flag the game set**, on this driver; why is not known. It is shown as the driver's word, never as "the game switched Reflex on". |
+| S2 | One `GetLatency` after each of 2000 sleeping frames, on the thread that sleeps and presents: median **2.5 / 2.6 / 2.6 µs**, mean 2.7–2.8, worst 66.9 / 16.8 / 8.0 µs, none of 2 ms. Back to back: median 0.7 µs (worst 10.2 / 81.6 / 4.1); `GetSleepStatus` median 0.2 µs. | Far inside both limits. A read after a frame that slept costs four or five times a read made back to back — a cold cache, by the look of it — and that is the Overlay's case: **about 2.6 µs, once a second**. |
+| S3 | From another thread while the first slept and presented at 240 frames a second. Four reads a second for 20 s: 80 reads a run, none not OK, none faulted, worst 64 / 82 / 12 µs (the control before the sleep mode: 92 / 209 / 119 µs). Without a pause for 10 s: **10.26 / 10.26 / 10.43 million reads**, none not OK, none faulted, worst 442 / 635 / 286 µs, **none of a millisecond** (the control: 9.97 / 9.94 / 9.89 million, worst 1 605 / 1 390 / 203 µs, one read of a millisecond in two of the three runs). | **The getter does not wait behind the sleep.** Thirty-one million reads were made while another thread was inside the sleep nearly all the time, and none took a millisecond; the slow reads there are belong to the control. |
+| S4 | The report: sixty-four frames with content. `driverStartTime` is filled in all sixty-four — it was zero in M5, without a sleep mode; `inputSampleTime` in none (the probe sets no input marker). Simulation start to present end 102–151 µs, to GPU end 150–191 µs; `gpuActiveRenderTimeUs` 0. | With a sleep mode the driver span is reported. A reader that treats a zero end point as "span not reported" covers both shapes. |
+
+**What it does not say**: a game's own sleep, on a game's own threads, with a real frame's work between the sleep
+and the present; frame generation's pacer; another driver. Those are what the first real title is for (D136).
