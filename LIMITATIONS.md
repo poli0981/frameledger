@@ -229,7 +229,10 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
     Streamline's answer for the graphics card the game asked about; which card that was is never read, so on a PC
     with two cards the row does not say. A refusal is shown by NVIDIA's own name for it
     (`eErrorFeatureNotSupported`), and it is the game that was refused, not FrameLedger. None of this says a
-    feature ran or drew anything. **Not confirmed on a real game yet.**
+    feature ran or drew anything. **Read on five games on 2026-11-13**: each asked whether its features are
+    supported, three asked whether they are loaded, two switched features off and on, one freed a feature's
+    resources once and one shut Streamline down once. **None allocated a feature's resources after FrameLedger was
+    in it**, so that row has not been seen in a real game.
   - **What a game started Streamline with is not read, and will not be**: the game makes that call once, before
     FrameLedger can be inside it — also when FrameLedger starts the game itself. The Advanced page lists the entry
     with that reason.

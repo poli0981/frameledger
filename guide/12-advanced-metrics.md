@@ -71,6 +71,8 @@ also keeps what the game itself handed to DLSS and FSR:
   *off* or *on and off* during the session; `· slAllocateResources` and `· slFreeResources` count how many times it
   set up and released what the feature needs (up to 15, then `≥ 15`); `slShutdown` counts how many times it shut
   Streamline down. These begin when FrameLedger is in the game: what the game did while it started is not there.
+  In the games run so far every one asks whether its features are supported; the other rows appear in some games
+  and not in others, and no game has shown an allocation.
 
 These are the game's own words to the upscaler, shown in the vendor's notation (`preExposure`, preset `K`).
 FrameLedger does not check what the upscaler did with them.

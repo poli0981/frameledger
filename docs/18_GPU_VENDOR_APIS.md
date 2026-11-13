@@ -811,6 +811,10 @@ planning, the design reviewed against the code before it was approved.
   row written before; the page says the six in one sentence. The switching and the counts are a session's — the
   capture side clears them at a new request — so, unlike the answers, a second session does not inherit them.
   `sl.init.preferences` now has reach `BeforeAttach` (D129): not a later release, never.
+  **Measured 2026-11-13** (six Streamline sessions on five games; `HANDOFF` item 43): `slIsFeatureSupported` was
+  read in every one — refusals among the answers, `eErrorFeatureMissing` for ImGUI, NIS and DeepDVC —
+  `slIsFeatureLoaded` in three games, `slSetFeatureLoaded` in two (every feature off and on), `slFreeResources`
+  and `slShutdown` once in one game each, and `slAllocateResources` in none.
 - **D113 — three releases, because a new patch site cannot be proven in CI.** A crash in a game under the user-mode
   anti-cheat exception's trial ends that exception for good (D38), and every release already means restarting the
   game. **beta.40**: more fields of calls *already* hooked — `sl::DLSSOptions` where the game chains it into
