@@ -232,9 +232,10 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   also whether Streamline says each feature is supported and whether it is loaded, and what the game did with it
 >   after FrameLedger attached — switched it on or off, allocated and freed its resources (counted to fifteen), shut
 >   Streamline down: calls the game made, not a statement that a feature ran or produced anything. FSR's upscaling
->   values, Streamline's constants (six games), its answers about a feature (five games) and the
->   frame-generation configuration (one game) have been read from real games; the DLSS options and the six calls
->   of beta.45 have not been confirmed on one yet. A game may give a value in a unit of its own: one gives
+>   values, Streamline's constants (seven games), its answers about a feature (seven games), the
+>   frame-generation configuration (one game) and five of beta.45's six calls (five games) have been read from
+>   real games; no game run so far allocated a feature's resources after FrameLedger attached, and the DLSS
+>   options have not been confirmed on one yet. A game may give a value in a unit of its own: one gives
 >   Streamline its field of view in degrees, and it is shown as given.
 > - **Safety:** every pre-injection check runs before injection, including the signed-by-a-known-vendor
 >   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and

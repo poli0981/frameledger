@@ -35,6 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **The limitations, the accuracy statement and the user guide say what the first real sessions on 0.1.0-beta.45
+  showed** (2026-11-13, six games): five of its six new readings were read in real games — every Streamline game
+  asked whether its features are supported — and no game allocated a feature's resources after FrameLedger was in
+  it, so that row has not been seen. No code changes.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

@@ -46,6 +46,12 @@ game asks about a feature is not that it uses it; 0.1.0-beta.45's `slIsFeatureLo
 rows will say whether Reflex and PCL are loaded and switched, on the owner's next sessions. No session says
 anything about a game that uses Reflex without Streamline: none of the hooks sees NVAPI.
 
+**Added 2026-11-13, from the first sessions on 0.1.0-beta.45** (190–196): Streamline answers `eOk` for
+`kFeatureReflex` in all five Streamline games run, and `slIsFeatureLoaded` says it is loaded in the three that ask
+(Phantom Blade Zero, Cyberpunk 2077, Hogwarts Legacy); Cyberpunk 2077 and Dying Light: The Beast switch it off and
+on through `slSetFeatureLoaded`. `kFeaturePCL` is supported in the four games that ask about it. Loaded is still
+not in use: whether a game sets markers is what no hook sees.
+
 ### The routes
 
 **A — hook NVAPI's own functions** (`SetLatencyMarker`, `SetSleepMode`; what `17_HOOK_ENGINE` §Memory / latency
@@ -158,3 +164,13 @@ route.
   would use it); what a
   real game's interposer and its Reflex and PCL plugins export (the above is the headers' and the source's word,
   not a dump of a game's files).
+
+### The owner's answers (2026-11-13, D132 and D133)
+
+1. **Route D: go — to the spike on `hook-harness` and a stub first.** With it the ruling a go needed: calling a
+   driver's read-only getter with the device of the swap chain the Overlay hooks is inside rule 4 (`CLAUDE.md`
+   carries the note). No real game until the owner has seen the spike's result; no shipped code changes for it.
+2. **Route C: refused.**
+3. **Route E: left closed**; §G is not reopened.
+
+The spike is `spike-notes` §31, written after 0.1.0-beta.46 is tagged.
