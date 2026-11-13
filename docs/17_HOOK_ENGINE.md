@@ -801,8 +801,19 @@ Every hook body is wrapped:
 > eighteen patches in 1.37 s / 1.56 s / 1.37 s; under one apply, **77 / 90 / 76 ms** — and from the Agent's request
 > to `UNHOOKED`, 1.27–1.48 s became 94–110 ms. One stop of the threads costs what it cost for one patch, whether it
 > covers four, nine or eighteen. A new log line says so in the field: `PATCH_BATCH install` / `restore`, `a` the
-> microseconds, `b` the patches. **Not measured:** a real game — how long one stop of the threads is with a few
-> hundred of them, and whether any title minds patches arriving together (owner-only item 44). One more thing the
+> microseconds, `b` the patches. ~~**Not measured:** a real game — how long one stop of the threads is with a few
+> hundred of them, and whether any title minds patches arriving together (owner-only item 44).~~ **In real games**
+> (the owner's five sessions of 2026-11-13 on 0.1.0-beta.46 — Hogwarts Legacy, Phantom Blade Zero, Black Myth:
+> Wukong, Cyberpunk 2077, Clair Obscur: Expedition 33; eighteen install batches of two to sixteen patches): every
+> batch went in whole, with the hooks beta.45 installed and no `PATCH_FAILED`; **sixteen batches cost 81–262 ms
+> whatever they held**, which is what one patch cost in the same game before. Streamline's thirteen, first line to
+> last on beta.45 against the one batch now: Phantom Blade Zero 0.74–0.85 s → 88 ms, Cyberpunk 2077 1.18 s → 93 ms
+> (with three more patches in the batch), Black Myth: Wukong 1.65 s → 188 ms (twelve), Hogwarts Legacy 2.80 s →
+> **1.26 s**. That last one and a batch of three in Cyberpunk 2077 (**0.61 s**) are not explained: the cost does
+> not follow the count — sixteen patches in 93 ms, three in 609 ms — and **the log cannot tell one long stop from an
+> apply that failed part-way and was finished one patch at a time**, because a batch writes a line only for a patch
+> that fails for good. **Still not measured: the restore in a real game** — no session has been stopped while its
+> game ran (owner-only item 44 (d)). One more thing the
 > queue changes for the better: MinHook's single-target disable does not move a thread that is suspended inside
 > the patched bytes (`hook.c` passes the enable action to its thread fix-up in both directions); the queued apply
 > does. ctest `fl_unhook_inline` drives `Batch` and `RestoreAll` against real MinHook (three in under one apply,

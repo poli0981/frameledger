@@ -1555,7 +1555,10 @@ probe never showed a deadlock.
 > (`17_HOOK_ENGINE` §Unhooking, Batches). Still only on the watchdog, never from the detour and never on a game's
 > thread; the gate around the queue is not held across a symbol lookup, so it is never held with the loader's lock
 > wanted. What a stop of the threads costs in a real game was read from the owner's logs of 2026-11-13: 57 to
-> 215 ms, thirteen times over for a Streamline title until this release.
+> 215 ms, thirteen times over for a Streamline title until this release. **On beta.46, the same evening** (five
+> games, eighteen batches): 81–262 ms a batch for sixteen of them, and two that took 0.61 s and 1.26 s while their
+> game was loading — one stop where there were three and thirteen, and still a second of every thread of Hogwarts
+> Legacy standing still. Not explained (`17_HOOK_ENGINE` §Unhooking, Batches).
 
 ### H11 ◐ · XeFG and FSR3-FG identity — **AMD built 2026-09-04 through the ffx-api leaves, complete 2026-09-06; Intel closed by licence; FSR 3.0 host route built 2026-09-05**
 
