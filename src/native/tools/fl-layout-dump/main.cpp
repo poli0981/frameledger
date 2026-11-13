@@ -115,7 +115,16 @@ int main() {
     FL_ADV_FIELD(samples);
     FL_ADV_FIELD(request);
     FL_ADV_FIELD(sampleQpc);
-    FL_ADV_FIELD(reservedHeader);
+    FL_ADV_FIELD(latState);
+    FL_ADV_FIELD(latReads);
+    FL_ADV_FIELD(latFrames);
+    FL_ADV_FIELD(latSimulationSumUs);
+    FL_ADV_FIELD(latSubmitSumUs);
+    FL_ADV_FIELD(latPresentSumUs);
+    FL_ADV_FIELD(latDriverSumUs);
+    FL_ADV_FIELD(latOsQueueSumUs);
+    FL_ADV_FIELD(latGpuSumUs);
+    FL_ADV_FIELD(latTotalSumUs);
     FL_ADV_FIELD(dlssStructVersion);
     FL_ADV_FIELD(dlssOptionsSeen);
     FL_ADV_FIELD(dlssOutputWidth);

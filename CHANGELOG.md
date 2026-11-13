@@ -54,6 +54,11 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Added
 
+- **For developers: room in the shared memory for NVIDIA Reflex latency** (owner decisions D136, D138). Ten reserved
+  words of the block that carries Advanced metrics from a game are now named for the driver's latency report -
+  where the read stands, and a sum for each stage of a frame. Nothing writes them yet and nothing reads them; the
+  shared memory's layout version did not change.
+
 - **For developers, nothing a user installs: a probe for NVIDIA Reflex latency** (owner decision D132). An
   unshipped tool, `fl-probe-reflex`, and a stand-in `nvapi64.dll` among the test fixtures measure what it would take
   to read the driver's latency report from inside a game - on FrameLedger's own test program and against the
