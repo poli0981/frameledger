@@ -49,11 +49,11 @@ enum class Resolved : std::uint32_t {
 // ResolveScoped does on a module it patches) so the addresses stay valid; never loads a module.
 inline Resolved Resolve(Api& api) noexcept {
     api = Api{};
-    HMODULE module = nullptr;
-    if (!GetModuleHandleExW(0, L"nvapi64.dll", &module) || module == nullptr) {
+    HMODULE nvapi = nullptr;
+    if (!GetModuleHandleExW(0, L"nvapi64.dll", &nvapi) || nvapi == nullptr) {
         return Resolved::NoModule;
     }
-    const auto query = reinterpret_cast<QueryInterfaceFn>(GetProcAddress(module, "nvapi_QueryInterface"));
+    const auto query = reinterpret_cast<QueryInterfaceFn>(GetProcAddress(nvapi, "nvapi_QueryInterface"));
     if (query == nullptr) {
         return Resolved::NoQueryInterface;
     }

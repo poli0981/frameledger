@@ -131,7 +131,7 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
   §31; `tools/fl-probe-reflex`, ctest `fl_reflex_probe_stub`): a decision table written before the runs, a stand-in
   `nvapi64.dll`, then the installed driver in the probe's own process. None of §30's stop conditions fired. Two
   things it decided that a plan must keep: **the call belongs on the presenting thread, once a second** — a call
-  the driver holds stops the thread that made it, so not the watchdog, and at half a microsecond it needs no thread
+  the driver holds stops the thread that made it, so not the watchdog, and at a microsecond or so it needs no thread
   of its own — and **the newest frames of a report are not final** (one run read a span of half an hour in the
   newest frame). Rule 4's note (D132) is in `CLAUDE.md`; nothing shipped calls a driver.
 
@@ -159,7 +159,7 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
 1. **The owner runs item 44** — the first real games on the batches, and the first stop while a game runs since
    beta.43. Not first on a game under the user-mode exception's trial (D38).
 2. ~~**The spike of Reflex route D on `hook-harness`**~~ **Done 2026-11-13** (`spike-notes` §31): on the harness
-   and against the installed driver the two getters are harmless, cost half a microsecond and return a readable
+   and against the installed driver the two getters are harmless, cost about a microsecond and return a readable
    report, and the Direct3D 12 device the Overlay holds is what the driver takes. **The owner's next word is go or no
    for one real title** — a go is a plan of its own before any code (where the numbers go, the Disclaimer's and the
    Privacy Policy's wording, `nvapi-readonly-check` over the Overlay). Routes C and E are closed (D133).

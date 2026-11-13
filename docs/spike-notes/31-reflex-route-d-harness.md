@@ -41,7 +41,8 @@ page); the wording of the Disclaimer and the Privacy Policy. Those are a plan of
 ### Results
 
 **Where.** The dev box of §Environment: Windows 11 Pro build 29648, RTX 5080, NVIDIA driver 32.0.16.2114
-(`nvapi64.dll` of the same version), 2026-11-13. `--stub` on software devices; `--real` three times, on the NVIDIA
+(`nvapi64.dll` of the same version), 2026-11-13. `--stub` on software devices; `--real` three times (and a fourth,
+shorter, after a fix to the probe — row M6), on the NVIDIA
 adapter, each with a 256×256 composition swap chain presented without a wait — some 14,000 to 17,000 frames a
 second, which is what makes the cost of anything beside it visible and is nothing like a game.
 
@@ -52,7 +53,7 @@ second, which is what makes the cost of anything beside it visible and is nothin
 | M3 | The getters **before** `NvAPI_Initialize`, with the module loaded: both resolve, `GetLatency` returns `NVAPI_OK` and sixty-four empty frames. No fault, three runs. | Harmless: an uninitialised NVAPI reads as "nothing reported". |
 | M4 | Initialised, 120 frames, no marker: `NVAPI_OK`, zero frames with anything; the sleep status is `NVAPI_OK` with every field zero. | As the header says. A game that does not use Reflex reads N/A, and the read costs it nothing else. |
 | M5 | 300 frames with markers, **no sleep mode set**: sixty-four frames, the newest one or two ids behind the last frame drawn. Per frame the driver fills simulation end, render submit start/end, present start/end, driver end, OS queue start/end and GPU start/end; `inputSampleTime` and `driverStartTime` stay zero (the probe sets no input marker). | **Readable by a third party in the process, from markers alone.** |
-| M6 | 2000 calls back to back on the presenting thread: `GetLatency` median **0.50 µs**, mean 0.53–0.54, worst 1.2 / 1.5 / 3.0 µs; `GetSleepStatus` median 0.10 µs, worst 0.7 / 0.8 / 62 µs. | **Within NFR-1 even if made at every present** (≤ 1 µs), and far within it once a second. The one 62 µs outlier is why "every present" is still not proposed. |
+| M6 | 2000 calls back to back on the presenting thread: `GetLatency` median **0.50 µs** in the three runs (mean 0.53–0.54, worst 1.2 / 1.5 / 3.0 µs) and **1.50 µs in a fourth**, made that evening after a fix to the probe, with the PC doing other things (mean 1.54, worst 70 µs); `GetSleepStatus` median 0.10 µs in all four, worst 0.7 / 0.8 / 62 / 12 µs. | **Far within NFR-1 once a second**: at 60 presents a second a call may cost 60 µs, and the medians are 0.5–1.5. **Not within it at every present**: the fourth run's median alone is over the microsecond NFR-1 allows a present, and single calls of 62 and 70 µs were seen. Once a second is what is proposed. |
 | M7 | 60 s, four reads a second from another thread beside the presenting, marker-setting thread, three runs: **228 reads each, none not OK, none faulted, none empty**; worst read 103 / 112 / 248 µs on the polling thread; no marker error. Frames a second beside the poller against alone: −1.3 % (one 60 s leg against one 5 s leg), then in six alternating 10 s legs −1.4 % and −0.6 % — **with single legs between +5.9 % and −9.9 %**. | **No fault: the route does not stop.** The half-percent line cannot be read off this: the loop's own drift from leg to leg is ten times it, in both directions. So a dose was measured instead — next row. |
 | M7b | The same poller **never pausing**: 38.3 million reads in 30 s (**1.28 million a second**), none not OK, none faulted, worst read 2.7 ms; frames a second −3.3 % (legs −1.1 %, −5.3 %, −3.7 %). | Three hundred thousand times the proposed rate costs about three percent of an uncapped loop. Four reads a second is that divided by 320,000: not measurable, and not half a percent. **The driver also took 38 million reads beside some three million marker calls without an error** — the concurrency §30 could only infer. |
 | M8 | Direct3D 12: markers set with the **device** — no error; read with the device and read with the queue both return the same sixty-four frames; the sleep status is `NVAPI_OK` with either; markers set with the queue work as well and are read back with the device. | **The device works**, and it is the object the Overlay already holds. |
@@ -68,11 +69,12 @@ must not take the last few as complete, and must refuse a span that no frame can
 
 - **Settled, on this driver and this adapter**: the two getters can be found without loading anything and called
   with a Direct3D 11 device or the Direct3D 12 device the Overlay holds; they do not fault before initialisation,
-  without markers, or beside a thread that sets markers at 16,000 frames a second; a call costs half a microsecond;
+  without markers, or beside a thread that sets markers at 16,000 frames a second; a call costs half a microsecond
+  to a microsecond and a half;
   the report is readable from markers alone and its unit is known. None of §30's stop conditions fired: no fault or
   hang attributable to the call, no overhead near NFR-1, and the Direct3D 12 device is the one already held.
-- **Decided by M2 and M6 together**: the call belongs on the **presenting thread, once a second** — half a
-  microsecond a second — not on the watchdog and not on a new thread. So the Disclaimer's "one background thread"
+- **Decided by M2 and M6 together**: the call belongs on the **presenting thread, once a second** — a microsecond
+  or so a second, with a worst case seen of 70 µs — not on the watchdog and not on a new thread. So the Disclaimer's "one background thread"
   would not change; what would change is its list of what the part inside the game does at a present.
 - **Not settled, because only a game can say**: a game's own device — many threads, deferred contexts, a device a
   game is about to release; what a real title's report holds (input sample, the GPU times of a real frame, frame

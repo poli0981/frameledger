@@ -48,8 +48,9 @@ void ReleaseIf(T*& p) noexcept {
 }
 
 double QpcSeconds() noexcept {
-    LARGE_INTEGER f{};
-    LARGE_INTEGER c{};
+    // QuadPart named in the initialiser, so the member read back is the one the union holds (cpp:S6232).
+    LARGE_INTEGER f{.QuadPart = 0};
+    LARGE_INTEGER c{.QuadPart = 0};
     QueryPerformanceFrequency(&f);
     QueryPerformanceCounter(&c);
     return static_cast<double>(c.QuadPart) / static_cast<double>(f.QuadPart);
@@ -439,6 +440,9 @@ struct Cost {
 template <class Call>
 Cost Measure(int n, const Call& call) noexcept {
     static double samples[4096];
+    if (n <= 0) {
+        return Cost{};
+    }
     if (n > 4096) {
         n = 4096;
     }
@@ -532,8 +536,10 @@ int RunReal(int pollSeconds) noexcept {
     const NvAPI_Status s1 = fl::reflex::ReadSleepStatus(api, dx11.device, sleep);
     std::printf("   sleep status %d: lowLatency %u, fsVrr %u, cplVsync %u, interval %u us, gameSleep %u, iFlip %u, "
                 "fgMultiplier %u\n",
-                static_cast<int>(s1), sleep.bLowLatencyMode, sleep.bFsVrr, sleep.bCplVsyncOn, sleep.sleepIntervalUs,
-                sleep.bUseGameSleep, sleep.bFullscreenIFlip, sleep.fgMultiplier);
+                static_cast<int>(s1), static_cast<unsigned>(sleep.bLowLatencyMode), static_cast<unsigned>(sleep.bFsVrr),
+                static_cast<unsigned>(sleep.bCplVsyncOn), static_cast<unsigned>(sleep.sleepIntervalUs),
+                static_cast<unsigned>(sleep.bUseGameSleep), static_cast<unsigned>(sleep.bFullscreenIFlip),
+                static_cast<unsigned>(sleep.fgMultiplier));
 
     // R2. The game sets markers: 300 frames.
     game.markerDevice = dx11.device;
@@ -553,7 +559,8 @@ int RunReal(int pollSeconds) noexcept {
         std::printf("   frames 62,63: id %llu,%llu simStart %llu,%llu (gap %llu) gpuFrameTimeUs %u\n",
                     static_cast<unsigned long long>(a.frameID), static_cast<unsigned long long>(b.frameID),
                     static_cast<unsigned long long>(a.simStartTime), static_cast<unsigned long long>(b.simStartTime),
-                    static_cast<unsigned long long>(b.simStartTime - a.simStartTime), b.gpuFrameTimeUs);
+                    static_cast<unsigned long long>(b.simStartTime - a.simStartTime),
+                    static_cast<unsigned>(b.gpuFrameTimeUs));
         // Every time of the last four frames, as its distance from that frame's simStartTime ("-" where the driver
         // left the field zero): which fields a report fills in, and when a frame's report is complete.
         for (int i = 60; i < 64; ++i) {
@@ -573,7 +580,8 @@ int RunReal(int pollSeconds) noexcept {
                                 static_cast<long long>(fields[f]) - static_cast<long long>(r.simStartTime));
                 }
             }
-            std::printf(" | gpuActive %u gpuFrame %u\n", r.gpuActiveRenderTimeUs, r.gpuFrameTimeUs);
+            std::printf(" | gpuActive %u gpuFrame %u\n", static_cast<unsigned>(r.gpuActiveRenderTimeUs),
+                        static_cast<unsigned>(r.gpuFrameTimeUs));
         }
     }
 
