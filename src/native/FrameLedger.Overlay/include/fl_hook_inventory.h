@@ -323,9 +323,11 @@ static_assert(kFamilySlConstants != kFamilyEvaluateFeature && kFamilySlConstants
 // Vulkan extensions and features -- are never followed (fl_adv_fields.h; tools/overlay-fields-check.ps1).
 //
 // INSTALLED ONLY WHERE ASKED FOR, as slSetConstants is (D111), a row and a bit each. THEY ARE THE FIRST ROWS OF THE
-// TABLE because a game asks while it starts: the watchdog patches the rows in the table's order, each patch stops
-// the game's threads for a moment, and in a process that was asked these two are the ones that cannot wait. In a
-// process never asked they are passed over before anything is resolved, and the order changes nothing.
+// TABLE because a game asks while it starts: until 0.1.0-beta.46 the watchdog patched the rows one by one in the
+// table's order, each patch stopped the game's threads for a moment, and in a process that was asked these two were
+// the ones that could not wait. The rows a tick finds now go in together, under one stop of the threads (D134), and
+// the table's order is the order of their log lines. In a process never asked they are passed over before anything
+// is resolved.
 inline constexpr uint32_t kFamilySlFeatureVersion = static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION);
 inline constexpr uint32_t kFamilySlFeatureRequirements = static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS);
 static_assert(kFamilySlFeatureVersion != kFamilySlFeatureRequirements &&

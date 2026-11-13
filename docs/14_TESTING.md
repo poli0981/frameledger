@@ -158,6 +158,13 @@ own work item on the STA thread and puts back — and with the keys a parameter,
    > Until the run happens, the honest state of this line is *unmeasured*, not *passing*.
 3. Results recorded in the release notes ("measured overhead this release: …").
 
+**What a patch costs when it goes in and comes out (since 0.1.0-beta.46) is not the per-present number above**, and
+is measured where it happens: `fl_guard`'s Streamline `[advanced]` case prints the microseconds of each install
+batch and of the stop's one restore (the Overlay's `PATCH_BATCH` lines), and the time from the unhook request to
+`UNHOOKED`; it asserts that every lazily installed patch is under a batch line, that the stop is one, and that the
+restore stays under a second — the bound the one-patch-at-a-time stop did not meet on the development PC. In a real
+game the same lines are in `logs\overlay-<pid>-….log`.
+
 ## Tier cross-validation (accuracy regression net) — **GONE, 2026-08-28, and this is the entry to read before planning P5**
 
 ~~Run the same game session with Tier 1 and Tier 2 simultaneously where possible (ETW does not conflict with hooking) and compare frametime distributions: Avg/1% Low must agree within **1%**. Divergence beyond that means one of the two paths is wrong and blocks the release. This is also the check that would have caught the original detection-accuracy problem.~~

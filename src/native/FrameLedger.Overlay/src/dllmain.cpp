@@ -164,6 +164,7 @@ enum FlLogCode : uint32_t {
     kLogUpscaleRoute,
     kLogRuntimeCensus,
     kLogFfxConfigureType,
+    kLogPatchBatch,
 };
 
 const char* LogCodeName(uint32_t code) noexcept {
@@ -204,6 +205,8 @@ const char* LogCodeName(uint32_t code) noexcept {
         return "RUNTIME_CENSUS";
     case kLogFfxConfigureType:
         return "FFX_CONFIGURE";
+    case kLogPatchBatch:
+        return "PATCH_BATCH";
     default:
         return "?";
     }
@@ -395,14 +398,76 @@ static_assert(fl::inventory::kRowCount + kPatchSitesOutsideTheInventory <= kMaxP
               "the patch registry cannot hold every patch this DLL may install -- raise kMaxPatches with the table");
 fl::patch::Registry<kMaxPatches> g_patches;
 
-// MinHook, as the engine fl::patch::Install drives.
+// THE GATE around MinHook's queue (fl_patch_registry.h, BATCHES; 0.1.0-beta.46). MH_ApplyQueued applies every mark
+// in the process's one table, so the watchdog's "mark, apply, commit" and the stop's "mark, apply" must not
+// interleave. A slim reader/writer lock, taken exclusively: no allocation, no handle, nothing to initialise or tear
+// down. Held for one apply -- one stop of the threads -- and never across a symbol lookup (the loader's lock).
+//
+// NOT IN ANY HOOK BODY. The one path from a hook to here is the stop itself -- MayObserve reading the Agent's request,
+// or the third fault -- which already blocked for MinHook's own lock and a stop of the threads for every patch it
+// restored. It waits here for at most the watchdog's one apply, once in a process's life.
+//
+// RE-ENTERED BY ITS OWNER WITHOUT WAITING: a slim lock taken twice by one thread never returns. The only way there is
+// a stop that begins on the thread that is inside a batch -- a third fault in the LoadLibrary detour, if the engine
+// loaded a module under the gate. That stop then runs with the marks the batch has made; the batch's own re-read of
+// the flag takes out what it put in (fl_patch_registry.h, Batch::Commit).
+SRWLOCK            g_patchGate = SRWLOCK_INIT;
+std::atomic<DWORD> g_patchGateOwner{0};
+uint32_t           g_patchGateDepth = 0;    // the owner's alone
+
+// MinHook, as the engine fl::patch::Install, Batch and RestoreAll drive.
 struct MinHookEngine {
     static bool Create(void* target, void* detour, void** original) noexcept {
         return MH_CreateHook(target, detour, original) == MH_OK;
     }
     static bool Enable(void* target) noexcept { return MH_EnableHook(target) == MH_OK; }
     static void Disable(void* target) noexcept { MH_DisableHook(target); }
+
+    static bool QueueEnable(void* target) noexcept { return MH_QueueEnableHook(target) == MH_OK; }
+    static bool QueueDisable(void* target) noexcept { return MH_QueueDisableHook(target) == MH_OK; }
+    static bool Apply() noexcept { return MH_ApplyQueued() == MH_OK; }
+    static bool EnsureEnabled(void* target) noexcept {
+        const MH_STATUS status = MH_EnableHook(target);
+        return status == MH_OK || status == MH_ERROR_ENABLED;
+    }
+    static bool EnsureDisabled(void* target) noexcept {
+        const MH_STATUS status = MH_DisableHook(target);
+        return status == MH_OK || status == MH_ERROR_DISABLED;
+    }
+    static void BeginQueue() noexcept {
+        const DWORD self = GetCurrentThreadId();
+        if (g_patchGateOwner.load(std::memory_order_acquire) == self) {
+            ++g_patchGateDepth;
+            return;
+        }
+        AcquireSRWLockExclusive(&g_patchGate);
+        g_patchGateOwner.store(self, std::memory_order_release);
+    }
+    static void EndQueue() noexcept {
+        if (g_patchGateDepth != 0u) {
+            --g_patchGateDepth;
+            return;
+        }
+        g_patchGateOwner.store(0, std::memory_order_release);
+        ReleaseSRWLockExclusive(&g_patchGate);
+    }
 };
+
+// The performance counter, as a number. QuadPart is named in the initialiser so that it is the member the union
+// holds when it is read back (SonarCloud's cpp:S6232 on a `{}` that initialises the other half).
+int64_t QpcNow() noexcept {
+    LARGE_INTEGER now{.QuadPart = 0};
+    QueryPerformanceCounter(&now);
+    return now.QuadPart;
+}
+
+// Microseconds since `fromTicks` (QpcNow), for a PATCH_BATCH line; saturating, because the line's field is 32 bits.
+uint32_t MicrosSince(int64_t fromTicks) noexcept {
+    const int64_t  now = QpcNow();
+    const uint64_t ticks = now > fromTicks ? static_cast<uint64_t>(now - fromTicks) : 0u;
+    const uint64_t micros = g_logQpcFreq != 0u ? ticks * 1000000ull / g_logQpcFreq : 0u;
+    return micros > 0xFFFFFFFFull ? 0xFFFFFFFFu : static_cast<uint32_t>(micros);
+}
 
 // A patch that did not go in, said ONCE per target and reason: the lazy installers retry every second, and a line a
 // second would push everything else out of a 256-event ring. Init and watchdog threads only, which never install at
@@ -919,7 +984,7 @@ void                  WakeWatchdog() noexcept;
 
 void StopObserving(uint32_t reason) noexcept {
     // Compare-exchange, not a plain check-then-set: the watchdog and a game
-    // thread inside a hook body can both arrive here, and MH_DisableHook must run
+    // thread inside a hook body can both arrive here, and the restore must run
     // exactly once. The loser returns without touching status, so the FIRST
     // reason wins -- a self-disable already in flight is not overwritten by a
     // safety stop that arrives a millisecond later, or the record of WHY we
@@ -939,14 +1004,27 @@ void StopObserving(uint32_t reason) noexcept {
     // is restored only while the bytes at its target are still the jump MinHook
     // wrote for us; otherwise it is left in place and our detour stays in the
     // other overlay's chain doing nothing -- g_observing is 0, every body forwards.
-    g_patches.ForEachLive([](void* target, void* detour, const char* name) noexcept {
-        if (fl::patch::StillOurs(target, detour)) {
-            const bool ok = MH_DisableHook(target) == MH_OK;
-            LogNote(kLogUnhookRestored, name, ok ? 1u : 0u, reinterpret_cast<uint64_t>(target));
-        } else {
-            LogNote(kLogUnhookDeclined, name, 0u, reinterpret_cast<uint64_t>(target));
-        }
-    });
+    //
+    // ONE STOP OF THE GAME'S THREADS FOR ALL OF THEM (0.1.0-beta.46, owner decision D134). Each patch was restored by
+    // its own MH_DisableHook -- a snapshot of the system's threads and a suspend of every one of this process's, per
+    // patch: about 160 ms each, two to three seconds for a Streamline title, possibly on the thread that presents.
+    // RestoreAll marks the patches that are still ours and applies the marks together (fl_patch_registry.h says what
+    // may and may not be marked, and why). The lines below are written after the gate is released.
+    const int64_t began = QpcNow();
+    uint32_t      restored = 0;
+    fl::patch::RestoreAll(
+        g_patches, MinHookEngine{},
+        [](const void* target, const void* detour) noexcept { return fl::patch::StillOurs(target, detour); },
+        [&restored](const char* name, void* target, bool wasOurs, bool ok) noexcept {
+            if (wasOurs) {
+                LogNote(kLogUnhookRestored, name, ok ? 1u : 0u, reinterpret_cast<uint64_t>(target));
+                restored += ok ? 1u : 0u;
+            } else {
+                LogNote(kLogUnhookDeclined, name, 0u, reinterpret_cast<uint64_t>(target));
+            }
+        });
+    // a = the microseconds the walk and its one apply took, b = how many patches it restored.
+    LogNote(kLogPatchBatch, "restore", MicrosSince(began), restored);
     if (g_state != nullptr) {
         std::atomic_ref<uint32_t> status{g_state->status};
         status.store(reason, std::memory_order_release);
@@ -984,6 +1062,63 @@ bool PatchTarget(void* target, void* detour, void** original, const char* name) 
         NotePatchFailedOnce(target, result, name);
     }
     return false;
+}
+
+// SEVERAL PATCHES FOR ONE STOP OF THE GAME'S THREADS (0.1.0-beta.46, owner decision D134). The lazy installers put a
+// row's patch into the watchdog's batch instead of making it at once, and the batch goes in when the walk is done:
+// thirteen Streamline rows were thirteen stops of every thread of the game, 0.7 s to 2.8 s of its start in the
+// owner's logs of 2026-11-13. fl_patch_registry.h holds the sequence and what it must never do.
+//
+// WATCHDOG THREAD ONLY, and empty between two installers: each commits what it queued before it returns.
+fl::patch::Batch<kMaxPatches> g_batch;
+
+// What PatchTarget does, deferred: the slot is claimed and the hook created now; the patch, its HOOK_INSTALLED line,
+// its family bit and its latch come at CommitPatchBatch -- in that order, and only if the patch went in. `family` is
+// 0 for a row whose family is published elsewhere, once every row of it is in; `latch` is the row's "patched" word.
+bool QueuePatch(void* target, void* detour, void** original, const char* name, uint32_t family,
+                std::atomic<uint32_t>* latch) noexcept {
+    const fl::patch::InstallResult result =
+        g_batch.Add(g_patches, g_observing, MinHookEngine{}, target, detour, original, name, latch, family);
+    if (result == fl::patch::InstallResult::Pending) {
+        return true;
+    }
+    if (result != fl::patch::InstallResult::NoTarget) {
+        NotePatchFailedOnce(target, result, name);
+    }
+    return false;
+}
+
+void CommitPatchBatch() noexcept {
+    const uint32_t count = g_batch.Count();
+    if (count == 0u) {
+        return;
+    }
+    const int64_t began = QpcNow();
+    g_batch.Commit(g_patches, g_observing, MinHookEngine{}, [](const void* target, const void* detour) noexcept {
+        return fl::patch::StillOurs(target, detour);
+    });
+    const uint32_t micros = MicrosSince(began);
+    uint32_t       installed = 0;
+    for (uint32_t i = 0; i < count; ++i) {
+        const auto& item = g_batch.At(i);
+        if (item.result != fl::patch::InstallResult::Installed) {
+            NotePatchFailedOnce(item.target, item.result, item.name);
+            continue;
+        }
+        LogNote(kLogHookInstalled, item.name, 0, reinterpret_cast<uint64_t>(item.target));
+        // The family, then the latch: PublishHookFamily's order, for a row that has both.
+        if (item.word != 0u && g_state != nullptr) {
+            std::atomic_ref<uint32_t> hooks{g_state->hooksInstalledMask};
+            hooks.fetch_or(item.word, std::memory_order_relaxed);
+        }
+        if (item.context != nullptr) {
+            static_cast<std::atomic<uint32_t>*>(item.context)->store(1u, std::memory_order_release);
+        }
+        ++installed;
+    }
+    // a = the microseconds the one apply took, b = how many patches it put in.
+    LogNote(kLogPatchBatch, "install", micros, installed);
+    g_batch.Clear();
 }
 
 // Returns false when we must not record this present.
@@ -2611,12 +2746,8 @@ bool InstallRow(const wchar_t* moduleName, const char* symbol, uint32_t family, 
         return false;
     }
 
-    if (!PatchTarget(target, detour, original, name)) {
-        return false;
-    }
-
-    PublishHookFamily(family, live);
-    return true;
+    // Queued, not patched: the family is published and the latch set when the batch commits (CommitPatchBatch).
+    return QueuePatch(target, detour, original, name, family, &live);
 }
 
 // Bind a row's family bit to the detour that implements it.
@@ -2720,11 +2851,8 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         if (target == nullptr) {
             return false;    // not loaded, or a module of the name that does not speak ffx-api
         }
-        if (!PatchTarget(target, FfxConfigureDetour(slot), reinterpret_cast<void**>(&g_origFfxConfigure[slot]), name)) {
-            return false;
-        }
-        g_ffxConfigurePatched[slot].store(1, std::memory_order_release);
-        return true;
+        return QueuePatch(target, FfxConfigureDetour(slot), reinterpret_cast<void**>(&g_origFfxConfigure[slot]), name,
+                          0u, &g_ffxConfigurePatched[slot]);
     }
     if (family == fl::inventory::kFamilyEvaluateFeature) {
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlEvaluateFeature),
@@ -2753,11 +2881,7 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
             frameRow ? reinterpret_cast<void*>(&Hook_SlSetTagForFrame) : reinterpret_cast<void*>(&Hook_SlSetTag);
         void** original =
             frameRow ? reinterpret_cast<void**>(&g_origSlSetTagForFrame) : reinterpret_cast<void**>(&g_origSlSetTag);
-        if (!PatchTarget(target, detour, original, name)) {
-            return false;
-        }
-        patched.store(1, std::memory_order_release);
-        return true;
+        return QueuePatch(target, detour, original, name, 0u, &patched);
     }
     if (family == static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS)) {
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlGetNewFrameToken),
@@ -2793,12 +2917,8 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
             if (target == nullptr) {
                 return false;    // not loaded, or a module of the name that does not speak the 3.0 host ABI
             }
-            if (!PatchTarget(target, reinterpret_cast<void*>(&Hook_FfxFsr3ContextDispatchUpscale),
-                             reinterpret_cast<void**>(&g_origFfxFsr3DispatchUpscale), name)) {
-                return false;
-            }
-            g_fsr3HostPatched.store(1, std::memory_order_release);
-            return true;
+            return QueuePatch(target, reinterpret_cast<void*>(&Hook_FfxFsr3ContextDispatchUpscale),
+                              reinterpret_cast<void**>(&g_origFfxFsr3DispatchUpscale), name, 0u, &g_fsr3HostPatched);
         }
         const auto slot = static_cast<uint32_t>(leaf);
         if (g_ffxPatched[slot].load(std::memory_order_acquire) != 0) {
@@ -2808,11 +2928,8 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         if (target == nullptr) {
             return false;    // not loaded, or a module of the name that does not speak ffx-api
         }
-        if (!PatchTarget(target, FfxDispatchDetour(slot), reinterpret_cast<void**>(&g_origFfxDispatch[slot]), name)) {
-            return false;
-        }
-        g_ffxPatched[slot].store(1, std::memory_order_release);
-        return true;
+        return QueuePatch(target, FfxDispatchDetour(slot), reinterpret_cast<void**>(&g_origFfxDispatch[slot]), name, 0u,
+                          &g_ffxPatched[slot]);
     }
     if (family == fl::inventory::kFamilyFfxQuery) {
         // FOUR ROWS, ONE ARM, the dispatch arm's shape: the row's MODULE picks the trampoline and the latch slot.
@@ -2829,11 +2946,8 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         if (target == nullptr) {
             return false;    // not loaded, or a module of the name that does not speak ffx-api
         }
-        if (!PatchTarget(target, FfxQueryDetour(slot), reinterpret_cast<void**>(&g_origFfxQuery[slot]), name)) {
-            return false;
-        }
-        g_ffxQueryPatched[slot].store(1, std::memory_order_release);
-        return true;
+        return QueuePatch(target, FfxQueryDetour(slot), reinterpret_cast<void**>(&g_origFfxQuery[slot]), name, 0u,
+                          &g_ffxQueryPatched[slot]);
     }
     return false;
 }
@@ -2957,6 +3071,9 @@ bool InstallUpscalerHooks() noexcept {
     }
     FL_HOOK_INVENTORY(FL_INSTALL_ROW)
 #undef FL_INSTALL_ROW
+    // Every row this tick found something to patch for goes in now, together -- and before the families that are
+    // published "when whole", which read the latches the commit sets.
+    CommitPatchBatch();
     PublishParamsFamilyIfWhole();
     PublishFfxFamilyIfWhole();
     PublishFfxQueryFamilyIfWhole();
@@ -3088,20 +3205,21 @@ bool InstallRtHooks() noexcept {
         const bool buildAgrees = directVtbl[fl::d3d12::kBuildRaytracingAccelerationStructureIndex] ==
                                  computeVtbl[fl::d3d12::kBuildRaytracingAccelerationStructureIndex];
 
+        // The two go in together (0.1.0-beta.46): one stop of the game's threads, not two.
         if (dispatchAgrees && g_rtDispatchLive.load(std::memory_order_acquire) == 0 &&
-            PatchTarget(directVtbl[fl::d3d12::kDispatchRaysIndex], reinterpret_cast<void*>(&Hook_DispatchRays),
-                        reinterpret_cast<void**>(&g_origDispatchRays),
-                        "d3d12!ID3D12GraphicsCommandList4::DispatchRays")) {
-            PublishHookFamily(static_cast<uint32_t>(fl::FL_HOOK_RT_DISPATCH), g_rtDispatchLive);
+            QueuePatch(directVtbl[fl::d3d12::kDispatchRaysIndex], reinterpret_cast<void*>(&Hook_DispatchRays),
+                       reinterpret_cast<void**>(&g_origDispatchRays), "d3d12!ID3D12GraphicsCommandList4::DispatchRays",
+                       static_cast<uint32_t>(fl::FL_HOOK_RT_DISPATCH), &g_rtDispatchLive)) {
             installed = true;
         }
         if (buildAgrees && g_rtAsBuildLive.load(std::memory_order_acquire) == 0 &&
-            PatchTarget(directVtbl[fl::d3d12::kBuildRaytracingAccelerationStructureIndex],
-                        reinterpret_cast<void*>(&Hook_BuildRtAs), reinterpret_cast<void**>(&g_origBuildRtAs),
-                        "d3d12!ID3D12GraphicsCommandList4::BuildRaytracingAccelerationStructure")) {
-            PublishHookFamily(static_cast<uint32_t>(fl::FL_HOOK_RT_AS_BUILD), g_rtAsBuildLive);
+            QueuePatch(directVtbl[fl::d3d12::kBuildRaytracingAccelerationStructureIndex],
+                       reinterpret_cast<void*>(&Hook_BuildRtAs), reinterpret_cast<void**>(&g_origBuildRtAs),
+                       "d3d12!ID3D12GraphicsCommandList4::BuildRaytracingAccelerationStructure",
+                       static_cast<uint32_t>(fl::FL_HOOK_RT_AS_BUILD), &g_rtAsBuildLive)) {
             installed = true;
         }
+        CommitPatchBatch();
     }
 
     // Closed before release: a command list left recording holds its allocator.
@@ -3267,7 +3385,9 @@ DWORD WatchdogLoop() noexcept {
 // Twelve patches (the Streamline fixture until then) took 1.9 s and fitted; with three more rows the stop took 2.4 s,
 // the flush gave up first, and the log ended "the stop was still writing" with the last three UNHOOK_RESTORED lines
 // missing -- the patches were restored, the log did not say so. The wait ends the moment the stop is logged, so the
-// longer bound costs nothing where the stop is quick.
+// longer bound costs nothing where the stop is quick. Since 0.1.0-beta.46 the stop restores its patches under one
+// stop of the threads and is quick; the bound stays for the case it was sized for -- an apply that fails and falls
+// back to one restore a patch.
 constexpr ULONGLONG kStopLogWaitMs = 250ull * kMaxPatches;
 
 DWORD WINAPI WatchdogThread(LPVOID) noexcept {

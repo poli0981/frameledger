@@ -367,3 +367,452 @@ TEST_CASE("a patch that failed gives its slot back, and a slot is not seen by th
     registry.Retire(-3);
     CHECK(registry.LiveCount() == 0u);
 }
+
+// --- batches (0.1.0-beta.46, owner decision D134) --------------------------------------------------------------------
+// Several patches for ONE stop of the process's threads, and every patch out the same way. Driven twice: against real
+// MinHook, for what is at the target, and against a MODEL of MinHook's table (hook.c: each hook has a state and a
+// mark, and an apply executes every hook whose two differ, stopping at the first that fails), for the things real
+// MinHook cannot be made to do on demand -- an apply that fails halfway, a stop that lands inside one.
+namespace {
+
+// MinHook with its queue, as dllmain.cpp's MinHookEngine hands it to Batch and RestoreAll. The gate is the Overlay's;
+// one thread patches here.
+struct RealQueue {
+    static bool Create(void* target, void* detour, void** original) noexcept {
+        return MH_CreateHook(target, detour, original) == MH_OK;
+    }
+    static bool QueueEnable(void* target) noexcept { return MH_QueueEnableHook(target) == MH_OK; }
+    static bool QueueDisable(void* target) noexcept { return MH_QueueDisableHook(target) == MH_OK; }
+    static bool Apply() noexcept { return MH_ApplyQueued() == MH_OK; }
+    static bool EnsureEnabled(void* target) noexcept {
+        const MH_STATUS status = MH_EnableHook(target);
+        return status == MH_OK || status == MH_ERROR_ENABLED;
+    }
+    static bool EnsureDisabled(void* target) noexcept {
+        const MH_STATUS status = MH_DisableHook(target);
+        return status == MH_OK || status == MH_ERROR_DISABLED;
+    }
+    static void BeginQueue() noexcept {}
+    static void EndQueue() noexcept {}
+};
+
+bool RealOurs(const void* target, const void* detour) noexcept {
+    return fl::patch::StillOurs(target, detour);
+}
+
+struct Model {
+    static constexpr int kMax = 8;
+    void*                target[kMax]{};
+    bool                 enabled[kMax]{};
+    bool                 marked[kMax]{};     // MinHook's queueEnable: the state the next apply gives the hook
+    bool                 foreign[kMax]{};    // somebody else patched over this one
+    int                  count = 0;
+
+    void*                       neverEnables = nullptr;    // the hook at this target cannot be enabled
+    bool                        applyFails = false;        // the apply does nothing and says so
+    std::atomic<std::uint32_t>* stopsDuringApply = nullptr;
+
+    int  applies = 0;
+    int  gate = 0;
+    bool touchedOutsideTheGate = false;
+    bool wroteOverAForeignPatch = false;
+
+    int Find(const void* t) const noexcept {
+        for (int i = 0; i < count; ++i) {
+            if (target[i] == t) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    bool AMarkIsStanding() const noexcept {
+        for (int i = 0; i < count; ++i) {
+            if (enabled[i] != marked[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+    bool Enabled(const void* t) const noexcept {
+        const int i = Find(t);
+        return i >= 0 && enabled[i];
+    }
+    void Set(int i, bool on) noexcept {
+        if (i < 0 || i >= count) {
+            return;
+        }
+        if (!on && enabled[i] && foreign[i]) {
+            wroteOverAForeignPatch = true;    // our saved bytes over their jump: what §H7 forbids
+        }
+        enabled[i] = on;
+        marked[i] = on;
+    }
+    // Somebody else patched over the hook at `t`.
+    void PatchOver(const void* t) noexcept {
+        const int i = Find(t);
+        if (i >= 0) {
+            foreign[i] = true;
+        }
+    }
+};
+
+struct ModelEngine {
+    Model* m;
+    bool   Create(void* target, void*, void**) const noexcept {
+        if (m->Find(target) >= 0 || m->count == Model::kMax) {
+            return false;
+        }
+        m->target[m->count++] = target;
+        return true;
+    }
+    bool Mark(void* target, bool on) const noexcept {
+        const int i = m->Find(target);
+        if (i < 0) {
+            return false;
+        }
+        m->touchedOutsideTheGate = m->touchedOutsideTheGate || m->gate == 0;
+        m->marked[i] = on;
+        return true;
+    }
+    bool QueueEnable(void* target) const noexcept { return Mark(target, true); }
+    bool QueueDisable(void* target) const noexcept { return Mark(target, false); }
+    bool Apply() const noexcept {
+        ++m->applies;
+        m->touchedOutsideTheGate = m->touchedOutsideTheGate || m->gate == 0;
+        if (m->stopsDuringApply != nullptr) {
+            m->stopsDuringApply->store(0u);
+        }
+        if (m->applyFails) {
+            return false;
+        }
+        for (int i = 0; i < m->count; ++i) {
+            if (m->enabled[i] == m->marked[i]) {
+                continue;
+            }
+            if (m->marked[i] && m->target[i] == m->neverEnables) {
+                return false;    // hook.c: the first failure ends the apply, the rest keep their marks
+            }
+            m->Set(i, m->marked[i]);
+        }
+        return true;
+    }
+    bool EnsureEnabled(void* target) const noexcept {
+        const int i = m->Find(target);
+        if (i < 0 || target == m->neverEnables) {
+            return false;
+        }
+        m->Set(i, true);
+        return true;
+    }
+    bool EnsureDisabled(void* target) const noexcept {
+        const int i = m->Find(target);
+        if (i < 0) {
+            return false;
+        }
+        m->Set(i, false);
+        return true;
+    }
+    void BeginQueue() const noexcept { ++m->gate; }
+    void EndQueue() const noexcept { --m->gate; }
+};
+
+// "Still ours", for the model: in, and nobody patched over it.
+struct ModelOurs {
+    const Model* m;
+    bool         operator()(const void* target, const void*) const noexcept {
+        const int i = m->Find(target);
+        return i >= 0 && m->enabled[i] && !m->foreign[i];
+    }
+};
+
+int g_a = 0;
+int g_b = 0;
+int g_c = 0;
+int g_detour = 0;
+
+}    // namespace
+
+TEST_CASE("a batch puts three patches in under one apply, and the stop takes them out under one",
+          "[unhook][registry][batch]") {
+    using fl::patch::InstallResult;
+    fl::patch::Registry<3>     registry;
+    fl::patch::Batch<3>        batch;
+    std::atomic<std::uint32_t> observing{1u};
+    void*                      first = reinterpret_cast<void*>(&First);
+    void*                      second = reinterpret_cast<void*>(&Second);
+    void*                      third = reinterpret_cast<void*>(&Third);
+    const int                  firstPlain = First(3);
+    const int                  secondPlain = Second(3);
+    const int                  thirdPlain = Third(3);
+
+    REQUIRE(MH_Initialize() == MH_OK);
+    CHECK(batch.Add(registry, observing, RealQueue{}, first, reinterpret_cast<void*>(&DetourFirst),
+                    reinterpret_cast<void**>(&g_origFirst), "first", nullptr, 0u) == InstallResult::Pending);
+    CHECK(batch.Add(registry, observing, RealQueue{}, second, reinterpret_cast<void*>(&DetourSecond),
+                    reinterpret_cast<void**>(&g_origSecond), "second", nullptr, 0u) == InstallResult::Pending);
+    // The same target a second time: the engine refuses it, its slot goes back, and the others are not held up.
+    CHECK(batch.Add(registry, observing, RealQueue{}, second, reinterpret_cast<void*>(&DetourSecond),
+                    reinterpret_cast<void**>(&g_origSecond), "second again", nullptr,
+                    0u) == InstallResult::CreateFailed);
+    CHECK(batch.Add(registry, observing, RealQueue{}, third, reinterpret_cast<void*>(&DetourThird),
+                    reinterpret_cast<void**>(&g_origThird), "third", nullptr, 7u) == InstallResult::Pending);
+    CHECK(batch.Add(registry, observing, RealQueue{}, nullptr, first, nullptr, "nothing", nullptr, 0u) ==
+          InstallResult::NoTarget);
+    REQUIRE(batch.Count() == 3u);
+
+    // Added is not patched: nothing is at any target, and the stop's walk has nothing to see.
+    CHECK(First(3) == firstPlain);
+    CHECK(Third(3) == thirdPlain);
+    CHECK(registry.LiveCount() == 0u);
+
+    batch.Commit(registry, observing, RealQueue{}, RealOurs);
+    for (std::uint32_t i = 0; i < batch.Count(); ++i) {
+        CHECK(batch.At(i).result == InstallResult::Installed);
+    }
+    CHECK(batch.At(2).word == 7u);    // what the caller attached comes back with the item
+    CHECK(First(3) == firstPlain + 1000000);
+    CHECK(Second(3) == secondPlain + 2000000);
+    CHECK(Third(3) == thirdPlain + 3000000);
+    CHECK(registry.LiveCount() == 3u);
+    batch.Clear();
+    CHECK(batch.Count() == 0u);
+
+    // The stop: one walk, one apply, every patch reported as ours and restored.
+    observing.store(0u);
+    int restored = 0;
+    int declined = 0;
+    fl::patch::RestoreAll(registry, RealQueue{}, RealOurs,
+                          [&restored, &declined](const char*, void*, bool wasOurs, bool ok) noexcept {
+                              restored += (wasOurs && ok) ? 1 : 0;
+                              declined += wasOurs ? 0 : 1;
+                          });
+    CHECK(restored == 3);
+    CHECK(declined == 0);
+    CHECK(First(3) == firstPlain);
+    CHECK(Second(3) == secondPlain);
+    CHECK(Third(3) == thirdPlain);
+
+    // Stopping is one-way for a batch as for a single patch: nothing is created after it.
+    CHECK(batch.Add(registry, observing, RealQueue{}, first, reinterpret_cast<void*>(&DetourFirst),
+                    reinterpret_cast<void**>(&g_origFirst), "first", nullptr, 0u) == InstallResult::Stopped);
+    MH_Uninitialize();
+}
+
+TEST_CASE("the stop's batch leaves a patch a foreign overlay patched over exactly as it is, and restores the others",
+          "[unhook][registry][batch]") {
+    using fl::patch::InstallResult;
+    fl::patch::Registry<2>     registry;
+    fl::patch::Batch<2>        batch;
+    std::atomic<std::uint32_t> observing{1u};
+    void*                      first = reinterpret_cast<void*>(&First);
+    void*                      second = reinterpret_cast<void*>(&Second);
+    const int                  secondPlain = Second(3);
+
+    REQUIRE(MH_Initialize() == MH_OK);
+    REQUIRE(batch.Add(registry, observing, RealQueue{}, first, reinterpret_cast<void*>(&DetourFirst),
+                      reinterpret_cast<void**>(&g_origFirst), "first", nullptr, 0u) == InstallResult::Pending);
+    REQUIRE(batch.Add(registry, observing, RealQueue{}, second, reinterpret_cast<void*>(&DetourSecond),
+                      reinterpret_cast<void**>(&g_origSecond), "second", nullptr, 0u) == InstallResult::Pending);
+    batch.Commit(registry, observing, RealQueue{}, RealOurs);
+    REQUIRE(registry.LiveCount() == 2u);
+
+    // A foreign overlay patches First after us.
+    std::uint8_t* foreignRelay = MakeRelay(reinterpret_cast<void*>(&ForeignDetour), first);
+    std::int32_t  savedRel = 0;
+    RepointJump(first, foreignRelay, &savedRel);
+    std::uint8_t theirs[5]{};
+    std::memcpy(theirs, first, sizeof(theirs));
+    REQUIRE(First(5) == 4);    // their hook is what runs
+
+    observing.store(0u);
+    int restored = 0;
+    int declined = 0;
+    fl::patch::RestoreAll(registry, RealQueue{}, RealOurs,
+                          [&restored, &declined](const char*, void*, bool wasOurs, bool ok) noexcept {
+                              restored += (wasOurs && ok) ? 1 : 0;
+                              declined += wasOurs ? 0 : 1;
+                          });
+    CHECK(restored == 1);
+    CHECK(declined == 1);
+    CHECK(std::memcmp(theirs, first, sizeof(theirs)) == 0);    // not one byte of theirs was written
+    CHECK(First(5) == 4);
+    CHECK(Second(3) == secondPlain);
+
+    // ...and no mark was left on the declined one: an apply by anybody afterwards still does not touch it.
+    CHECK(MH_ApplyQueued() == MH_OK);
+    CHECK(std::memcmp(theirs, first, sizeof(theirs)) == 0);
+
+    RestoreJump(first, savedRel);    // the foreign overlay goes away before MinHook is torn down
+    MH_Uninitialize();
+    VirtualFree(foreignRelay, 0, MEM_RELEASE);
+}
+
+TEST_CASE("an apply that fails halfway costs one patch, and leaves no mark for a later apply to act on",
+          "[unhook][registry][batch]") {
+    using fl::patch::InstallResult;
+    fl::patch::Registry<3>     registry;
+    fl::patch::Batch<3>        batch;
+    std::atomic<std::uint32_t> observing{1u};
+    Model                      model;
+    model.neverEnables = &g_b;
+    const ModelEngine engine{&model};
+
+    REQUIRE(batch.Add(registry, observing, engine, &g_a, &g_detour, nullptr, "a", nullptr, 0u) ==
+            InstallResult::Pending);
+    REQUIRE(batch.Add(registry, observing, engine, &g_b, &g_detour, nullptr, "b", nullptr, 0u) ==
+            InstallResult::Pending);
+    REQUIRE(batch.Add(registry, observing, engine, &g_c, &g_detour, nullptr, "c", nullptr, 0u) ==
+            InstallResult::Pending);
+    CHECK_FALSE(model.AMarkIsStanding());    // adding marks nothing
+    batch.Commit(registry, observing, engine, ModelOurs{&model});
+
+    CHECK(batch.At(0).result == InstallResult::Installed);
+    CHECK(batch.At(1).result == InstallResult::EnableFailed);
+    CHECK(batch.At(2).result == InstallResult::Installed);    // the apply stopped at b; c went in by itself
+    CHECK(model.Enabled(&g_a));
+    CHECK_FALSE(model.Enabled(&g_b));
+    CHECK(model.Enabled(&g_c));
+    CHECK(registry.LiveCount() == 2u);
+    CHECK(model.applies == 1);
+    CHECK_FALSE(model.AMarkIsStanding());
+    CHECK_FALSE(model.touchedOutsideTheGate);
+    CHECK(model.gate == 0);
+
+    // The stop's apply -- anybody's apply -- must not be what puts b in.
+    model.neverEnables = nullptr;
+    CHECK(engine.Apply());
+    CHECK_FALSE(model.Enabled(&g_b));
+
+    // b's slot went back: the third slot can be claimed again.
+    CHECK(registry.Claim(&g_b, &g_detour, "b again") >= 0);
+}
+
+TEST_CASE("an apply that does nothing at all still gets every patch in, one at a time", "[unhook][registry][batch]") {
+    using fl::patch::InstallResult;
+    fl::patch::Registry<2>     registry;
+    fl::patch::Batch<2>        batch;
+    std::atomic<std::uint32_t> observing{1u};
+    Model                      model;
+    model.applyFails = true;    // MinHook could not stop the threads: nothing applied, one status for all
+    const ModelEngine engine{&model};
+
+    REQUIRE(batch.Add(registry, observing, engine, &g_a, &g_detour, nullptr, "a", nullptr, 0u) ==
+            InstallResult::Pending);
+    REQUIRE(batch.Add(registry, observing, engine, &g_b, &g_detour, nullptr, "b", nullptr, 0u) ==
+            InstallResult::Pending);
+    batch.Commit(registry, observing, engine, ModelOurs{&model});
+    CHECK(batch.At(0).result == InstallResult::Installed);
+    CHECK(batch.At(1).result == InstallResult::Installed);
+    CHECK(registry.LiveCount() == 2u);
+    CHECK_FALSE(model.AMarkIsStanding());
+
+    // And the stop, with the same failing apply, still takes both out.
+    observing.store(0u);
+    int restored = 0;
+    fl::patch::RestoreAll(
+        registry, engine, ModelOurs{&model},
+        [&restored](const char*, void*, bool wasOurs, bool ok) noexcept { restored += (wasOurs && ok) ? 1 : 0; });
+    CHECK(restored == 2);
+    CHECK_FALSE(model.Enabled(&g_a));
+    CHECK_FALSE(model.Enabled(&g_b));
+    CHECK_FALSE(model.AMarkIsStanding());
+    CHECK_FALSE(model.touchedOutsideTheGate);
+}
+
+TEST_CASE("a stop before the batch commits enables nothing; a stop inside its apply is undone by the batch itself",
+          "[unhook][registry][batch]") {
+    using fl::patch::InstallResult;
+    Model             model;
+    const ModelEngine engine{&model};
+
+    SECTION("the stop ran between the adds and the commit") {
+        fl::patch::Registry<2>     registry;
+        fl::patch::Batch<2>        batch;
+        std::atomic<std::uint32_t> observing{1u};
+        REQUIRE(batch.Add(registry, observing, engine, &g_a, &g_detour, nullptr, "a", nullptr, 0u) ==
+                InstallResult::Pending);
+        REQUIRE(batch.Add(registry, observing, engine, &g_b, &g_detour, nullptr, "b", nullptr, 0u) ==
+                InstallResult::Pending);
+        observing.store(0u);
+        batch.Commit(registry, observing, engine, ModelOurs{&model});
+        CHECK(batch.At(0).result == InstallResult::StoppedDuring);
+        CHECK(batch.At(1).result == InstallResult::StoppedDuring);
+        CHECK(model.applies == 0);    // nothing was marked, nothing applied
+        CHECK_FALSE(model.Enabled(&g_a));
+        CHECK_FALSE(model.Enabled(&g_b));
+        CHECK(registry.LiveCount() == 0u);
+        CHECK(registry.Claim(&g_a, &g_detour, "free again") >= 0);    // never live, so not retired
+    }
+
+    SECTION("the stop ran while the apply was putting them in") {
+        fl::patch::Registry<2>     registry;
+        fl::patch::Batch<2>        batch;
+        std::atomic<std::uint32_t> observing{1u};
+        model.stopsDuringApply = &observing;
+        REQUIRE(batch.Add(registry, observing, engine, &g_a, &g_detour, nullptr, "a", nullptr, 0u) ==
+                InstallResult::Pending);
+        REQUIRE(batch.Add(registry, observing, engine, &g_b, &g_detour, nullptr, "b", nullptr, 0u) ==
+                InstallResult::Pending);
+        batch.Commit(registry, observing, engine, ModelOurs{&model});
+        CHECK(batch.At(0).result == InstallResult::StoppedDuring);
+        CHECK(batch.At(1).result == InstallResult::StoppedDuring);
+        CHECK_FALSE(model.Enabled(&g_a));    // put in, and taken out again by the installer
+        CHECK_FALSE(model.Enabled(&g_b));
+        CHECK(model.applies == 2);    // one in, one out
+        CHECK(registry.LiveCount() == 0u);
+        CHECK(registry.Claim(&g_a, &g_detour, "again") == -1);    // they were live: the slots are never reused
+        CHECK_FALSE(model.AMarkIsStanding());
+        CHECK_FALSE(model.touchedOutsideTheGate);
+        CHECK(model.gate == 0);
+    }
+}
+
+TEST_CASE("the stop marks only what is still ours: a foreign patch is not written, a restored patch is not put back",
+          "[unhook][registry][batch]") {
+    using fl::patch::InstallResult;
+    fl::patch::Registry<3>     registry;
+    fl::patch::Batch<3>        batch;
+    std::atomic<std::uint32_t> observing{1u};
+    Model                      model;
+    const ModelEngine          engine{&model};
+
+    REQUIRE(batch.Add(registry, observing, engine, &g_a, &g_detour, nullptr, "a", nullptr, 0u) ==
+            InstallResult::Pending);
+    REQUIRE(batch.Add(registry, observing, engine, &g_b, &g_detour, nullptr, "b", nullptr, 0u) ==
+            InstallResult::Pending);
+    REQUIRE(batch.Add(registry, observing, engine, &g_c, &g_detour, nullptr, "c", nullptr, 0u) ==
+            InstallResult::Pending);
+    batch.Commit(registry, observing, engine, ModelOurs{&model});
+    REQUIRE(registry.LiveCount() == 3u);
+
+    model.PatchOver(&g_a);    // a: somebody patched over us
+    // c: committed, and already taken out -- an installer between its own disable and its Retire. The draft that
+    // marked everything and then un-marked what it must not restore marked THIS one for enabling, and the stop's own
+    // apply put the patch back in after the stop.
+    model.Set(model.Find(&g_c), false);
+    model.applies = 0;
+
+    observing.store(0u);
+    int ours = 0;
+    int notOurs = 0;
+    fl::patch::RestoreAll(registry, engine, ModelOurs{&model},
+                          [&ours, &notOurs](const char*, void*, bool wasOurs, bool ok) noexcept {
+                              ours += (wasOurs && ok) ? 1 : 0;
+                              notOurs += wasOurs ? 0 : 1;
+                          });
+    CHECK(ours == 1);       // b
+    CHECK(notOurs == 2);    // a and c
+    CHECK(model.applies == 1);
+    CHECK(model.Enabled(&g_a));    // theirs: still in
+    CHECK_FALSE(model.wroteOverAForeignPatch);
+    CHECK_FALSE(model.Enabled(&g_b));
+    CHECK_FALSE(model.Enabled(&g_c));    // stayed out
+    CHECK_FALSE(model.AMarkIsStanding());
+    CHECK_FALSE(model.touchedOutsideTheGate);
+    CHECK(model.gate == 0);
+
+    // Nothing of ours left: a second stop's walk marks nothing and applies nothing.
+    model.applies = 0;
+    fl::patch::RestoreAll(registry, engine, ModelOurs{&model}, [](const char*, void*, bool, bool) noexcept {});
+    CHECK(model.applies == 0);
+}
