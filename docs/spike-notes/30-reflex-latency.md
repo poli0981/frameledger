@@ -173,4 +173,5 @@ route.
 2. **Route C: refused.**
 3. **Route E: left closed**; §G is not reopened.
 
-The spike is `spike-notes` §31, written after 0.1.0-beta.46 is tagged.
+The spike is [`spike-notes` §31](31-reflex-route-d-harness.md), run on 2026-11-13: none of the stop conditions
+above fired on the harness, and it ends in the question of one real title.

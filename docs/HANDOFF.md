@@ -127,8 +127,13 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
   Advanced request to its families includes the wait for the watchdog's tick, and batching changes the tick's
   phase, so that number went *up* in the test while the install itself went from 0.6 s to 0.08 s. The install is
   asserted by count — every lazily installed patch under a `PATCH_BATCH` line — not by time.
-- **The spike of route D is still to be written** (`spike-notes` §31): a stub `nvapi64.dll`, an unshipped probe,
-  a decision table before the runs. Rule 4's note (D132) is in `CLAUDE.md`; nothing shipped calls a driver.
+- ~~**The spike of route D is still to be written**~~ **The spike of route D was run the same day** (`spike-notes`
+  §31; `tools/fl-probe-reflex`, ctest `fl_reflex_probe_stub`): a decision table written before the runs, a stand-in
+  `nvapi64.dll`, then the installed driver in the probe's own process. None of §30's stop conditions fired. Two
+  things it decided that a plan must keep: **the call belongs on the presenting thread, once a second** — a call
+  the driver holds stops the thread that made it, so not the watchdog, and at a microsecond or so it needs no thread
+  of its own — and **the newest frames of a report are not final** (one run read a span of half an hour in the
+  newest frame). Rule 4's note (D132) is in `CLAUDE.md`; nothing shipped calls a driver.
 
 ### Traps this train left
 
@@ -153,8 +158,11 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
 
 1. **The owner runs item 44** — the first real games on the batches, and the first stop while a game runs since
    beta.43. Not first on a game under the user-mode exception's trial (D38).
-2. **The spike of Reflex route D on `hook-harness`** (D132): `spike-notes` §31, unshipped code only, ending in the
-   owner's go or no for one real title. Routes C and E are closed (D133).
+2. ~~**The spike of Reflex route D on `hook-harness`**~~ **Done 2026-11-13** (`spike-notes` §31): on the harness
+   and against the installed driver the two getters are harmless, cost about a microsecond and return a readable
+   report, and the Direct3D 12 device the Overlay holds is what the driver takes. **The owner's next word is go or no
+   for one real title** — a go is a plan of its own before any code (where the numbers go, the Disclaimer's and the
+   Privacy Policy's wording, `nvapi-readonly-check` over the Overlay). Routes C and E are closed (D133).
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
 4. **Train D** after train C, the same way: a spike first — and §30 found its hook would miss a game that fetched
    its functions before the attach.
@@ -180,7 +188,7 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** item 44; the go or no on `spike-notes` §31 when it is written; one session each of Valor Mortis and
+**Owner-only:** item 44; the go or no on `spike-notes` §31 (one real title); one session each of Valor Mortis and
 Black Myth: Wukong with hooking off; what item 41 left unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
