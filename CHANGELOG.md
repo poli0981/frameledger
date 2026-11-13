@@ -35,29 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Changed
-
-- **Hooks go into a game together, and come out together** (owner decision D134). Putting a hook in or taking it
-  out stops every thread of the game for a moment, and until now that happened once for every hook: the thirteen
-  Streamline hooks took 0.7 to 2.8 seconds of a game's start in real sessions (2026-11-13), and stopping a session
-  took about a sixth of a second for each hook — two to three seconds, sometimes on the thread that draws. The
-  hooks a moment finds are now put in under **one** stop of the threads, and a stop takes all of them out under
-  one. On FrameLedger's own test program: nine hooks in 78–90 ms where they took 0.6–0.7 s; eighteen out in
-  76–90 ms where they took 1.4–1.6 s. What a hook reads and when it is installed are unchanged, and no hook's own
-  code changed. The log of the part inside the game has a new line for each such moment (`PATCH_BATCH`, with the
-  time it took and the number of hooks). **Not run in a real game yet.**
-
-- **The limitations, the accuracy statement and the user guide say what the first real sessions on 0.1.0-beta.45
-  showed** (2026-11-13, six games): five of its six new readings were read in real games — every Streamline game
-  asked whether its features are supported — and no game allocated a feature's resources after FrameLedger was in
-  it, so that row has not been seen. No code changes.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.46` | 2026-11-13 | [`docs/changelog/0.1.0-beta.46.md`](docs/changelog/0.1.0-beta.46.md) |
 | `0.1.0-beta.45` | 2026-11-12 | [`docs/changelog/0.1.0-beta.45.md`](docs/changelog/0.1.0-beta.45.md) |
 | `0.1.0-beta.44` | 2026-11-12 | [`docs/changelog/0.1.0-beta.44.md`](docs/changelog/0.1.0-beta.44.md) |
 | `0.1.0-beta.43` | 2026-11-12 | [`docs/changelog/0.1.0-beta.43.md`](docs/changelog/0.1.0-beta.43.md) |
