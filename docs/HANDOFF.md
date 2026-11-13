@@ -202,6 +202,52 @@ and the logs, and from Windows' application log. None of the five is under the u
   nor (g), off means off: `telemetry.advanced` was on throughout. (c), how a game's start feels, is the owner's to
   say. (a) held: the terms window did not show.
 
+### The train after 0.1.0-beta.46: Reflex route D in a game, and D137 (plan approved 2026-11-13)
+
+*Nothing of this is in a release. The release pull request is not opened before the owner has run item 44 (d).*
+The owner approved the plan the evening item 44 was read. Its order: **PR-0** the decisions and the probe's leg
+with a sleep (done: `spike-notes` §31 — no stop condition) → **PR-1** D137 → **PR-2** the words in region 5, written
+by nobody → **PR-3** the Overlay, the gates, the fixtures → **PR-4** the Agent, the App, strings, documents, legal
+texts and owner-only item 45 → **the release, held**. What the plan's review against the source decided — a draft
+of mine was wrong in six places — and that no other file carries yet:
+
+- **Resolve on the watchdog, once for the process; call on the presenting thread.** The watchdog asks Windows for
+  an `nvapi64.dll` that is *already loaded* (never loads it), only while a session asks for Advanced metrics and a
+  Direct3D 12 device is held; it keeps one reference and never releases it; it refuses a module in the executable's
+  own folder (D140); it fetches `nvapi_QueryInterface` and the two ids under a guard and checks with `VirtualQuery`
+  that both addresses lie inside that module. "No module", "no getter" and "refused" are final for the process.
+- **One atomic gate with four states** — idle, armed, reading, off — not a busy flag beside accumulators (two
+  presenting threads could read back to back, and the watchdog could drain half a read). The watchdog drains only
+  when it sees *idle* and arms at most once a second by its own clock (the loader detour wakes it more often); a
+  present does one relaxed load, takes *armed* to *reading*, reads into a static buffer (the report is 15.4 KB: never
+  on a game thread's stack), and stores *idle* or *off*. A request that goes off takes *armed* back.
+- **After the record is published, and only for a swap chain whose device is the one held** (`g_d3d12Device` is the
+  first device seen, not "this chain's": a flag in the chain's slot, set in `ResolveApi`).
+- **The latches, each until the game exits**: a fault in a getter (its own guard with `FlFilter`; counted once
+  through `NoteFault`, so the session shows it and it cannot reach the three that self-disable); one call of 2 ms or
+  more (D141); the watchdog finding *reading* on two ticks running — logged and flushed at once, published as
+  stalled, and **nothing can stop a call that does not return**. An error status or an empty report is recorded and
+  reading goes on.
+- **The summary**: only frames newer than the last one summed; the two newest of a report skipped (§31: not final);
+  a zero end point is "span not reported" (published as all ones), not a refused frame; a frame is refused for a
+  span that runs backwards, one over a second, or no total; frame ids that go backwards restart the sequence.
+- **Layout 5 stays**: the ten reserved words of region 5's first line take it (`slShutdowns` is the precedent; the
+  handshake compares the build id anyway, and a trial must be removable without a layout 7). The sleep interval is
+  not stored. No new request word (D138). `FL_HOOK_REFLEX`, `FL_MEASURED_LATENCY` and `reflexLatencyUs` stay unset:
+  there is no hook, and the numbers are a series beside the frames; `sessions.reflex_active` stays NULL.
+- **Managed side**: a new reach, `GameDriver`, not a relaxed test of `Game` (whose meaning is "the arguments of a
+  call the Overlay hooks"); `nvapi.reflex.frame_report` as seven series, `nvapi.reflex.sleep_status` as a table of
+  switches *seen on / seen off*; `nvapi.reflex.mode`, `sl.reflex.state` and `sl.pcl.markers` become *refused* with
+  the reason; `InGameAdvancedSampler.Take` must read the latency state when the mask is zero and keep the new bit
+  out of `SawAnything`.
+- **The gates**: `overlay-fields-check` learns the two NVAPI structs (`frameID` joins the shared members; `version`
+  is written outside the header); `nvapi-readonly-check` gets a pass over the Overlay — no `NvAPI_*(` token, every
+  id that equals one of `nvapi_interface.h`'s on a list of exactly two, `Sleep` a writer verb; `hookinventory-check`
+  refuses an `nvapi` import. The injected tests prove nothing about Control Flow Guard (the harness does not enforce
+  it): the probe includes the header that ships, so `fl_reflex_probe_stub` tests the shipped sequence under it.
+- **The legal texts change in PR-4** (Disclaimer 2.16, Privacy Policy 2.20, the accuracy statement): the part
+  inside the game now *makes a call of its own*, once a second, on the game's presenting thread.
+
 ### NEXT
 
 1. ~~**The owner runs item 44**~~ **Read 2026-11-13** (§What the owner's five sessions on beta.46 showed): the
@@ -218,6 +264,7 @@ and the logs, and from Windows' application log. None of the five is under the u
    Privacy Policy's wording, `nvapi-readonly-check` over the Overlay). Routes C and E are closed (D133).
    **The owner said go on 2026-11-13 (D136): a plan first, for Cyberpunk 2077.** No code before the plan is
    approved, and no release that carries it before item 44 (d) — the stop while a game runs — has been run.
+   **The plan was approved the same evening, with D138–D141** (§The train after 0.1.0-beta.46).
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
 4. **Train D** after train C, the same way: a spike first — and §30 found its hook would miss a game that fetched
    its functions before the attach.
@@ -912,6 +959,10 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D135 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory | `slAllocateResources` keeps its patch although no game called it in the first six sessions; looked at again when there are more |
 | D136 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14, [`spike-notes/31-reflex-route-d-harness.md`](spike-notes/31-reflex-route-d-harness.md) §The question for the owner | Reflex route D goes on to one real title, Cyberpunk 2077 — a plan of its own first, no code before it is approved, and no release carrying it before item 44 (d) has been run |
 | D137 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking, *Batches* | the `PATCH_BATCH` line says how a batch ended — one apply, or finished one patch at a time — after two batches in real games took 0.61 s and 1.26 s and the log could not say which; with the next release, not one of its own |
+| D138 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14, `HANDOFF.md` §The train after 0.1.0-beta.46 | the Reflex read has no switch of its own: it is part of Advanced metrics — so it reaches every Direct3D 12 game that loaded the driver's `nvapi64.dll`, for everyone who switched Advanced metrics on; "one title" is the order of the owner's first runs (item 45), not a limit in code |
+| D139 | [`spike-notes/31-reflex-route-d-harness.md`](spike-notes/31-reflex-route-d-harness.md) §The leg with a sleep | before any Overlay code the probe runs a leg with `NvAPI_D3D_SetSleepMode` and `NvAPI_D3D_Sleep` — writes, in the probe's own process, on its own device, in no shipped binary |
+| D140 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14 | an `nvapi64.dll` loaded from the game's own folder — a replacement, not the driver's — is refused, and the session says why |
+| D141 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14 | one call into the driver of 2 ms or more switches the Reflex read off until the game exits |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

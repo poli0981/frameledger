@@ -48,9 +48,10 @@ numeric core and does not move; the heading is the full version — corrected 20
 - **For developers, nothing a user installs: a probe for NVIDIA Reflex latency** (owner decision D132). An
   unshipped tool, `fl-probe-reflex`, and a stand-in `nvapi64.dll` among the test fixtures measure what it would take
   to read the driver's latency report from inside a game - on FrameLedger's own test program and against the
-  installed driver, never in a game. What it found is `docs/spike-notes/31-reflex-route-d-harness.md`; whether a
-  real game is tried next is the owner's decision. Nothing in the App, the Agent or the part that runs inside a
-  game changed.
+  installed driver, never in a game. What it found is `docs/spike-notes/31-reflex-route-d-harness.md`. A further
+  leg (owner decision D139) measured the same reads while the probe itself used Reflex's sleep, as a game does:
+  the reads do not wait behind it. The owner has said to go on to a real game (D136); that work is not in any
+  release yet. Nothing in the App, the Agent or the part that runs inside a game changed.
 
 ## Releases
 

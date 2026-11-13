@@ -400,6 +400,8 @@ struct Poller {
     std::uint32_t              faults = 0;
     double                     worstSeconds = 0.0;
     std::uint32_t              emptyReports = 0;
+    std::uint32_t              atLeast1Ms = 0;    // reads that took a millisecond or more, and two (R6)
+    std::uint32_t              atLeast2Ms = 0;
 };
 
 DWORD WINAPI PollerThread(LPVOID p) noexcept {
@@ -422,6 +424,8 @@ DWORD WINAPI PollerThread(LPVOID p) noexcept {
         if (took > poll->worstSeconds) {
             poll->worstSeconds = took;
         }
+        poll->atLeast1Ms += took >= 0.001 ? 1u : 0u;
+        poll->atLeast2Ms += took >= 0.002 ? 1u : 0u;
         const std::uint32_t interval = poll->intervalMs.load(std::memory_order_relaxed);
         if (interval != 0u) {
             Sleep(interval);
@@ -473,6 +477,208 @@ double FramesPerSecond11(Game& g, Dx11& dx, double seconds) noexcept {
         ++frames;
     }
     return static_cast<double>(frames) / (QpcSeconds() - t0);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// R6 (owner decision D139; spike-notes §31, "The leg with a sleep"): THE GETTERS WHILE THE GAME SLEEPS.
+// No run above set a sleep mode or called NvAPI_D3D_Sleep, and a game that uses Reflex does both every frame. If the
+// driver makes a getter wait behind the game's sleep, a read on the presenting thread holds a present for as long as
+// the sleep lasts. The probe is the game once more: BOTH CALLS BELOW ARE WRITES, made on the probe's own device in its
+// own process; no shipped binary contains either, and the mode is switched back off before the device goes.
+// ---------------------------------------------------------------------------------------------------------------------
+constexpr unsigned int kIdSetSleepMode = 0xac1ca9e0u;    // nvapi_interface.h: NvAPI_D3D_SetSleepMode -- the game's call
+constexpr unsigned int kIdSleep = 0x852cd1d2u;           // NvAPI_D3D_Sleep -- the game's call
+constexpr unsigned int kSleepIntervalUs = 4166u;         // a 240-a-second limit: every frame really sleeps
+
+using SetSleepModeFn = NvAPI_Status(__cdecl*)(IUnknown*, NV_SET_SLEEP_MODE_PARAMS*);
+using SleepFn = NvAPI_Status(__cdecl*)(IUnknown*);
+
+struct Sleeper {
+    SleepFn       sleep = nullptr;
+    IUnknown*     device = nullptr;
+    bool          on = false;
+    std::uint32_t errors = 0;
+    std::uint32_t calls = 0;
+    double        seconds = 0.0;    // spent inside NvAPI_D3D_Sleep
+};
+
+// One frame of a game that uses Reflex: the sleep first, then the markers and the present.
+void SleepingFrame12(Game& g, Dx12& dx, Sleeper& s) noexcept {
+    if (s.on) {
+        const double t0 = QpcSeconds();
+        if (s.sleep(s.device) != NVAPI_OK) {
+            ++s.errors;
+        }
+        s.seconds += QpcSeconds() - t0;
+        ++s.calls;
+    }
+    Frame12(g, dx);
+}
+
+struct Beside {
+    std::uint32_t calls = 0;
+    std::uint32_t notOk = 0;
+    std::uint32_t faults = 0;
+    std::uint32_t atLeast1Ms = 0;
+    std::uint32_t atLeast2Ms = 0;
+    double        worstUs = 0.0;
+    double        framesPerSecond = 0.0;
+};
+
+// The getters on another thread every `intervalMs` (0: without a pause) for `seconds`, while this thread is the game.
+Beside PollBeside(const fl::reflex::Api& api, Game& g, Dx12& dx, Sleeper& s, std::uint32_t intervalMs,
+                  double seconds) noexcept {
+    Poller poll{};
+    poll.api = api;
+    poll.device = dx.device;
+    poll.intervalMs.store(intervalMs);
+    HANDLE        thread = CreateThread(nullptr, 0, &PollerThread, &poll, 0, nullptr);
+    const double  t0 = QpcSeconds();
+    std::uint32_t frames = 0;
+    while (QpcSeconds() - t0 < seconds) {
+        SleepingFrame12(g, dx, s);
+        ++frames;
+    }
+    const double took = QpcSeconds() - t0;
+    poll.quit.store(1u);
+    if (thread != nullptr) {
+        WaitForSingleObject(thread, 5000);
+        CloseHandle(thread);
+    }
+    Beside out{};
+    out.calls = poll.calls;
+    out.notOk = poll.notOk;
+    out.faults = poll.faults;
+    out.atLeast1Ms = poll.atLeast1Ms;
+    out.atLeast2Ms = poll.atLeast2Ms;
+    out.worstUs = poll.worstSeconds * 1e6;
+    out.framesPerSecond = static_cast<double>(frames) / took;
+    return out;
+}
+
+void PrintBeside(const char* label, const Beside& b) noexcept {
+    std::printf(
+        "%-52s %u reads, %u not OK, %u faulted, worst %.1f us, >= 1 ms: %u, >= 2 ms: %u; %.0f frames a second\n", label,
+        b.calls, b.notOk, b.faults, b.worstUs, b.atLeast1Ms, b.atLeast2Ms, b.framesPerSecond);
+}
+
+void RunSleepLeg(IDXGIFactory4* factory, IDXGIAdapter1* adapter, const fl::reflex::Api& api,
+                 fl::reflex::QueryInterfaceFn query, SetMarkerFn setMarker) noexcept {
+    const auto setMode = reinterpret_cast<SetSleepModeFn>(query(kIdSetSleepMode));
+    Sleeper    sleeper{};
+    sleeper.sleep = reinterpret_cast<SleepFn>(query(kIdSleep));
+    Dx12 dx{};
+    if (setMode == nullptr || sleeper.sleep == nullptr || !MakeDx12(factory, adapter, dx)) {
+        std::printf("R6 SKIPPED: no sleep functions from this nvapi64.dll, or no Direct3D 12 device\n");
+        FreeDx12(dx);
+        return;
+    }
+    sleeper.device = dx.device;
+    Game game{};
+    game.setMarker = setMarker;
+    game.markerDevice = dx.device;
+    game.frame = 300000;
+    static NV_LATENCY_RESULT_PARAMS report;
+    NV_GET_SLEEP_STATUS_PARAMS      status{};
+
+    // THE CONTROL: the same device, the same two pollers, before any sleep mode.
+    for (int i = 0; i < 300; ++i) {
+        SleepingFrame12(game, dx, sleeper);
+    }
+    const Beside controlSlow = PollBeside(api, game, dx, sleeper, 250u, 20.0);
+    const Beside controlFast = PollBeside(api, game, dx, sleeper, 0u, 10.0);
+    PrintBeside("R6 control, no sleep mode, 4 reads a second:", controlSlow);
+    PrintBeside("R6 control, no sleep mode, reads without a pause:", controlFast);
+
+    // S1. THE GAME SETS A SLEEP MODE AND SLEEPS EVERY FRAME.
+    NV_SET_SLEEP_MODE_PARAMS mode{};
+    mode.version = NV_SET_SLEEP_MODE_PARAMS_VER1;
+    mode.bLowLatencyMode = 1;
+    mode.minimumIntervalUs = kSleepIntervalUs;
+    mode.bUseMarkersToOptimize = 1;
+    const NvAPI_Status set = setMode(dx.device, &mode);
+    sleeper.on = set == NVAPI_OK;
+    const double began = QpcSeconds();
+    for (int i = 0; i < 600; ++i) {
+        SleepingFrame12(game, dx, sleeper);
+    }
+    const double       frameUs = (QpcSeconds() - began) / 600.0 * 1e6;
+    const NvAPI_Status s1 = fl::reflex::ReadSleepStatus(api, dx.device, status);
+    std::printf("S1 SetSleepMode %d; 600 frames: %.1f us a frame, %.1f us of it inside Sleep, %u sleep error(s)\n",
+                static_cast<int>(set), frameUs,
+                sleeper.calls != 0u ? sleeper.seconds / static_cast<double>(sleeper.calls) * 1e6 : 0.0, sleeper.errors);
+    std::printf("S1 sleep status %d: lowLatency %u, fsVrr %u, cplVsync %u, interval %u us, gameSleep %u, iFlip %u, "
+                "fgMultiplier %u\n",
+                static_cast<int>(s1), static_cast<unsigned>(status.bLowLatencyMode),
+                static_cast<unsigned>(status.bFsVrr), static_cast<unsigned>(status.bCplVsyncOn),
+                static_cast<unsigned>(status.sleepIntervalUs), static_cast<unsigned>(status.bUseGameSleep),
+                static_cast<unsigned>(status.bFullscreenIFlip), static_cast<unsigned>(status.fgMultiplier));
+
+    // S4. What the report holds once the game sleeps.
+    PrintDigest("S4 D3D12, sleeping, 600 frames:", fl::reflex::ReadLatency(api, dx.device, report), report);
+    {
+        std::uint32_t input = 0;
+        std::uint32_t driverStart = 0;
+        std::uint32_t gpuEnd = 0;
+        for (const auto& r : report.frameReport) {
+            input += r.inputSampleTime != 0u ? 1u : 0u;
+            driverStart += r.driverStartTime != 0u ? 1u : 0u;
+            gpuEnd += r.gpuRenderEndTime != 0u ? 1u : 0u;
+        }
+        std::printf("S4 of 64 frames: inputSampleTime in %u, driverStartTime in %u, gpuRenderEndTime in %u\n", input,
+                    driverStart, gpuEnd);
+    }
+
+    // S2. THE GETTERS ON THE THREAD THAT SLEEPS AND PRESENTS: one read after each frame's present -- where the Overlay
+    // would make it -- and then back to back.
+    {
+        static double samples[2000];
+        double        sum = 0.0;
+        double        worst = 0.0;
+        std::uint32_t slow = 0;
+        for (double& sample : samples) {
+            SleepingFrame12(game, dx, sleeper);
+            const double t0 = QpcSeconds();
+            fl::reflex::ReadLatency(api, dx.device, report);
+            sample = (QpcSeconds() - t0) * 1e6;
+            sum += sample;
+            worst = sample > worst ? sample : worst;
+            slow += sample >= 2000.0 ? 1u : 0u;
+        }
+        for (int i = 1; i < 2000; ++i) {    // insertion sort, as Measure does
+            const double v = samples[i];
+            int          j = i - 1;
+            while (j >= 0 && samples[j] > v) {
+                samples[j + 1] = samples[j];
+                --j;
+            }
+            samples[j + 1] = v;
+        }
+        std::printf("S2 GetLatency after each of 2000 sleeping frames, us: mean %.2f, median %.2f, worst %.2f, "
+                    ">= 2 ms: %u\n",
+                    sum / 2000.0, samples[1000], worst, slow);
+    }
+    const Cost latency = Measure(2000, [&]() noexcept { fl::reflex::ReadLatency(api, dx.device, report); });
+    const Cost sleepStatus = Measure(2000, [&]() noexcept { fl::reflex::ReadSleepStatus(api, dx.device, status); });
+    std::printf("S2 GetLatency     back to back, us: mean %.2f, median %.2f, worst %.2f (2000 calls)\n", latency.mean,
+                latency.median, latency.worst);
+    std::printf("S2 GetSleepStatus back to back, us: mean %.2f, median %.2f, worst %.2f (2000 calls)\n",
+                sleepStatus.mean, sleepStatus.median, sleepStatus.worst);
+
+    // S3. THE GETTERS ON ANOTHER THREAD WHILE THIS ONE SLEEPS AND PRESENTS -- a game's sleep is often on a thread that
+    // is not the one that presents.
+    const Beside sleepSlow = PollBeside(api, game, dx, sleeper, 250u, 20.0);
+    const Beside sleepFast = PollBeside(api, game, dx, sleeper, 0u, 10.0);
+    PrintBeside("S3 sleeping, 4 reads a second:", sleepSlow);
+    PrintBeside("S3 sleeping, reads without a pause:", sleepFast);
+    std::printf("S3 marker errors %u (last status %d), sleep errors %u\n", game.markerErrors,
+                static_cast<int>(game.lastMarkerStatus), sleeper.errors);
+
+    // The mode goes back off before the device does.
+    NV_SET_SLEEP_MODE_PARAMS off{};
+    off.version = NV_SET_SLEEP_MODE_PARAMS_VER1;
+    std::printf("R6 SetSleepMode back off: %d\n", static_cast<int>(setMode(dx.device, &off)));
+    FreeDx12(dx);
 }
 
 int RunReal(int pollSeconds) noexcept {
@@ -684,6 +890,9 @@ int RunReal(int pollSeconds) noexcept {
     } else {
         std::printf("R5 no Direct3D 12 device on the NVIDIA adapter\n");
     }
+
+    // R6. The getters while the game sleeps (D139).
+    RunSleepLeg(factory, adapter, api, query, game.setMarker);
 
     FreeDx11(dx11);
     if (unload != nullptr) {
