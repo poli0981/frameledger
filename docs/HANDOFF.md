@@ -241,7 +241,8 @@ of mine was wrong in six places — and that no other file carries yet:
 - **What D141 costs, measured once on a busy PC** (`spike-notes` §31, *A run on a busy PC*): the 2 ms latch will
   sometimes fire on a pause that was Windows' and not the driver's — a few sessions in a hundred at worst, by a
   reading of one run. The owner chose one call over two knowing it errs towards the game; item 45's outcomes must
-  say how the two are told apart (the microseconds published with *slow*).
+  say how the two are told apart (the microseconds published with *slow*). **Asked again with this run in hand,
+  the owner kept it: one call (2026-11-13). Do not re-ask.**
 - **The summary**: only frames newer than the last one summed; the two newest of a report skipped (§31: not final);
   a zero end point is "span not reported" (published as all ones), not a refused frame; a frame is refused for a
   span that runs backwards, one over a second, or no total; frame ids that go backwards restart the sequence.

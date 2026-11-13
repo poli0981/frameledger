@@ -177,3 +177,5 @@ The session then says *stopped: slow* with the microseconds, and the next start 
 trade the owner chose with D141 (one call, not two): it errs towards the game. The number published with the state
 is what tells the two apart afterwards — a driver that holds a call does it again and for longer; a pause is a few
 milliseconds, once.
+
+**The owner was asked again with this table in hand and kept D141 as it is: one call** (2026-11-13).
