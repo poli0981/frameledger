@@ -175,3 +175,13 @@ add_test(NAME fl_unhook_preserves_foreign COMMAND hook-harness --probe-unhook)
 # timing threshold on a shared CI runner fails for reasons that have nothing to
 # do with the code. Run it deliberately: hook-harness --probe-cost
 
+# EVERY TEST ABOVE ENDS ON THE SAME LINE: main() prints "HARNESS OK (0 failure(s))" when every probe it was asked for
+# passed, and that line is what ctest looks for -- a run cut short is not a pass (the top-level file, above
+# enable_testing(); 2026-11-13).
+foreach(fl_harness_test IN ITEMS
+        fl_vtable_indices fl_frame_identity fl_d3d12_acquisition fl_proxy_swapchain
+        fl_d3d12_vtable_indices fl_dxr_probe fl_dxr_inputs fl_upscaler_resolve
+        fl_sl_abi_guard fl_ffx_resolve fl_sl_inputs fl_adv_fields
+        fl_sl_seen fl_dxgi_count fl_unhook_preserves_foreign)
+    fl_test_completes(${fl_harness_test} "HARNESS OK \\(")
+endforeach()

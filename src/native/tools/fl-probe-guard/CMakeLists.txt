@@ -19,3 +19,5 @@ target_compile_definitions(fl-probe-guard PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 # is ACCESS_DENIED on a service, which the probe reports as NOT MEASURED
 # rather than leaving to be assumed.
 add_test(NAME fl_guard_apis COMMAND fl-probe-guard)
+# Its last line when every probe passed (a run cut short is not a pass -- the top-level file, above enable_testing()).
+fl_test_completes(fl_guard_apis "GUARD PROBE OK \\(")

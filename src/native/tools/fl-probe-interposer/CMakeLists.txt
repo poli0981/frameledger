@@ -51,3 +51,6 @@ target_compile_definitions(fl-probe-interposer PRIVATE WIN32_LEAN_AND_MEAN NOMIN
 # Run part 2 deliberately, like --probe-cost:
 #   fl-probe-interposer --interposer "D:\...\Cyberpunk 2077\bin\x64"
 add_test(NAME fl_vtable_identity_control COMMAND fl-probe-interposer)
+# Part 1's last line: printed only once the control passed, just before the probe returns (a run cut short is not a
+# pass -- the top-level file, above enable_testing()).
+fl_test_completes(fl_vtable_identity_control "control: [0-9]+/[0-9]+ checks passed")

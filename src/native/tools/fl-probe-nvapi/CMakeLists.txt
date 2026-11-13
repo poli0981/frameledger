@@ -40,6 +40,9 @@ add_test(NAME fl_nvapi_probe COMMAND fl-probe-nvapi)
 # probe returns in ~0.01 s against ~1.4 s on the dev box — but inferable is not
 # observed, and docs/18_GPU_VENDOR_APIS.md §L3 says so rather than claiming the
 # stronger thing.
-set_tests_properties(fl_nvapi_probe PROPERTIES
-    PASS_REGULAR_EXPRESSION "BRANCH: (AVAILABLE|DEGRADED)"
-)
+#
+# THE BRANCH LINE AND, AFTER IT, THE PROBE'S LAST LINE (2026-11-13). The branch line alone passed a run that stopped
+# right after printing it -- and, because a pass expression makes ctest ignore the exit code, a run that went on to
+# print FAILED. "OK (available branch)" / "OK (degraded branch)" is what the probe ends on when nothing failed.
+fl_test_completes(fl_nvapi_probe
+    "BRANCH: (AVAILABLE|DEGRADED)(.|\n)*OK \\((available|degraded) branch\\)")

@@ -35,6 +35,14 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **For developers: a native test that is cut short no longer counts as passed.** The quality gate's native tests
+  were judged by their exit code alone, and a test program that was stopped early with a clean exit code read as
+  *Passed* - seen once, when security software removed the test program while the gate ran. Every native test now
+  has to print the line it ends on, a test added without one stops the build's configure step, and four tests
+  exist only to prove the rule goes red when it should. Nothing a user installs changed.
+
 ### Added
 
 - **For developers, nothing a user installs: a probe for NVIDIA Reflex latency** (owner decision D132). An

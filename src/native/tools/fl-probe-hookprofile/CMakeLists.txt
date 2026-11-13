@@ -15,3 +15,5 @@ target_link_libraries(fl-probe-hookprofile PRIVATE FrameLedger.Shm fl_native_fla
 target_compile_definitions(fl-probe-hookprofile PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 
 add_test(NAME fl_hook_profile COMMAND fl-probe-hookprofile)
+# Its last line when every probe passed (a run cut short is not a pass -- the top-level file, above enable_testing()).
+fl_test_completes(fl_hook_profile "ALL PROBES PASSED \\(")

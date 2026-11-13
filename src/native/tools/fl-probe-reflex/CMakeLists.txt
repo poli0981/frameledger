@@ -20,3 +20,5 @@ add_dependencies(fl-probe-reflex fl_stub_nvapi64)
 # is a measurement the note records, never a test.
 add_test(NAME fl_reflex_probe_stub COMMAND fl-probe-reflex --stub "$<TARGET_FILE:fl_stub_nvapi64>")
 set_tests_properties(fl_reflex_probe_stub PROPERTIES SKIP_RETURN_CODE 77)
+# Its last line when nothing failed (a run cut short is not a pass -- the top-level file, above enable_testing()).
+fl_test_completes(fl_reflex_probe_stub "STUB OK: 0 failure\\(s\\)")

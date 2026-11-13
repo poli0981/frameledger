@@ -43,3 +43,5 @@ target_compile_definitions(fl-probe-vklayer PRIVATE
 # blocked case would then pass for the wrong reason. The probe says so and
 # exits 0.
 add_test(NAME fl_vklayer_selfscan COMMAND fl-probe-vklayer)
+# Its last line when nothing failed (a run cut short is not a pass -- the top-level file, above enable_testing()).
+fl_test_completes(fl_vklayer_selfscan "VKLAYER SELF-SCAN OK \\(")
