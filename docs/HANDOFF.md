@@ -154,15 +154,70 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
 - **`docs/14_TESTING` and the changelog are where a non-per-present cost goes**; "measured overhead" in a pull
   request body means what the change can move — here the install and the stop, not a present.
 
+### What the owner's five sessions on beta.46 showed (item 44, read 2026-11-13)
+
+The owner updated at 20:29 (+07) the day of the release, ran five Streamline games with Advanced metrics on — one
+session each, four to nine minutes, sessions 198–202 — and said: check and go on. Read from a copy of the ledger
+and the logs, and from Windows' application log. None of the five is under the user-mode exception.
+
+| Session | Game | Install batches in the log's order: `a=` in microseconds · patches | The interposer's patches on beta.45, first line to last |
+|---|---|---|---|
+| 198 | Hogwarts Legacy | **1 260 835 · 13** (Streamline) — 261 920 · 3 — 227 061 · 2 | 2.80 s, 0.19–0.31 s a patch |
+| 199 | Phantom Blade Zero | 81 417 · 3 — 92 512 · 6 — 88 455 · 13 (Streamline) — 99 253 · 2 | 0.74 s and 0.85 s |
+| 200 | Black Myth: Wukong | 187 931 · 12 (Streamline) — 157 010 · 3 — 109 025 · 2 | 1.65 s |
+| 201 | Cyberpunk 2077 | 93 168 · 16 (Streamline's thirteen and the FSR loader's three) — **608 700 · 3** — 177 970 · 3 — 120 878 · 2 | 1.18 s |
+| 202 | Clair Obscur: Expedition 33 | 168 527 · 3 — 165 405 · 16 (Streamline's thirteen and FSR frame generation's three) — 218 172 · 2 | no session on beta.45 |
+
+- **The batches went in whole.** In every log the `HOOK_INSTALLED` lines above a `PATCH_BATCH install` carry one
+  time to the thousandth of a second; there is no `PATCH_FAILED` and no `UNHOOK_DECLINED`; and the hooks are the
+  ones beta.45 installed for the same game, compared name for name (four games; Clair Obscur had no log on beta.45).
+- **Sixteen of the eighteen batches cost 81–262 ms, whatever they held** — two patches or sixteen. That is what one
+  patch cost in the same game on beta.45, as expected.
+- **Two did not, and neither is explained.** Hogwarts Legacy's thirteen took **1.26 s** — under half the 2.8 s they
+  took one by one, and about five times what one stop cost in that game the same afternoon. Three of Cyberpunk
+  2077's took **0.61 s**, which is what three patches cost there one by one. **The log cannot tell one long stop
+  from an apply that failed part-way and was finished one patch at a time**: a batch writes a line only for a patch
+  that fails for good (item 44's text said a fallback leaves a `PATCH_FAILED`; that was wrong). What speaks for one
+  long stop: the queued apply fails only where a page's protection cannot be changed, and thirteen single stops in
+  Hogwarts Legacy would have cost 2.5 s or more. *A reading, not a measurement*: a stop waits until every thread of
+  the game has taken its suspension, and how long that takes follows what the game is doing at that instant — both
+  happened while the game was loading — and not how many patches the stop covers.
+- **What that means for a ceiling on a batch** (item 44's own words for a second or more, written before the run):
+  the eighteen batches say the cost does not follow the count — sixteen patches in 93 ms, three in 609 ms — so
+  splitting a batch would add stops, not shorten one. What is missing is the line that says how a batch ended.
+- **Nothing else moved.** All five hooked, `normal`, no fault counted, no record dropped. Rates and factor beside
+  each game's earlier sessions: Cyberpunk 2077 149 → 298 (×2.0) beside 164 → 327 and 137 → 275; Hogwarts Legacy
+  61 → 245 (×4.0) beside 59 → 236; Black Myth: Wukong 78 → 315 (×4.0) beside 85 → 341; Phantom Blade Zero 87 → 261
+  (×3.0) beside 81 → 244 at ×3.0 on beta.43; Clair Obscur 112 → 339 (×3.0) beside 106 → 323 on beta.44.
+- **The way out is as it was.** Hogwarts Legacy faults in `_nvngx.dll` at `0x6aa85` and Black Myth: Wukong in
+  Steam's `crashhandler64.dll` at `0x39b49` — the module and the offset of every build read so far. The other
+  three games leave nothing in Windows' application log.
+- **The Advanced rows are as on beta.45**, and Clair Obscur gave its first reading of the six calls (interposer
+  2.7.30): `slIsFeatureSupported` and `slIsFeatureLoaded` read, among them a feature no session had named before,
+  `kFeatureLatewarp` (Streamline's answer: `eErrorFeatureMissing`). `slAllocateResources` and `slShutdown` were
+  called in none of the five (D135 stands). That game's `hook_crash_count` of 3 is old: it dates from 2026-10-20
+  and is the same in the copy read for item 43.
+- **Not exercised: the stop.** Every session ended with its game exiting; no log has a `STOP` or a `PATCH_BATCH
+  restore` line. **`RestoreAll` has still run in no real game** — item 44 (d). Nor (e), a game with no Streamline,
+  nor (g), off means off: `telemetry.advanced` was on throughout. (c), how a game's start feels, is the owner's to
+  say. (a) held: the terms window did not show.
+
 ### NEXT
 
-1. **The owner runs item 44** — the first real games on the batches, and the first stop while a game runs since
-   beta.43. Not first on a game under the user-mode exception's trial (D38).
+1. ~~**The owner runs item 44**~~ **Read 2026-11-13** (§What the owner's five sessions on beta.46 showed): the
+   install half held in five games. **Still to run, the owner's: (d) a stop while a game runs** — *Disable all
+   hooking* with a game being recorded — which is the half of beta.46 no real game has exercised; (e) a game with
+   no Streamline; (g) off means off. Not first on a game under the user-mode exception's trial (D38).
+   ~~**Proposed, not done: `PATCH_BATCH` says how the batch ended**~~ **Decided the same evening (D137):
+   `PATCH_BATCH` says how the batch ended** — under one apply, or finished one patch at a time, and how many — so
+   that a long `a=` can be read. It goes with the next release, not in one of its own.
 2. ~~**The spike of Reflex route D on `hook-harness`**~~ **Done 2026-11-13** (`spike-notes` §31): on the harness
    and against the installed driver the two getters are harmless, cost about a microsecond and return a readable
    report, and the Direct3D 12 device the Overlay holds is what the driver takes. **The owner's next word is go or no
    for one real title** — a go is a plan of its own before any code (where the numbers go, the Disclaimer's and the
    Privacy Policy's wording, `nvapi-readonly-check` over the Overlay). Routes C and E are closed (D133).
+   **The owner said go on 2026-11-13 (D136): a plan first, for Cyberpunk 2077.** No code before the plan is
+   approved, and no release that carries it before item 44 (d) — the stop while a game runs — has been run.
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
 4. **Train D** after train C, the same way: a spike first — and §30 found its hook would miss a game that fetched
    its functions before the attach.
@@ -192,7 +247,10 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
   red and green (`14_TESTING` §Native unit tests; `src/native/CMakeLists.txt`). Two things it turned up: four tests
   passed on a line they print in the middle of their run, and `fl_nvapi_probe` passed whatever it printed after its
   branch line — a pass expression makes ctest ignore the exit code.
-- **No real game was run on this build.** The order in which patches reach a game changed for every game.
+- ~~**No real game was run on this build.**~~ Five were, on 2026-11-13 (above): the order in which patches reach a
+  game changed for every game, and the five took it. **The restore under one apply has run in no real game.**
+- **Two batches took 1.26 s and 0.61 s and nothing explains them** (Hogwarts Legacy, Cyberpunk 2077); the log has
+  no line that tells a long stop from a batch finished one patch at a time.
 - **Off means off has never been exercised on a real game** (item 43 (f), now item 44 (g)); nor (c) and (h) of
   item 43, which only the owner sees.
 - **Valor Mortis's crash at 51 s** (twice, beta.40 and beta.44) **and Black Myth: Wukong's fault in Steam's crash
@@ -209,7 +267,7 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** item 44; the go or no on `spike-notes` §31 (one real title); one session each of Valor Mortis and
+**Owner-only:** item 44 (d), (e), (g) and what (c) felt like; the go or no on `spike-notes` §31 (one real title); one session each of Valor Mortis and
 Black Myth: Wukong with hooking off; what item 41 left unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
@@ -694,6 +752,15 @@ Black Myth: Wukong with hooking off; what item 41 left unexercised; item 40 (d).
    (compare the `HOOK_INSTALLED` lines), or a session that reads *not hooked* where it read *read*: the batch lost
    a patch — the log's `PATCH_FAILED` line names it and why. A crash in play or at exit that is new: say so at
    once; *Disable all hooking* runs the game with nothing patched after the start.
+   **Five sessions were run on 2026-11-13 and read the same day** (§What the owner's five sessions on beta.46
+   showed): (a) held — the terms window did not show; (b) five Streamline games — every batch's lines carry one
+   time; `a=` is 81 417–261 920 for sixteen of the eighteen batches, **1 260 835 for Hogwarts Legacy's thirteen
+   and 608 700 for three of Cyberpunk 2077's**, neither explained — and the sentence above about a fallback is
+   wrong: a batch finished one patch at a time leaves no line unless a patch fails for good, so the log cannot say
+   which of the two a long `a=` was; (f) held — no crash in play, no `PATCH_FAILED`, no `UNHOOK_DECLINED`, the
+   same hooks as on beta.45, rates and factor as before, the two known faults on the way out at their old offsets.
+   **(d), (e) and (g) were not exercised; (c) is the owner's to say.** Not passed: (d) is the half of this release
+   that no real game has run.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
@@ -843,6 +910,8 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D133 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14, [`spike-notes/30-reflex-latency.md`](spike-notes/30-reflex-latency.md) | Reflex route C (the Overlay calling `slReflexGetState`) is refused; the no-injection ETW route stays closed, and §G with it |
 | D134 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking, *Batches* | installs and restores are batched through MinHook's queue — one stop of the game's threads for a batch, not one a patch — in a pull request of its own, measured, released alone (0.1.0-beta.46) |
 | D135 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory | `slAllocateResources` keeps its patch although no game called it in the first six sessions; looked at again when there are more |
+| D136 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14, [`spike-notes/31-reflex-route-d-harness.md`](spike-notes/31-reflex-route-d-harness.md) §The question for the owner | Reflex route D goes on to one real title, Cyberpunk 2077 — a plan of its own first, no code before it is approved, and no release carrying it before item 44 (d) has been run |
+| D137 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking, *Batches* | the `PATCH_BATCH` line says how a batch ended — one apply, or finished one patch at a time — after two batches in real games took 0.61 s and 1.26 s and the log could not say which; with the next release, not one of its own |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

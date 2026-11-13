@@ -164,7 +164,9 @@ is measured where it happens: `fl_guard`'s Streamline `[advanced]` case prints t
 batch and of the stop's one restore (the Overlay's `PATCH_BATCH` lines), and the time from the unhook request to
 `UNHOOKED`; it asserts that every lazily installed patch is under a batch line, that the stop is one, and that the
 restore stays under a second — the bound the one-patch-at-a-time stop did not meet on the development PC. In a real
-game the same lines are in `logs\overlay-<pid>-….log`.
+game the same lines are in `logs\overlay-<pid>-….log` — read there on 2026-11-13 for five games: eighteen install
+batches, 81–262 ms for sixteen of them and 0.61 s and 1.26 s for two (`17_HOOK_ENGINE` §Unhooking, *Batches*); no
+restore line yet, because no session was stopped while its game ran.
 
 ## Tier cross-validation (accuracy regression net) — **GONE, 2026-08-28, and this is the entry to read before planning P5**
 

@@ -94,3 +94,7 @@ Overlay and taught that `Sleep` is a writer; the Disclaimer's and the Privacy Po
 title of the owner's choosing that is not inside the anti-cheat exception's trial (D38), with what each outcome
 means written before it. A no leaves `nvapi.reflex.*` and `sl.reflex.*` at N/A with the reason, and this note as
 the record of why it was within reach.
+
+**Answered 2026-11-13 (owner decision D136): go, to a plan.** The title is Cyberpunk 2077. No code before the plan
+is approved, and no release that carries the calls before a stop while a game runs has been exercised on
+0.1.0-beta.46 (owner-only item 44 (d)).
