@@ -256,7 +256,10 @@ of mine was wrong in six places — and that no other file carries yet:
    no Streamline; (g) off means off. Not first on a game under the user-mode exception's trial (D38).
    ~~**Proposed, not done: `PATCH_BATCH` says how the batch ended**~~ **Decided the same evening (D137):
    `PATCH_BATCH` says how the batch ended** — under one apply, or finished one patch at a time, and how many — so
-   that a long `a=` can be read. It goes with the next release, not in one of its own.
+   that a long `a=` can be read. It goes with the next release, not in one of its own. **Written 2026-11-13**:
+   `install` / `restore` for one apply, `install singly` / `restore singly` with the count in the high half of `b`
+   (`17_HOOK_ENGINE` §Unhooking, *Batches*). It explains nothing about the two long batches already seen; it makes
+   the next one readable.
 2. ~~**The spike of Reflex route D on `hook-harness`**~~ **Done 2026-11-13** (`spike-notes` §31): on the harness
    and against the installed driver the two getters are harmless, cost about a microsecond and return a readable
    report, and the Direct3D 12 device the Overlay holds is what the driver takes. **The owner's next word is go or no

@@ -7620,17 +7620,23 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     unsigned long long restoreMicros = 0;
     unsigned long long installedLazily = 0;
     unsigned long long restoredLines = 0;
+    // `b` holds the patches in its low half; its high half counts the ones a failed apply left to be done one at a
+    // time (owner decision D137), and the line then reads "install singly" / "restore singly". Neither happens here.
     eachLine("PATCH_BATCH      install", [&](const std::string& line) {
         ++installBatches;
-        installedByBatch += field(line, " b=0x", 16);
-        WARN("an install batch put " << field(line, " b=0x", 16) << " patches in, in " << field(line, " a=", 10)
-                                     << " us");
+        installedByBatch += field(line, " b=0x", 16) & 0xFFFFull;
+        CHECK((field(line, " b=0x", 16) >> 16) == 0ull);
+        WARN("an install batch put " << (field(line, " b=0x", 16) & 0xFFFFull) << " patches in, in "
+                                     << field(line, " a=", 10) << " us");
     });
     eachLine("PATCH_BATCH      restore", [&](const std::string& line) {
         ++restoreBatches;
-        restoredByBatch += field(line, " b=0x", 16);
+        restoredByBatch += field(line, " b=0x", 16) & 0xFFFFull;
+        CHECK((field(line, " b=0x", 16) >> 16) == 0ull);
         restoreMicros += field(line, " a=", 10);
     });
+    CHECK(text.find("install singly") == std::string::npos);
+    CHECK(text.find("restore singly") == std::string::npos);
     eachLine("HOOK_INSTALLED   ", [&](const std::string& line) {
         if (line.find("dxgi!") == std::string::npos && line.find("kernelbase!") == std::string::npos &&
             line.find("opengl32!") == std::string::npos) {

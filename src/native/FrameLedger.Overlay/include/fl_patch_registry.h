@@ -210,6 +210,17 @@ InstallResult Install(Registry<Capacity>& registry, const std::atomic<std::uint3
 // BeginQueue() / EndQueue().
 // ---------------------------------------------------------------------------------------------------------------------
 
+// HOW A BATCH'S ONE APPLY ENDED (owner decision D137). Two install batches in real games took 0.61 s and 1.26 s on
+// 0.1.0-beta.46 where sixteen others took 0.08-0.26 s, and the log could not say whether either was one long stop of
+// the threads or an apply that failed part-way and was finished one patch at a time: the fallback wrote a line only
+// for a patch that failed for good. The caller logs this. `singly` counts the patches handed to the engine one at a
+// time after the apply said it had failed -- attempts, not stops: the engine makes no stop for one the apply had
+// already done.
+struct BatchOutcome {
+    bool          applied = true;    // the one apply did all it was asked, or there was nothing to apply
+    std::uint32_t singly = 0;        // patches then enabled -- or, in the stop, restored -- one at a time
+};
+
 // The stop's walk: every committed patch that is still OURS is restored, under one apply; a patch a foreign overlay
 // has patched over is left exactly as it is (17_HOOK_ENGINE §Unhooking, §H7). The caller has already cleared the
 // observing flag -- this is the read half of the pair described at the top of this file.
@@ -217,7 +228,7 @@ InstallResult Install(Registry<Capacity>& registry, const std::atomic<std::uint3
 // `ours(target, detour)` -> bool: the bytes at the target are still the jump made for us (fl_patch_check.h).
 // `report(name, target, wasOurs, restored)` is called once per committed patch, after the gate is released.
 template <std::uint32_t Capacity, class Hooker, class Ours, class Report>
-void RestoreAll(const Registry<Capacity>& registry, Hooker&& hooker, Ours&& ours, Report&& report) noexcept {
+BatchOutcome RestoreAll(const Registry<Capacity>& registry, Hooker&& hooker, Ours&& ours, Report&& report) noexcept {
     struct Entry {
         void*       target;
         const char* name;
@@ -242,12 +253,14 @@ void RestoreAll(const Registry<Capacity>& registry, Hooker&& hooker, Ours&& ours
             anyMarked = anyMarked || marked;
             entries[count++] = Entry{target, name, mine, marked, false};
         });
-    const bool applied = !anyMarked || hooker.Apply();
+    const bool   applied = !anyMarked || hooker.Apply();
+    BatchOutcome outcome{applied, 0u};
     for (std::uint32_t i = 0; i < count; ++i) {
         Entry& e = entries[i];
         if (!e.marked) {
             continue;
         }
+        outcome.singly += applied ? 0u : 1u;
         // The apply stops at the first hook it cannot restore: the ones after it are taken out one at a time, as
         // every patch was until 0.1.0-beta.46. One that will not come out at all has its mark removed -- it is
         // enabled, so marking it "enable" leaves nothing to apply.
@@ -261,6 +274,7 @@ void RestoreAll(const Registry<Capacity>& registry, Hooker&& hooker, Ours&& ours
     for (std::uint32_t i = 0; i < count; ++i) {
         report(entries[i].name, entries[i].target, entries[i].wasOurs, entries[i].restored);
     }
+    return outcome;
 }
 
 // Several patches, registered before any can run, enabled under ONE stop of the threads, and none left in after a
@@ -308,11 +322,13 @@ public:
         return InstallResult::Pending;
     }
 
+    // Returns how the apply that put the patches IN ended; the apply that takes them out again after a stop that
+    // landed meanwhile is not reported -- every item then reads StoppedDuring.
     template <class Hooker, class Ours>
-    void Commit(Registry<Capacity>& registry, const std::atomic<std::uint32_t>& observing, Hooker&& hooker,
-                Ours&& ours) noexcept {
+    BatchOutcome Commit(Registry<Capacity>& registry, const std::atomic<std::uint32_t>& observing, Hooker&& hooker,
+                        Ours&& ours) noexcept {
         if (count_ == 0u) {
-            return;
+            return BatchOutcome{};
         }
         hooker.BeginQueue();
         if (observing.load(std::memory_order_seq_cst) == 0u) {
@@ -323,7 +339,7 @@ public:
                 items_[i].result = InstallResult::StoppedDuring;
             }
             hooker.EndQueue();
-            return;
+            return BatchOutcome{};
         }
         for (std::uint32_t i = 0; i < count_; ++i) {
             if (!hooker.QueueEnable(items_[i].target)) {
@@ -331,12 +347,14 @@ public:
                 items_[i].result = InstallResult::EnableFailed;
             }
         }
-        const bool applied = hooker.Apply();
+        const bool   applied = hooker.Apply();
+        BatchOutcome outcome{applied, 0u};
         for (std::uint32_t i = 0; i < count_; ++i) {
             Item& item = items_[i];
             if (item.result != InstallResult::Pending) {
                 continue;
             }
+            outcome.singly += applied ? 0u : 1u;
             // The ENGINE says whether the hook is enabled, not the bytes at the target: a foreign overlay that
             // patched over us a moment after the apply would read as "not in", and taking that for a failure would
             // mark a restore nobody had compared (§H7). The apply stops at the first hook that fails, so the ones
@@ -353,7 +371,7 @@ public:
         hooker.EndQueue();
 
         if (observing.load(std::memory_order_seq_cst) != 0u) {
-            return;
+            return outcome;
         }
         // The stop ran while the batch went in -- the re-read of Install, for the group. Its walk either saw the
         // committed slots and restored the patches, and then they are no longer ours and nothing is marked, or it had
@@ -382,6 +400,7 @@ public:
             item.result = InstallResult::StoppedDuring;
         }
         hooker.EndQueue();
+        return outcome;
     }
 
     std::uint32_t Count() const noexcept { return count_; }
