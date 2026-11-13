@@ -35,6 +35,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **The log of the part inside a game says how a group of hooks went in or came out** (owner decision D137). Since
+  0.1.0-beta.46 hooks are put into a game in groups, the game's threads stopped once for a group. In the owner's
+  first sessions two groups took much longer than the others (0.6 s and 1.3 s against 0.1-0.3 s), and the log
+  could not tell one long stop from a group that had to be finished one hook at a time. The `PATCH_BATCH` line now
+  reads `install` or `restore` for a group that went in one go, and `install singly` or `restore singly`, with a
+  count, for one that did not. Nothing else about hooking changed, and what a game is measured by is the same.
+
 ### Fixed
 
 - **For developers: a native test that is cut short no longer counts as passed.** The quality gate's native tests

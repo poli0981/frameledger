@@ -982,6 +982,12 @@ constexpr DWORD kWatchdogIntervalMs = 1000;
 std::atomic<uint32_t> g_stopLogged{0};
 void                  WakeWatchdog() noexcept;
 
+// The `b` of a PATCH_BATCH line: the patches the batch put in or took out in the low half, the ones it had to do one
+// at a time in the high half (0 for a batch that went under its one apply).
+uint32_t PatchBatchWord(uint32_t done, uint32_t singly) noexcept {
+    return (done & 0xFFFFu) | ((singly & 0xFFFFu) << 16);
+}
+
 void StopObserving(uint32_t reason) noexcept {
     // Compare-exchange, not a plain check-then-set: the watchdog and a game
     // thread inside a hook body can both arrive here, and the restore must run
@@ -1010,9 +1016,9 @@ void StopObserving(uint32_t reason) noexcept {
     // patch: about 160 ms each, two to three seconds for a Streamline title, possibly on the thread that presents.
     // RestoreAll marks the patches that are still ours and applies the marks together (fl_patch_registry.h says what
     // may and may not be marked, and why). The lines below are written after the gate is released.
-    const int64_t began = QpcNow();
-    uint32_t      restored = 0;
-    fl::patch::RestoreAll(
+    const int64_t                 began = QpcNow();
+    uint32_t                      restored = 0;
+    const fl::patch::BatchOutcome outcome = fl::patch::RestoreAll(
         g_patches, MinHookEngine{},
         [](const void* target, const void* detour) noexcept { return fl::patch::StillOurs(target, detour); },
         [&restored](const char* name, void* target, bool wasOurs, bool ok) noexcept {
@@ -1023,8 +1029,10 @@ void StopObserving(uint32_t reason) noexcept {
                 LogNote(kLogUnhookDeclined, name, 0u, reinterpret_cast<uint64_t>(target));
             }
         });
-    // a = the microseconds the walk and its one apply took, b = how many patches it restored.
-    LogNote(kLogPatchBatch, "restore", MicrosSince(began), restored);
+    // a = the microseconds the walk and its one apply took; b = how many patches it restored in its low half and, in
+    // its high half, how many had to be restored one at a time because the apply said it had failed (D137).
+    LogNote(kLogPatchBatch, outcome.applied ? "restore" : "restore singly", MicrosSince(began),
+            PatchBatchWord(restored, outcome.singly));
     if (g_state != nullptr) {
         std::atomic_ref<uint32_t> status{g_state->status};
         status.store(reason, std::memory_order_release);
@@ -1093,10 +1101,11 @@ void CommitPatchBatch() noexcept {
     if (count == 0u) {
         return;
     }
-    const int64_t began = QpcNow();
-    g_batch.Commit(g_patches, g_observing, MinHookEngine{}, [](const void* target, const void* detour) noexcept {
-        return fl::patch::StillOurs(target, detour);
-    });
+    const int64_t                 began = QpcNow();
+    const fl::patch::BatchOutcome outcome =
+        g_batch.Commit(g_patches, g_observing, MinHookEngine{}, [](const void* target, const void* detour) noexcept {
+            return fl::patch::StillOurs(target, detour);
+        });
     const uint32_t micros = MicrosSince(began);
     uint32_t       installed = 0;
     for (uint32_t i = 0; i < count; ++i) {
@@ -1116,8 +1125,11 @@ void CommitPatchBatch() noexcept {
         }
         ++installed;
     }
-    // a = the microseconds the one apply took, b = how many patches it put in.
-    LogNote(kLogPatchBatch, "install", micros, installed);
+    // a = the microseconds the one apply took; b = how many patches went in in its low half and, in its high half,
+    // how many were enabled one at a time because the apply said it had failed (D137). "install" is one stop of the
+    // game's threads; "install singly" is that stop and then up to one more for each of those.
+    LogNote(kLogPatchBatch, outcome.applied ? "install" : "install singly", micros,
+            PatchBatchWord(installed, outcome.singly));
     g_batch.Clear();
 }
 

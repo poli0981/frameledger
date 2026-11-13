@@ -565,7 +565,9 @@ TEST_CASE("a batch puts three patches in under one apply, and the stop takes the
     CHECK(Third(3) == thirdPlain);
     CHECK(registry.LiveCount() == 0u);
 
-    batch.Commit(registry, observing, RealQueue{}, RealOurs);
+    const fl::patch::BatchOutcome in = batch.Commit(registry, observing, RealQueue{}, RealOurs);
+    CHECK(in.applied);    // one apply did it (D137: the caller's log line says so)
+    CHECK(in.singly == 0u);
     for (std::uint32_t i = 0; i < batch.Count(); ++i) {
         CHECK(batch.At(i).result == InstallResult::Installed);
     }
@@ -579,13 +581,15 @@ TEST_CASE("a batch puts three patches in under one apply, and the stop takes the
 
     // The stop: one walk, one apply, every patch reported as ours and restored.
     observing.store(0u);
-    int restored = 0;
-    int declined = 0;
-    fl::patch::RestoreAll(registry, RealQueue{}, RealOurs,
-                          [&restored, &declined](const char*, void*, bool wasOurs, bool ok) noexcept {
-                              restored += (wasOurs && ok) ? 1 : 0;
-                              declined += wasOurs ? 0 : 1;
-                          });
+    int                           restored = 0;
+    int                           declined = 0;
+    const fl::patch::BatchOutcome out = fl::patch::RestoreAll(
+        registry, RealQueue{}, RealOurs, [&restored, &declined](const char*, void*, bool wasOurs, bool ok) noexcept {
+            restored += (wasOurs && ok) ? 1 : 0;
+            declined += wasOurs ? 0 : 1;
+        });
+    CHECK(out.applied);
+    CHECK(out.singly == 0u);
     CHECK(restored == 3);
     CHECK(declined == 0);
     CHECK(First(3) == firstPlain);
@@ -664,8 +668,12 @@ TEST_CASE("an apply that fails halfway costs one patch, and leaves no mark for a
     REQUIRE(batch.Add(registry, observing, engine, &g_c, &g_detour, nullptr, "c", nullptr, 0u) ==
             InstallResult::Pending);
     CHECK_FALSE(model.AMarkIsStanding());    // adding marks nothing
-    batch.Commit(registry, observing, engine, ModelOurs{&model});
+    const fl::patch::BatchOutcome outcome = batch.Commit(registry, observing, engine, ModelOurs{&model});
 
+    // D137: the apply said it failed, so all three were handed to the engine one at a time -- a, which the apply had
+    // already put in, among them: the count is of attempts, and the engine makes no stop for a patch that is in.
+    CHECK_FALSE(outcome.applied);
+    CHECK(outcome.singly == 3u);
     CHECK(batch.At(0).result == InstallResult::Installed);
     CHECK(batch.At(1).result == InstallResult::EnableFailed);
     CHECK(batch.At(2).result == InstallResult::Installed);    // the apply stopped at b; c went in by itself
@@ -700,7 +708,9 @@ TEST_CASE("an apply that does nothing at all still gets every patch in, one at a
             InstallResult::Pending);
     REQUIRE(batch.Add(registry, observing, engine, &g_b, &g_detour, nullptr, "b", nullptr, 0u) ==
             InstallResult::Pending);
-    batch.Commit(registry, observing, engine, ModelOurs{&model});
+    const fl::patch::BatchOutcome in = batch.Commit(registry, observing, engine, ModelOurs{&model});
+    CHECK_FALSE(in.applied);    // what the Overlay logs as "install singly", with the two in the line's high half
+    CHECK(in.singly == 2u);
     CHECK(batch.At(0).result == InstallResult::Installed);
     CHECK(batch.At(1).result == InstallResult::Installed);
     CHECK(registry.LiveCount() == 2u);
@@ -708,10 +718,12 @@ TEST_CASE("an apply that does nothing at all still gets every patch in, one at a
 
     // And the stop, with the same failing apply, still takes both out.
     observing.store(0u);
-    int restored = 0;
-    fl::patch::RestoreAll(
+    int                           restored = 0;
+    const fl::patch::BatchOutcome out = fl::patch::RestoreAll(
         registry, engine, ModelOurs{&model},
         [&restored](const char*, void*, bool wasOurs, bool ok) noexcept { restored += (wasOurs && ok) ? 1 : 0; });
+    CHECK_FALSE(out.applied);    // "restore singly"
+    CHECK(out.singly == 2u);
     CHECK(restored == 2);
     CHECK_FALSE(model.Enabled(&g_a));
     CHECK_FALSE(model.Enabled(&g_b));
@@ -734,7 +746,9 @@ TEST_CASE("a stop before the batch commits enables nothing; a stop inside its ap
         REQUIRE(batch.Add(registry, observing, engine, &g_b, &g_detour, nullptr, "b", nullptr, 0u) ==
                 InstallResult::Pending);
         observing.store(0u);
-        batch.Commit(registry, observing, engine, ModelOurs{&model});
+        const fl::patch::BatchOutcome outcome = batch.Commit(registry, observing, engine, ModelOurs{&model});
+        CHECK(outcome.applied);    // nothing was asked of an apply, so nothing failed
+        CHECK(outcome.singly == 0u);
         CHECK(batch.At(0).result == InstallResult::StoppedDuring);
         CHECK(batch.At(1).result == InstallResult::StoppedDuring);
         CHECK(model.applies == 0);    // nothing was marked, nothing applied
