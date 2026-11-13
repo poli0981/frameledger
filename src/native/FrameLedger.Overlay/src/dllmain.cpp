@@ -964,7 +964,8 @@ void TickLatency(bool newRequest, int64_t now) noexcept {
                 state = FL_LAT_FAULTED;
                 NoteFault(fault, "nvapi_QueryInterface (the driver's)");
                 break;
-            default:
+            case fl::reflex::Resolved::NoQueryInterface:
+            case fl::reflex::Resolved::NoGetter:
                 g_latFinal = true;
                 state = FL_LAT_NO_GETTER;
                 break;
