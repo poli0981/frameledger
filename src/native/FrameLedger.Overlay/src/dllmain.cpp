@@ -979,7 +979,8 @@ void TickLatency(bool newRequest, int64_t now) noexcept {
             const size_t room = sizeof(FlLogEvent::text) - 1u;
             for (const wchar_t* path : {g_latApi.modulePath, g_latApi.ownerPath}) {
                 if (path[0] != L'\0') {
-                    const size_t length = wcslen(path);
+                    // Bounded by the buffer both paths live in (fl_reflex.h): never a walk off its end.
+                    const size_t length = wcsnlen(path, fl::reflex::kPathCapacity);
                     LogNoteW(kLogLatency, path + (length > room ? length - room : 0u), state,
                              reinterpret_cast<uint64_t>(path == g_latApi.modulePath ? g_latApi.nvapi : g_latApi.owner));
                 }
