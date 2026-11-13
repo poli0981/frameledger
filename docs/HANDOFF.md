@@ -208,13 +208,16 @@ and the logs, and from Windows' application log. None of the five is under the u
    install half held in five games. **Still to run, the owner's: (d) a stop while a game runs** — *Disable all
    hooking* with a game being recorded — which is the half of beta.46 no real game has exercised; (e) a game with
    no Streamline; (g) off means off. Not first on a game under the user-mode exception's trial (D38).
-   **Proposed, not done: `PATCH_BATCH` says how the batch ended** — under one apply, or finished one patch at a
-   time — so that a long `a=` can be read; it is a change to what is loaded into a game, so it is the owner's to say.
+   ~~**Proposed, not done: `PATCH_BATCH` says how the batch ended**~~ **Decided the same evening (D137):
+   `PATCH_BATCH` says how the batch ended** — under one apply, or finished one patch at a time, and how many — so
+   that a long `a=` can be read. It goes with the next release, not in one of its own.
 2. ~~**The spike of Reflex route D on `hook-harness`**~~ **Done 2026-11-13** (`spike-notes` §31): on the harness
    and against the installed driver the two getters are harmless, cost about a microsecond and return a readable
    report, and the Direct3D 12 device the Overlay holds is what the driver takes. **The owner's next word is go or no
    for one real title** — a go is a plan of its own before any code (where the numbers go, the Disclaimer's and the
    Privacy Policy's wording, `nvapi-readonly-check` over the Overlay). Routes C and E are closed (D133).
+   **The owner said go on 2026-11-13 (D136): a plan first, for Cyberpunk 2077.** No code before the plan is
+   approved, and no release that carries it before item 44 (d) — the stop while a game runs — has been run.
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
 4. **Train D** after train C, the same way: a spike first — and §30 found its hook would miss a game that fetched
    its functions before the attach.
@@ -907,6 +910,8 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D133 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14, [`spike-notes/30-reflex-latency.md`](spike-notes/30-reflex-latency.md) | Reflex route C (the Overlay calling `slReflexGetState`) is refused; the no-injection ETW route stays closed, and §G with it |
 | D134 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking, *Batches* | installs and restores are batched through MinHook's queue — one stop of the game's threads for a batch, not one a patch — in a pull request of its own, measured, released alone (0.1.0-beta.46) |
 | D135 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory | `slAllocateResources` keeps its patch although no game called it in the first six sessions; looked at again when there are more |
+| D136 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14, [`spike-notes/31-reflex-route-d-harness.md`](spike-notes/31-reflex-route-d-harness.md) §The question for the owner | Reflex route D goes on to one real title, Cyberpunk 2077 — a plan of its own first, no code before it is approved, and no release carrying it before item 44 (d) has been run |
+| D137 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking, *Batches* | the `PATCH_BATCH` line says how a batch ended — one apply, or finished one patch at a time — after two batches in real games took 0.61 s and 1.26 s and the log could not say which; with the next release, not one of its own |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

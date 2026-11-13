@@ -812,7 +812,7 @@ Every hook body is wrapped:
 > **1.26 s**. That last one and a batch of three in Cyberpunk 2077 (**0.61 s**) are not explained: the cost does
 > not follow the count — sixteen patches in 93 ms, three in 609 ms — and **the log cannot tell one long stop from an
 > apply that failed part-way and was finished one patch at a time**, because a batch writes a line only for a patch
-> that fails for good. **Still not measured: the restore in a real game** — no session has been stopped while its
+> that fails for good (**to be added with the next release, owner decision D137**). **Still not measured: the restore in a real game** — no session has been stopped while its
 > game ran (owner-only item 44 (d)). One more thing the
 > queue changes for the better: MinHook's single-target disable does not move a thread that is suspended inside
 > the patched bytes (`hook.c` passes the enable action to its thread fix-up in both directions); the queued apply
