@@ -186,8 +186,12 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
   (the suite takes 181 s), and the gate went red only because the next test, `fl_prescan`, runs the same executable
   and could not find it. Run again with that software off, the gate was green. Nothing was changed for it: a test
   whose process ends early with a zero exit code is a pass to ctest, and the suite has no line it must print to
-  count. Worth a guard of its own (a `PASS_REGULAR_EXPRESSION` on Catch2's last line, or a minimum number of test
-  cases); proposed, not done.
+  count. ~~Worth a guard of its own (a `PASS_REGULAR_EXPRESSION` on Catch2's last line, or a minimum number of test
+  cases); proposed, not done.~~ **Done the same evening, on the owner's word**: every native test names the line it
+  ends on and ctest requires it; a test registered without one fails the configure; four canaries prove the rule
+  red and green (`14_TESTING` §Native unit tests; `src/native/CMakeLists.txt`). Two things it turned up: four tests
+  passed on a line they print in the middle of their run, and `fl_nvapi_probe` passed whatever it printed after its
+  branch line — a pass expression makes ctest ignore the exit code.
 - **No real game was run on this build.** The order in which patches reach a game changed for every game.
 - **Off means off has never been exercised on a real game** (item 43 (f), now item 44 (g)); nor (c) and (h) of
   item 43, which only the owner sees.

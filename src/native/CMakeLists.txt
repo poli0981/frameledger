@@ -210,6 +210,79 @@ add_subdirectory(FrameLedger.VkLayer)
 # -DFL_BUILD_TOOLS=ON -DFL_BUILD_TESTS=OFF a configuration error.
 enable_testing()
 
+# A TEST THAT WAS CUT SHORT IS NOT A PASS (2026-11-13).
+#
+# ctest calls a test passed when its process exits with 0. On 2026-11-13 the development PC's security software
+# removed a freshly linked fl_guard_test.exe while the gate ran: the process ended early, with 0, and ctest printed
+# "fl_guard ... Passed 0.66 sec" for a suite that takes three minutes. The gate went red only because the next test,
+# fl_prescan, runs the same executable and could not find it -- by luck, not by design. An exit code cannot tell
+# "finished and passed" from "stopped, and nobody complained".
+#
+# So every test in this tree must PRINT THE LINE IT ENDS ON, and ctest is told to look for it
+# (PASS_REGULAR_EXPRESSION): the last thing the program writes when it has run to its end and passed. A run that
+# stops before that line is red, whatever it returned.
+#
+# TWO THINGS ABOUT PASS_REGULAR_EXPRESSION, both learnt here before (tests/CMakeLists.txt, fl_nvapi_bridge): with it
+# set ctest IGNORES THE EXIT CODE, so the line must be one the program prints only when it passed -- and where a
+# program's summary can read "passed" beside a failure, FAIL_REGULAR_EXPRESSION names the failure. A SKIP_RETURN_CODE
+# still wins: a test that says "cannot run here" is skipped, not failed for the line it never reached.
+#
+# fl_test_completes(<test> <regex>...) -- the test passes only if its output matches one of the expressions.
+# fl_catch2_test_completes(<test>...)  -- the same for a Catch2 executable: its own last line, or its summary row
+#                                         when a case was skipped, and never a row that names a failure.
+# EVERY TEST MUST GO THROUGH ONE OF THE TWO: fl_require_every_test_completes(), at the end of this file, fails the
+# CONFIGURE when a test in tests/ or tools/ has not -- a new test cannot be added without its last line.
+function(fl_test_completes test)
+    if(ARGC LESS 2)
+        message(FATAL_ERROR "fl_test_completes(${test}): give the line the test ends on")
+    endif()
+    set_tests_properties(${test} PROPERTIES PASS_REGULAR_EXPRESSION "${ARGN}")
+    set_property(GLOBAL APPEND PROPERTY FL_TESTS_THAT_COMPLETE "${test}")
+endfunction()
+
+# Catch2's console reporter ends a run with "All tests passed (N assertions in M test cases)" when every case
+# passed, and with a row "test cases: T | P passed | S skipped" when one was skipped (catch_reporter_helpers.cpp,
+# printTestRunTotals: a count of zero has no column). A row with a failure has " | F failed" in it.
+set(FL_CATCH2_COMPLETE "All tests passed \\(" "test cases: +[0-9]+ \\| +[0-9]+ passed \\| +[0-9]+ skipped")
+set(FL_CATCH2_FAILED "\\| +[0-9]+ failed")
+function(fl_catch2_test_completes)
+    foreach(test IN LISTS ARGN)
+        fl_test_completes(${test} ${FL_CATCH2_COMPLETE})
+        set_tests_properties(${test} PROPERTIES FAIL_REGULAR_EXPRESSION "${FL_CATCH2_FAILED}")
+    endforeach()
+endfunction()
+
+function(fl_collect_tests directory out)
+    get_property(found DIRECTORY "${directory}" PROPERTY TESTS)
+    get_property(subdirectories DIRECTORY "${directory}" PROPERTY SUBDIRECTORIES)
+    foreach(subdirectory IN LISTS subdirectories)
+        fl_collect_tests("${subdirectory}" nested)
+        list(APPEND found ${nested})
+    endforeach()
+    set(${out} "${found}" PARENT_SCOPE)
+endfunction()
+
+function(fl_require_every_test_completes)
+    get_property(complete GLOBAL PROPERTY FL_TESTS_THAT_COMPLETE)
+    set(missing "")
+    foreach(directory IN LISTS ARGN)
+        if(IS_DIRECTORY "${directory}")
+            fl_collect_tests("${directory}" tests)
+            foreach(test IN LISTS tests)
+                if(NOT test IN_LIST complete)
+                    list(APPEND missing "${test}")
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+    if(missing)
+        list(JOIN missing ", " names)
+        message(FATAL_ERROR
+            "These tests can be cut short and still pass: ${names}. Each needs the line it ends on -- "
+            "fl_test_completes() or fl_catch2_test_completes(), see the note above enable_testing().")
+    endif()
+endfunction()
+
 if(FL_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
@@ -217,3 +290,13 @@ endif()
 if(FL_BUILD_TOOLS)
     add_subdirectory(tools)
 endif()
+
+# Last, when every test is registered: none may be left that passes on its exit code alone.
+set(fl_test_directories "")
+if(FL_BUILD_TESTS)
+    list(APPEND fl_test_directories "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+endif()
+if(FL_BUILD_TOOLS)
+    list(APPEND fl_test_directories "${CMAKE_CURRENT_SOURCE_DIR}/tools")
+endif()
+fl_require_every_test_completes(${fl_test_directories})

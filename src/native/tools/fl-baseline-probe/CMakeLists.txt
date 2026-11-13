@@ -30,3 +30,5 @@ add_dependencies(fl-baseline-probe FrameLedger.Guard)
 # process reports nothing, a planted module IS detected, and the answer flips
 # back after unload rather than latching.
 add_test(NAME fl_baseline_probe COMMAND fl-baseline-probe --self-test)
+# The self-test's last line (the note above enable_testing() in the top-level file: a run cut short is not a pass).
+fl_test_completes(fl_baseline_probe "\\[PASS\\] after unload the scan reports no capability loaded again")

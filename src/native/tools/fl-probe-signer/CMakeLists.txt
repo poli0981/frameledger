@@ -24,5 +24,7 @@ target_compile_definitions(fl-probe-signer PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 # load-bearing: a machine with no .NET shared framework must not be red for being
 # itself, and an unrun leg is reported as unrun rather than as a negative.
 add_test(NAME fl_signer_probe COMMAND fl-probe-signer)
-set_tests_properties(fl_signer_probe PROPERTIES
-                     PASS_REGULAR_EXPRESSION "BLOCKER: (FOUND|NOT PRESENT)")
+# AND IT MUST REACH ITS LAST LINE (2026-11-13: a run cut short is not a pass -- the top-level file, above
+# enable_testing()). The last line is "OK - N failure(s)" or "FAILURES - N failure(s)"; either is accepted, because
+# this test's criterion was always that the answers are PRINTED, not that the machine agrees with them.
+fl_test_completes(fl_signer_probe "BLOCKER: (FOUND|NOT PRESENT)(.|\n)*(OK|FAILURES) [^\n]*[0-9]+ failure\\(s\\)")

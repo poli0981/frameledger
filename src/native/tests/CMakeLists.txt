@@ -8,6 +8,9 @@
 add_executable(fl_shm_layout_test layout_test.cpp)
 target_link_libraries(fl_shm_layout_test PRIVATE FrameLedger.Shm fl_native_flags)
 add_test(NAME fl_shm_layout COMMAND fl_shm_layout_test)
+# Not a Catch2 executable: its last line is its own (the note above enable_testing() in the top-level file -- a run
+# cut short is not a pass).
+fl_test_completes(fl_shm_layout "layout ok")
 
 # The NVAPI bridge's C ABI (P2 PR-E2). Links the SHIPPED DLL rather than compiling its source in,
 # because what the managed side loads is that DLL's export table; the DLL is copied beside the test
@@ -23,9 +26,14 @@ add_test(NAME fl_nvapi_bridge COMMAND fl_nvapi_bridge_test)
 # The branch line is required AND a failed assertion fails the test (2026-09-25). PASS_REGULAR_EXPRESSION alone makes
 # ctest ignore the exit code, and for as long as it stood alone the AVAILABLE branch's reference-counting check failed
 # on every machine with an NVIDIA GPU while ctest reported Passed; CI, which has no driver, never takes that branch.
-set_tests_properties(fl_nvapi_bridge PROPERTIES
-    PASS_REGULAR_EXPRESSION "BRANCH: (AVAILABLE|DEGRADED)"
-    FAIL_REGULAR_EXPRESSION "FAILED:;[0-9]+ failed")
+#
+# AND THE RUN MUST REACH ITS END (2026-11-13; the note above enable_testing() in the top-level file): the branch line is
+# printed in the middle of the run, so by itself it passed a run that stopped right after it. The expression now
+# needs the branch line AND, after it, Catch2's last line.
+fl_test_completes(fl_nvapi_bridge
+    "BRANCH: (AVAILABLE|DEGRADED)(.|\n)*All tests passed \\("
+    "BRANCH: (AVAILABLE|DEGRADED)(.|\n)*test cases: +[0-9]+ \\| +[0-9]+ passed \\| +[0-9]+ skipped")
+set_tests_properties(fl_nvapi_bridge PROPERTIES FAIL_REGULAR_EXPRESSION "FAILED:;[0-9]+ failed")
 
 # The process-memory reader's C ABI (beta.12, D43). Same shape as the bridge above: the SHIPPED DLL, copied beside
 # the test, a branch line that says which machine this is (a CI runner has no hardware adapter, so the video half
@@ -38,9 +46,10 @@ add_custom_command(TARGET fl_process_stats_test POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:FrameLedger.ProcessStats> $<TARGET_FILE_DIR:fl_process_stats_test>)
 add_test(NAME fl_process_stats COMMAND fl_process_stats_test)
-set_tests_properties(fl_process_stats PROPERTIES
-    PASS_REGULAR_EXPRESSION "BRANCH: (GPU_INSTANCE|NO_GPU_INSTANCE)"
-    FAIL_REGULAR_EXPRESSION "FAILED:;[0-9]+ failed")
+fl_test_completes(fl_process_stats
+    "BRANCH: (GPU_INSTANCE|NO_GPU_INSTANCE)(.|\n)*All tests passed \\("
+    "BRANCH: (GPU_INSTANCE|NO_GPU_INSTANCE)(.|\n)*test cases: +[0-9]+ \\| +[0-9]+ passed \\| +[0-9]+ skipped")
+set_tests_properties(fl_process_stats PROPERTIES FAIL_REGULAR_EXPRESSION "FAILED:;[0-9]+ failed")
 
 # The safety-guard matrix. 20_OPEN_QUESTIONS §S13(a) put the guard in C++, which
 # made Catch2 a PREREQUISITE of the guard rather than a later nicety: 14_TESTING
@@ -147,6 +156,7 @@ target_compile_definitions(fl_guard_test PRIVATE
 add_dependencies(fl_guard_test hook-harness FrameLedger.Overlay fl_stage_overlay_payload)
 
 add_test(NAME fl_guard COMMAND fl_guard_test)
+fl_catch2_test_completes(fl_guard)
 
 # The Vulkan layer's capture side (P1 item 3), driven by a FAKE loader chain --
 # no registry, no loader, no GPU -- so it is merge-gated. Three ctests, three
@@ -179,6 +189,7 @@ target_link_libraries(fl_unhook_inline_test PRIVATE fl_native_flags minhook Catc
 target_compile_options(fl_unhook_inline_test PRIVATE /EHsc)
 target_compile_definitions(fl_unhook_inline_test PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 add_test(NAME fl_unhook_inline COMMAND fl_unhook_inline_test)
+fl_catch2_test_completes(fl_unhook_inline)
 
 # fl_ffx_types.h (0.1.0-beta.42, D121): the descriptor types an ffx-api module was handed, kept by the detours for
 # the native log. The header the Overlay compiles, driven without the Overlay -- including from eight threads.
@@ -188,6 +199,7 @@ target_link_libraries(fl_ffx_types_test PRIVATE fl_native_flags Catch2::Catch2Wi
 target_compile_options(fl_ffx_types_test PRIVATE /EHsc)
 target_compile_definitions(fl_ffx_types_test PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 add_test(NAME fl_ffx_types COMMAND fl_ffx_types_test)
+fl_catch2_test_completes(fl_ffx_types)
 
 add_test(NAME fl_vklayer COMMAND fl_vklayer_test "[vklayer]")
 add_test(NAME fl_vklayer_supervision COMMAND fl_vklayer_test "[vklayer-deadline]")
@@ -195,12 +207,14 @@ add_test(NAME fl_vklayer_supervision COMMAND fl_vklayer_test "[vklayer-deadline]
 # presentable device -- CI, per the §S29(d) census -- and runs on a dev box.
 add_test(NAME fl_vklayer_real COMMAND fl_vklayer_test "[vklayer-real]")
 set_tests_properties(fl_vklayer_real PROPERTIES SKIP_RETURN_CODE 4)
+fl_catch2_test_completes(fl_vklayer fl_vklayer_supervision fl_vklayer_real)
 
 # Check 4's fail-closed matrix, as its own ctest name so a regression in the
 # static pre-scan is legible in the ctest summary rather than buried in
 # fl_guard's total. Same binary, selected by tag — duplicating the evidence
 # fakes into a second target would be a second set of seams to keep in step.
 add_test(NAME fl_prescan COMMAND fl_guard_test "[prescan]")
+fl_catch2_test_completes(fl_prescan)
 
 # The rules file we actually SHIP, against the parser that has to read it.
 #
@@ -230,6 +244,7 @@ target_compile_definitions(fl_rules_budget_test PRIVATE
 )
 
 add_test(NAME fl_rules_budget COMMAND fl_rules_budget_test)
+fl_catch2_test_completes(fl_rules_budget)
 
 # The SPSC ring (14_TESTING §Native unit tests). Half of the TODO that used to
 # sit here; the fault-policy suite lands with the hook bodies it guards, since a
@@ -244,6 +259,27 @@ add_executable(fl_ring_test ring_test.cpp)
 target_link_libraries(fl_ring_test PRIVATE FrameLedger.Shm fl_native_flags Catch2::Catch2WithMain)
 target_compile_options(fl_ring_test PRIVATE /EHsc)
 add_test(NAME fl_ring COMMAND fl_ring_test)
+fl_catch2_test_completes(fl_ring)
+
+# THE RULE ABOVE, MADE TO FAIL ON PURPOSE (2026-11-13). "A run that is cut short is red" is a property of two
+# regular expressions, and a gate that has never been seen red is this project's own recurring defect
+# (20_OPEN_QUESTIONS, gates that cannot fail). Four runs that print what a Catch2 executable would, through the very
+# function the real tests use:
+#   - nothing at all, exit 0 -- the run of 2026-11-13 -- must be RED;
+#   - Catch2's last line must be green;
+#   - its summary row with a skipped case must be green (a test that skips one case and passes the rest);
+#   - a row that names a failure must be RED even beside a line that says passed.
+# WILL_FAIL turns "red" into this test's pass, so the suite is green exactly while the rule holds.
+add_test(NAME fl_canary_cut_short_is_red COMMAND "${CMAKE_COMMAND}" -E true)
+add_test(NAME fl_canary_complete_is_green
+    COMMAND "${CMAKE_COMMAND}" -E echo "All tests passed (1 assertion in 1 test case)")
+add_test(NAME fl_canary_skipped_case_is_green
+    COMMAND "${CMAKE_COMMAND}" -E echo "test cases: 3 | 2 passed | 1 skipped")
+add_test(NAME fl_canary_failure_is_red
+    COMMAND "${CMAKE_COMMAND}" -E echo "All tests passed ( test cases: 3 | 2 passed | 1 failed")
+fl_catch2_test_completes(fl_canary_cut_short_is_red fl_canary_complete_is_green fl_canary_skipped_case_is_green
+    fl_canary_failure_is_red)
+set_tests_properties(fl_canary_cut_short_is_red fl_canary_failure_is_red PROPERTIES WILL_FAIL TRUE)
 
 # STILL NO FAULT-POLICY SUITE, and the reason is worth more than the TODO it
 # replaces. The three-fault self-disable is NFR-3's entire mechanism and the
