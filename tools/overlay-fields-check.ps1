@@ -60,6 +60,11 @@ $script:Parameter = [ordered]@{
     g    = 'ffxConfigureDescFrameGeneration'
     fv   = 'sl::FeatureVersion'
     fr   = 'sl::FeatureRequirements'
+    # Train C: what NVIDIA's driver wrote into the Overlay's own buffers (fl_reflex.h makes the two calls). `lf` is
+    # one frame of the report, handed on by index - `lr.frameReport[i]` - and never bound to a name of its own.
+    lr   = 'NV_LATENCY_RESULT_PARAMS'
+    lf   = 'NV_LATENCY_RESULT_PARAMS::FrameReport'
+    ls   = 'NV_GET_SLEEP_STATUS_PARAMS'
     desc = 'ffxQueryDescHeader'
 }
 
@@ -81,7 +86,9 @@ $script:CameraStruct = @('sl::Constants', 'ffxDispatchDescFrameGenerationPrepare
 
 # Member names every struct has. The header's reads of them are held to the list like any other; what rule 3 cannot do
 # is refuse them elsewhere, where they are members of the Overlay's own structs and of descriptors read since 0.1.0.
-$script:SharedMember = @('structVersion', 'type', 'flags', 'reset')
+# `frameID` joined them with train C: the driver's latency report has one, and so has the frame-generation prepare
+# descriptor the Overlay has read since 0.1.0 (dllmain.cpp counts application frames by it).
+$script:SharedMember = @('structVersion', 'type', 'flags', 'reset', 'frameID')
 
 # A C++ source without its comments and string literals: a camera named in the comment that says it is never read is
 # not a read.
@@ -112,7 +119,7 @@ function Get-HeaderRead([string]$Code) {
     $reads = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
     $problems = [System.Collections.Generic.List[string]]::new()
 
-    foreach ($m in [regex]::Matches($Code, '(?<![\w.>:])(o|d|m|q|k|g|fv|fr)\b(\s*\.\s*([A-Za-z_]\w*))?')) {
+    foreach ($m in [regex]::Matches($Code, '(?<![\w.>:])(o|d|m|q|k|g|fv|fr|lr|lf|ls)\b(\s*\.\s*([A-Za-z_]\w*))?')) {
         $name = $m.Groups[1].Value
         if ($m.Groups[3].Success) {
             [void]$reads.Add("$($script:Parameter[$name])::$($m.Groups[3].Value)")
@@ -234,6 +241,10 @@ inline void Publish(Accumulators& a, FlAdvancedState* region) noexcept { region-
         @{ Name = 'the adapter a game asks about, forwarded by its parameter and never looked into, passes'; Header = $goodHeader; List = $goodList; Other = @{ 'dllmain.cpp' = 'sl::Result Hook(sl::Feature feature, const sl::AdapterInfo& adapterInfo) { return g_orig(feature, adapterInfo); } // never adapterInfo.deviceLUID' }; Expect = 0 },
         @{ Name = 'the adapter''s LUID read in the detour FAILS'; Header = $goodHeader; List = $goodList; Other = @{ 'dllmain.cpp' = 'sl::Result Hook(sl::Feature feature, const sl::AdapterInfo& adapterInfo) { Keep(adapterInfo.deviceLUID[0]); return g_orig(feature, adapterInfo); }' }; Expect = 1 },
         @{ Name = 'a Vulkan physical device taken from the adapter in the layer FAILS'; Header = $goodHeader; List = $goodList; Other = @{ 'layer.cpp' = 'void* device = info->vkPhysicalDevice;' }; Expect = 1 },
+        @{ Name = 'the driver''s latency report read through its parameters, a frame handed on by index, passes'; Header = $goodHeader + "`ninline uint64_t IdOf(const NV_LATENCY_RESULT_PARAMS::FrameReport& lf) noexcept { return lf.frameID + lf.simStartTime; }`ninline void ObserveL(const NV_LATENCY_RESULT_PARAMS& lr, Tally& t) noexcept { t.n += IdOf(lr.frameReport[3]); }`ninline uint32_t ObserveS(const NV_GET_SLEEP_STATUS_PARAMS& ls) noexcept { return ls.bLowLatencyMode; }"; List = $goodList + "NV_LATENCY_RESULT_PARAMS::frameReport`nNV_LATENCY_RESULT_PARAMS::FrameReport::frameID`nNV_LATENCY_RESULT_PARAMS::FrameReport::simStartTime`nNV_GET_SLEEP_STATUS_PARAMS::bLowLatencyMode`n"; Other = $goodOther; Expect = 0 },
+        @{ Name = 'a member of a latency frame the list does not allow FAILS'; Header = $goodHeader + "`ninline uint64_t IdOf(const NV_LATENCY_RESULT_PARAMS::FrameReport& lf) noexcept { return lf.frameID + lf.inputSampleTime; }"; List = $goodList + "NV_LATENCY_RESULT_PARAMS::FrameReport::frameID`n"; Other = $goodOther; Expect = 1 },
+        @{ Name = 'a frame of the report bound to a name of its own FAILS'; Header = $goodHeader + "`ninline void ObserveL(const NV_LATENCY_RESULT_PARAMS& lr) noexcept { const auto& f = lr.frameReport[0]; Keep(f.simStartTime); const auto& whole = lr; Keep(whole); }"; List = $goodList + "NV_LATENCY_RESULT_PARAMS::frameReport`n"; Other = $goodOther; Expect = 1 },
+        @{ Name = 'the frame id, which the prepare descriptor has too, is read outside the header; a time of the report is not'; Header = $goodHeader + "`ninline uint64_t IdOf(const NV_LATENCY_RESULT_PARAMS::FrameReport& lf) noexcept { return lf.frameID + lf.simStartTime; }"; List = $goodList + "NV_LATENCY_RESULT_PARAMS::FrameReport::frameID`nNV_LATENCY_RESULT_PARAMS::FrameReport::simStartTime`n"; Other = @{ 'dllmain.cpp' = 'void Hook() { Keep(prep->frameID); Keep(report.frameReport); Keep(r.simStartTime); }' }; Expect = 1 },
         @{ Name = 'a header with no read at all FAILS'; Header = '// o.outputWidth is somewhere else'; List = "# nothing`n"; Other = $goodOther; Expect = 1 }
     )
     foreach ($c in $cases) {

@@ -172,6 +172,31 @@ Every hook must be listed here with a purpose. Anything not on this list is not 
 | ✅ `opengl32.dll!wglSwapBuffers` (2026-09-06, P1 item 4) | The OpenGL present hook (§Presentation). A system module, not a vendor one, so — like the row below — it is deliberately **not** in `FL_HOOK_INVENTORY` and `hookinventory-check` does not cover it; listed here so the table above and these two rows together are the whole inventory |
 | ✅ `kernelbase.dll!LoadLibraryExW` (2026-09-06, P1 item 1) | The wake for lazily loaded runtimes and the in-process anti-cheat stop — §DLL entry step 3 above carries the mechanism. **Rule 4:** it reads one argument the API was given (`flags`) and one property of a handle the loader just returned to *its own caller* (the module file name); nothing of the game's. **~~It is the only hook on a system module, and~~ Like `wglSwapBuffers` above it, it is deliberately not in `FL_HOOK_INVENTORY` (corrected 2026-10-04):** that table is *vendor* symbols resolved by name and gated by `hookinventory-check` against `vendor-exports.json`, and `LoadLibraryExW` is neither vendor nor uncertain. It is listed here instead so the table above and this row together are the whole inventory. It **never** installs, uninstalls or patches anything itself (§H2) |
 
+### Calls the Overlay makes into a driver — not hooks, and the only ones
+
+Everything else on this page learns what it learns from the arguments of a call the game made. This is the one
+place the Overlay **makes a call of its own** into code that is neither the game's nor FrameLedger's, and it is
+listed here so that nobody takes it for a hook or adds a second one without the same ruling
+(`CLAUDE.md` rule 4's note of 2026-11-13, owner decisions D132, D136, D138–D141).
+
+| Call | When, where | Rule 4 | What bounds it |
+|---|---|---|---|
+| **NVIDIA's `NvAPI_D3D_GetLatency` and `NvAPI_D3D_GetSleepStatus`** — the driver's two read-only latency getters (Advanced metrics train C; `fl_reflex.h`; **in no release yet**) | **Only while a session asks for Advanced metrics** (D138: no switch of its own), only for a Direct3D 12 swap chain whose device is the one the Overlay holds, **about once a second, on the presenting thread, after that present's record is published**. The watchdog finds the addresses once for the process and arms one read at a time; a present pays one relaxed load. The addresses come from an `nvapi64.dll` **the game had already loaded** — asked for by name, never loaded — through its `nvapi_QueryInterface` and the two interface ids of the vendored `nvapi_interface.h`. The Overlay links no NVAPI | The owner's ruling (D132): a driver's read-only getter called with the device behind the swap chain the Overlay hooks reads the driver's report, not game memory, and writes nothing. Getters only — never a setter, a marker or a sleep (`tools/nvapi-readonly-check.ps1` holds which ids code loaded into a game may name: these two). What is read of the two structs is on `tools/overlay-allowed-fields.txt` like every other vendor member | **An `nvapi64.dll` in the executable's own folder is refused** (D140): the driver's is in Windows' directories. **A fault** in a getter is caught by a guard of its own, counted once in `faultCount`, and ends the reads for the process. **One call of 2 ms or more** ends them too (D141). **A call that has not returned after two seconds** is logged, flushed and published as stalled — nothing can stop it, and the presenting thread it holds is the game's. Each is until the game exits |
+
+**Where the addresses are, measured** (`fl-probe-reflex --real`, driver 32.0.16.2114): System32's `nvapi64.dll` is a
+shim and answers the two ids with addresses inside **`nvapi64_impl.dll`**, in the driver's own store. So an address
+is accepted when it is executable code of an image the process has loaded, and **the Overlay keeps a reference on
+that image as well as on `nvapi64.dll`** — two modules the game loaded, never released, for the reason
+`ResolveScoped` gives: a presenting thread may be about to call. `nvapi64_impl.dll` is a Control Flow Guard image;
+the probe, which enforces CFG, has made the calls from the header that ships, so on this driver the getters are
+valid targets. **Not excluded**: a game that enforces CFG on a driver the probe has not been run against — a target
+that were not valid is a fast-fail no guard catches.
+
+**The gate.** One word, four states — idle, armed, reading, off (`dllmain.cpp`, above `ReadLatencyOnce`). Only the
+watchdog arms; a presenting thread takes *armed* to *reading* by compare-exchange and owns the 15.4 KB report
+buffer (static storage, never a game thread's stack) and the read's result until it stores *idle* or *off*; the
+watchdog takes the result only when nobody is reading. No lock, and no second read while one is under way.
+
 ### Watchdog observations — not hooks, and listed here so nobody mistakes them for one
 
 | Observation | Mechanism | Rule 4 | Why |
@@ -405,7 +430,7 @@ or version, so the question is whether the declaration ever changed:
 | Hook / call | Yields |
 |---|---|
 | ~~`IDXGIAdapter3::QueryVideoMemoryInfo` (we **call** it, not hook it, once per second from our own thread)~~ | ~~**Per-process VRAM** `CurrentUsage` + `Budget` — previously impossible; now exact~~ **Never built; superseded 2026-10-03 (D43):** the game's memory is read from OUTSIDE the game by the Agent (`18_GPU_VENDOR_APIS` §The game process's memory), so nothing in the Overlay calls it. Only the budget would need it, and that stays open (`20_OPEN_QUESTIONS` §M11) |
-| NVAPI Reflex: ~~hook `NvAPI_D3D_SetSleepMode`, `NvAPI_D3D_SetLatencyMarker`~~; call `NvAPI_D3D_GetLatency` *(**never built.** The two hooks cannot be: neither function is an export — `20_OPEN_QUESTIONS` §M14. What a call-only route would take is read through in `spike-notes` §30, 2026-11-12, and waits for the owner's go or no)* | Reflex on/off + PC latency breakdown. Declarations come from the vendored MIT NVAPI headers (`18_GPU_VENDOR_APIS` §L3); the Overlay links them like any other header. NVIDIA-only — the whole block compiles out to a no-op capability flag elsewhere |
+| NVAPI Reflex: ~~hook `NvAPI_D3D_SetSleepMode`, `NvAPI_D3D_SetLatencyMarker`~~; call `NvAPI_D3D_GetLatency` and `NvAPI_D3D_GetSleepStatus` *(the two hooks cannot be: neither function is an export — `20_OPEN_QUESTIONS` §M14. **The calls are written since 2026-11-13 and in no release yet** — §Calls the Overlay makes into a driver, above; owner decisions D132, D136)* | Reflex on/off + PC latency breakdown. Declarations come from the vendored MIT NVAPI headers (`18_GPU_VENDOR_APIS` §L3); the Overlay links them like any other header. NVIDIA-only — the whole block compiles out to a no-op capability flag elsewhere |
 
 ### Explicitly not hooked
 Input APIs, file I/O, network, memory allocators, window messages beyond what the overlay needs, anything game-specific. Rule 4 in CLAUDE.md.
@@ -650,7 +675,7 @@ Field notes — each of these was a defect in an earlier revision:
   header — they are written by the other process, and mixing them into an
   Overlay-written line reintroduces exactly the false sharing the split exists to
   prevent. Layout is normative in `07_IPC` §A + B.
-- **The hot path performs: one QPC read, a few field reads from cached state, one 60-byte store, two relaxed atomic stores and two compiler fences.** No syscall, no allocation, no lock, no logging. Target ≤ 1 µs per present. *(Added 2026-10-04: the summary leaves out the per-present `IDXGISwapChain::GetLastPresentCount` call (§H5, the `dxgiUnseen` count) and the display sample every 500 ms at most (region 4).)*
+- **The hot path performs: one QPC read, a few field reads from cached state, one 60-byte store, two relaxed atomic stores and two compiler fences.** No syscall, no allocation, no lock, no logging. Target ≤ 1 µs per present. *(Added 2026-10-04: the summary leaves out the per-present `IDXGISwapChain::GetLastPresentCount` call (§H5, the `dxgiUnseen` count) and the display sample every 500 ms at most (region 4).)* *(Added 2026-11-13, train C, in no release yet: after the store, one relaxed load of the latency gate; and, while a session asks for Advanced metrics and the watchdog armed one, a call into the driver about once a second — §Calls the Overlay makes into a driver. That call is the one thing on this path that is not bounded by FrameLedger's own code: 0.5–2.6 µs measured against the installed driver, and a call of 2 ms or more is the last.)*
 - Per-frame mutable state (current upscaler, render res, dispatch counts) lives in a small struct updated by the feature hooks and *read* by the present hook; counters reset at present.
 
 ## The watchdog thread — the only thread we add to the game
@@ -716,6 +741,7 @@ Every hook body is wrapped:
 - Any SEH exception inside our code ⇒ increment `faultCount`, record which hook, **return control to the original function** so the game continues.
 - 3 faults total ⇒ set `status = self_disabled`, ~~uninstall all hooks (`MH_DisableHook(MH_ALL_HOOKS)`)~~ restore each patch's prologue only while its bytes are still our jump (compare-and-restore per patch through `StopObserving`, §Unhooking, §H7 — `MH_ALL_HOOKS` would have removed an overlay chained after us; corrected 2026-09-27; since 0.1.0-beta.46 the patches that are still ours come out together, under one stop of the threads — §Unhooking, Batches), stop writing, stay dormant. The Agent sees the flag and finalizes the session as `degraded`.
 - Never `__try` around the call to the original function — only around *our* code, so we never mask a game bug as ours or vice versa.
+- **One exception, since train C (2026-11-13): the two driver getters the Overlay calls itself** (§Calls the Overlay makes into a driver) are under a guard of their own, `fl_reflex.h`'s, with the same filter. They are not "the original function" — the game did not make these calls, we did, so a fault in them is ours to answer for. It is counted once through `NoteFault`, and the read is switched off for the process in the same breath, so that one fault cannot become the three that self-disable. **A caught fault does not give back a lock the driver held**: the guard is containment, not safety, which is why nothing is called again after it.
 - The trampoline call to the original is always executed exactly once, on every path, including error paths.
 
 ## Unhooking
@@ -878,6 +904,10 @@ No logging in hook bodies. A small fixed-size in-memory ring of structured event
 > since beta.43 `FFX_CONFIGURE` — each configure type a hooked ffx module was handed, in a process where
 > `ffxConfigure` is hooked at all (one asked for Advanced metrics) — and since beta.46 `PATCH_BATCH`: one line an
 > apply, `install` or `restore`, `a` the microseconds it took and `b` the patches it covered (§Unhooking, Batches).
+> **`LATENCY` (train C, in no release yet)**: one line each time the state of the driver read changes — `a` the
+> `FlLatencyState`, the text what it means — and, when the module is found, two more with the end of the path
+> `nvapi64.dll` was loaded from and of the image its getters are in. Written by the watchdog; a fault in a getter
+> is a `FAULT` line from the presenting thread, as any fault is.
 > **Three flush points — four since beta.42, the same note —, none on a present path:** the end of `InitThread` (so the
 > file exists from the start of the session and a crash mid-session still leaves it), the watchdog when
 > `FlControlBlock.logFlushRequested` changes (a counter the Agent bumps at session end; nothing clears it),

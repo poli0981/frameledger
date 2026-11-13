@@ -1843,6 +1843,7 @@ TEST_CASE(
 // to, which is the only part of this suite that has a live Overlay to inspect.
 #include <fl_ring.h>
 #include <fl_shm.h>
+#include <fl_stub_nvapi_shared.h>
 #include <fl_tolerance.h>
 // The compiled floor, so the early-stop case computes the family index the Overlay
 // publishes from the same table rather than asserting a literal.
@@ -7653,4 +7654,458 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     // (0.1.0-beta.45, eighteen patches). A bound a slow runner still meets, and the old way did not.
     WARN("the stop's one apply restored " << restoredByBatch << " patches in " << restoreMicros << " us");
     CHECK(restoreMicros < 1000000ull);
+}
+
+// =====================================================================================================================
+// REFLEX LATENCY (Advanced metrics train C; owner decisions D132, D136, D138-D141; fl_reflex.h; fl_shm.h's latency
+// words). The one thing the Overlay does in a game that is not reading a hooked call's arguments: a call of its own
+// into the driver, once a second, on the presenting thread. Against a Direct3D 12 target that has loaded a stand-in
+// nvapi64.dll (tools/vendor-stubs/stub_nvapi64.cpp), whose knobs and call counts the test reads from outside through
+// the stub's named section -- so "the driver was not called" is a count, not an inference.
+//
+// NOT PROVEN HERE: anything about Control Flow Guard (hook-harness does not enforce it; ctest fl_reflex_probe_stub
+// runs the same header in a process that does), and anything about a real driver.
+// =====================================================================================================================
+namespace {
+
+struct StubNv {
+    HANDLE              section = nullptr;
+    fl::stubnv::Shared* words = nullptr;
+    ~StubNv() {
+        if (words != nullptr) {
+            UnmapViewOfFile(words);
+        }
+        if (section != nullptr) {
+            CloseHandle(section);
+        }
+    }
+};
+
+bool OpenStubNv(DWORD pid, StubNv& stub) {
+    wchar_t name[64]{};
+    if (_snwprintf_s(name, _TRUNCATE, fl::stubnv::kSectionFormat, pid) <= 0) {
+        return false;
+    }
+    for (int i = 0; i < 100 && stub.section == nullptr; ++i) {
+        stub.section = OpenFileMappingW(FILE_MAP_READ | FILE_MAP_WRITE, FALSE, name);
+        if (stub.section == nullptr) {
+            Sleep(50);
+        }
+    }
+    if (stub.section == nullptr) {
+        return false;
+    }
+    stub.words = static_cast<fl::stubnv::Shared*>(
+        MapViewOfFile(stub.section, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, sizeof(fl::stubnv::Shared)));
+    return stub.words != nullptr;
+}
+
+uint32_t StubWord(const uint32_t& word) {
+    return std::atomic_ref<const uint32_t>{word}.load(std::memory_order_relaxed);
+}
+
+void SetStubWord(uint32_t& word, uint32_t value) {
+    std::atomic_ref<uint32_t>{word}.store(value, std::memory_order_relaxed);
+}
+
+struct LatencyTarget {
+    Child      child;
+    MappedRing r;
+    StubNv     stub;
+};
+
+// The harness -- `exe`, or the built one -- started with `args`, injected, its ring opened; and the stub's section
+// opened when the target was told to load one.
+bool StartLatencyTarget(LatencyTarget& t, const std::wstring& args, bool withStub,
+                        const wchar_t* exe = FL_HARNESS_EXE) {
+    std::wstring cmd = std::wstring(L"\"") + exe + L"\" " + args;
+    STARTUPINFOW si{};
+    si.cb = sizeof(si);
+    if (!CreateProcessW(exe, cmd.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, nullptr, &si,
+                        &t.child.pi)) {
+        return false;
+    }
+    Sleep(800);
+    if (WaitForSingleObject(t.child.pi.hProcess, 0) != WAIT_TIMEOUT) {
+        return false;
+    }
+    if (withStub && !OpenStubNv(t.child.pi.dwProcessId, t.stub)) {
+        return false;
+    }
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {t.child.pi.dwProcessId};
+    if (!GuardedInjectWithSources(t.child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources()).Allowed()) {
+        return false;
+    }
+    return OpenRingFor(t.child.pi.dwProcessId, t.r) && t.r.st != nullptr && t.r.ctl != nullptr;
+}
+
+std::wstring LatencyArgs(const wchar_t* presenting) {
+    return std::wstring(L"--real --load \"") + FL_STUB_NVAPI64 + L"\" " + presenting;
+}
+
+uint32_t LatStateOf(const fl::FlAdvancedState& a) {
+    return a.latState & FL_LAT_STATE_MASK;
+}
+
+// A consistent copy of region 5 as it is now, or false while the watchdog is inside it.
+bool CopyAdvanced(const MappedRing& r, fl::FlAdvancedState& out) {
+    fl::FlAdvancedState*      region = RegionFive(r);
+    std::atomic_ref<uint32_t> seq{region->seq};
+    const uint32_t            before = seq.load(std::memory_order_acquire);
+    if (before == 0u || (before & 1u) != 0u) {
+        return false;
+    }
+    fl::FlAdvancedState copy{};
+    std::memcpy(&copy, region, sizeof(copy));
+    std::atomic_thread_fence(std::memory_order_seq_cst);
+    if (seq.load(std::memory_order_acquire) != before) {
+        return false;
+    }
+    out = copy;
+    return true;
+}
+
+// Waits, bounded, for a publication that answers `request` and whose latency state is `want`.
+bool WaitForLatState(const MappedRing& r, uint32_t request, uint32_t want, fl::FlAdvancedState& out) {
+    uint32_t after = 0u;
+    for (int i = 0; i < 14; ++i) {
+        fl::FlAdvancedState a{};
+        if (!ReadAdvanced(r, request, a, after)) {
+            return false;
+        }
+        after = a.samples;
+        if (LatStateOf(a) == want) {
+            out = a;
+            return true;
+        }
+    }
+    return false;
+}
+
+// What a run of publications showed: every one that carried frames carried the stub's numbers.
+struct LatencySeen {
+    uint32_t withFrames = 0;
+    uint32_t reads = 0;
+    uint32_t state = 0;
+    bool     framesRight = true;
+    bool     sumsRight = true;
+    bool     driverSpanAbsent = false;
+};
+
+void WatchLatency(const MappedRing& r, uint32_t request, int ms, LatencySeen& seen) {
+    uint32_t lastSamples = 0u;
+    for (int waited = 0; waited < ms; waited += 50) {
+        ++r.ctl->guardTicks;
+        fl::FlAdvancedState a{};
+        if (CopyAdvanced(r, a) && a.request == request && a.samples != lastSamples) {
+            lastSamples = a.samples;
+            seen.state = LatStateOf(a);
+            seen.reads = a.latReads & 0xFFFFu;
+            const uint32_t frames = a.latFrames & 0xFFFFu;
+            if (frames != 0u) {
+                ++seen.withFrames;
+                // Sixty-four frames less the two newest the first time; after that the ten the stub moved on by.
+                seen.framesRight = seen.framesRight && (frames == 62u || frames == fl::stubnv::kFrameIdStep) &&
+                                   (a.latFrames >> 16) == 0u;
+                seen.driverSpanAbsent = seen.driverSpanAbsent || a.latDriverSumUs == FL_LAT_SUM_NONE;
+                seen.sumsRight =
+                    seen.sumsRight && a.latSimulationSumUs == frames * fl::stubnv::kSimulationUs &&
+                    a.latSubmitSumUs == frames * fl::stubnv::kSubmitUs &&
+                    a.latPresentSumUs == frames * fl::stubnv::kPresentUs &&
+                    (a.latDriverSumUs == frames * fl::stubnv::kDriverUs || a.latDriverSumUs == FL_LAT_SUM_NONE) &&
+                    a.latOsQueueSumUs == frames * fl::stubnv::kOsQueueUs &&
+                    a.latGpuSumUs == frames * fl::stubnv::kGpuUs && a.latTotalSumUs == frames * fl::stubnv::kTotalUs;
+            }
+        }
+        Sleep(50);
+    }
+}
+
+// The present hook is recording: these targets load no upscaler, so there is no hook family to wait for.
+bool WaitForRecords(const MappedRing& r) {
+    for (int i = 0; i < 120; ++i) {
+        ++r.ctl->guardTicks;
+        if (r.st->writeIndex >= 10u) {
+            return true;
+        }
+        Sleep(50);
+    }
+    return false;
+}
+
+bool TargetHasModule(HANDLE process, const wchar_t* leaf) {
+    HMODULE modules[1024]{};
+    DWORD   needed = 0;
+    if (!EnumProcessModules(process, modules, sizeof(modules), &needed)) {
+        return false;
+    }
+    const DWORD count = needed / sizeof(HMODULE) < 1024u ? needed / sizeof(HMODULE) : 1024u;
+    for (DWORD i = 0; i < count; ++i) {
+        wchar_t name[MAX_PATH]{};
+        if (GetModuleBaseNameW(process, modules[i], name, MAX_PATH) != 0 && _wcsicmp(name, leaf) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+}    // namespace
+
+TEST_CASE("the driver's latency report is read only while a session asks, once a second, and stops with the request "
+          "and with the hooks",
+          "[guard][inject][shm][advanced][latency]") {
+    LatencyTarget t;
+    REQUIRE(StartLatencyTarget(t, LatencyArgs(L"--hold-presenting-d3d12 45"), true));
+    const MappedRing&   r = t.r;
+    fl::stubnv::Shared* stub = t.stub.words;
+    if (stub == nullptr || r.st == nullptr || r.ctl == nullptr) {
+        return;    // not reached after the REQUIRE; said in the form a static analyser follows (cpp:S2259)
+    }
+    REQUIRE(WaitForRecords(r));
+
+    // ---- 1. NOT ASKED. The module is there, the device is there, the chain presents -- and nothing is asked of the
+    // module, not even for the two addresses.
+    const std::uint64_t atHooks = r.st->writeIndex;
+    TickFor(r, 3200);
+    REQUIRE(r.st->writeIndex > atHooks + 30u);
+    CHECK(RegionFiveIsZero(r));
+    CHECK(StubWord(stub->queries) == 0u);
+    CHECK(StubWord(stub->latencyCalls) == 0u);
+    CHECK(StubWord(stub->sleepStatusCalls) == 0u);
+
+    // ---- 2. ASKED. The first publication with the bit carries a read.
+    SetAdvancedRequest(r, 7u);
+    fl::FlAdvancedState a{};
+    REQUIRE(ReadAdvanced(r, 7u, a, 0u, fl::FL_ADV_VALID_LATENCY));
+    CHECK(LatStateOf(a) == fl::FL_LAT_READING);
+    CHECK(((a.latState >> FL_LAT_SLEEP_SEEN_ON_SHIFT) & FL_LAT_SLEEP_BITS) == (1u | 8u));    // the stub's status
+    CHECK(((a.latState >> FL_LAT_SLEEP_SEEN_OFF_SHIFT) & FL_LAT_SLEEP_BITS) == (2u | 4u | 16u));
+    CHECK((a.latState >> FL_LAT_FG_MULTIPLIER_SHIFT) == 2u);
+    CHECK((a.latReads >> 16) < 2000u);    // no call of two milliseconds: that would have been the last one
+
+    LatencySeen seen;
+    WatchLatency(r, 7u, 5200, seen);
+    INFO("publications with frames " << seen.withFrames << ", reads " << seen.reads << ", stub calls "
+                                     << StubWord(stub->latencyCalls) << ", state " << seen.state);
+    CHECK(seen.state == fl::FL_LAT_READING);
+    CHECK(seen.withFrames >= 2u);
+    CHECK(seen.framesRight);
+    CHECK(seen.sumsRight);
+    // ABOUT ONCE A SECOND: some seven seconds since the request. Not ten, and not hundreds.
+    CHECK(seen.reads >= 3u);
+    CHECK(seen.reads <= 9u);
+    // Every read the Overlay counts is a call the stub received, and at most one more is on its way to be counted.
+    const uint32_t calls = StubWord(stub->latencyCalls);
+    CHECK(calls >= seen.reads);
+    CHECK(calls <= seen.reads + 2u);
+    CHECK(StubWord(stub->queries) == 2u);    // the two addresses, asked for once
+    CHECK(r.st->faultCount == 0u);
+    CHECK(r.st->status == fl::FL_STATUS_READY);
+    REQUIRE(ReadAdvanced(r, 7u, a, a.samples));
+    WARN("the slowest of " << (a.latReads & 0xFFFFu) << " reads took " << (a.latReads >> 16) << " us");
+
+    // ---- 3. A span the driver does not report reads "none", and its frames are still summed; an error is an error,
+    // and reading goes on after it.
+    SetStubWord(stub->mode, fl::stubnv::kModeNoDriverSpan);
+    LatencySeen withoutDriverSpan;
+    WatchLatency(r, 7u, 3200, withoutDriverSpan);
+    CHECK(withoutDriverSpan.driverSpanAbsent);
+    CHECK(withoutDriverSpan.sumsRight);
+    SetStubWord(stub->mode, fl::stubnv::kModeError);
+    REQUIRE(WaitForLatState(r, 7u, fl::FL_LAT_ERROR, a));
+    CHECK((a.validMask & fl::FL_ADV_VALID_LATENCY) != 0u);    // a read did return OK in this session
+    SetStubWord(stub->mode, fl::stubnv::kModeReports);
+    REQUIRE(WaitForLatState(r, 7u, fl::FL_LAT_READING, a));
+
+    // ---- 4. NOT ASKED AGAIN. No further call.
+    SetAdvancedRequest(r, 0u);
+    TickFor(r, 2500);    // the watchdog has seen the zero, and a read already under way has ended
+    const uint32_t callsWhenOff = StubWord(stub->latencyCalls);
+    TickFor(r, 3000);
+    CHECK(StubWord(stub->latencyCalls) == callsWhenOff);
+
+    // ---- 5. A SECOND SESSION of a target that kept running: its count is its own, and the module is not asked for
+    // the addresses again.
+    SetAdvancedRequest(r, 9u);
+    REQUIRE(ReadAdvanced(r, 9u, a, 0u, fl::FL_ADV_VALID_LATENCY));
+    CHECK(LatStateOf(a) == fl::FL_LAT_READING);
+    CHECK((a.latReads & 0xFFFFu) <= 3u);
+    CHECK(StubWord(stub->queries) == 2u);
+
+    // ---- 6. THE STOP while a session asks: nothing is called after it.
+    r.ctl->unhookRequested = 1;
+    for (int i = 0; i < 100 && r.st->status != fl::FL_STATUS_UNHOOKED; ++i) {
+        Sleep(50);
+    }
+    REQUIRE(r.st->status == fl::FL_STATUS_UNHOOKED);
+    Sleep(300);    // a read that was under way when the stop landed
+    const uint32_t callsWhenStopped = StubWord(stub->latencyCalls);
+    Sleep(2500);
+    CHECK(StubWord(stub->latencyCalls) == callsWhenStopped);
+    CHECK(r.st->faultCount == 0u);
+}
+
+TEST_CASE("a call into the driver that takes fifty milliseconds is the last one, and the game goes on",
+          "[guard][inject][shm][advanced][latency]") {
+    LatencyTarget t;
+    REQUIRE(StartLatencyTarget(t, LatencyArgs(L"--hold-presenting-d3d12 16"), true));
+    const MappedRing&   r = t.r;
+    fl::stubnv::Shared* stub = t.stub.words;
+    if (stub == nullptr || r.st == nullptr || r.ctl == nullptr) {
+        return;
+    }
+    REQUIRE(WaitForRecords(r));
+    SetStubWord(stub->blockMs, 50u);
+    SetAdvancedRequest(r, 7u);
+
+    fl::FlAdvancedState a{};
+    REQUIRE(WaitForLatState(r, 7u, fl::FL_LAT_SLOW, a));    // owner decision D141: one call of 2 ms or more
+    CHECK((a.latReads >> 16) >= 40000u);                    // the microseconds it took are published
+    CHECK(StubWord(stub->latencyCalls) == 1u);
+    CHECK(StubWord(stub->sleepStatusCalls) == 0u);    // nor the second getter after a slow first
+
+    const std::uint64_t index = r.st->writeIndex;
+    TickFor(r, 3000);
+    CHECK(StubWord(stub->latencyCalls) == 1u);
+    CHECK(r.st->writeIndex > index + 30u);    // presents are still recorded
+    CHECK(r.st->status == fl::FL_STATUS_READY);
+    CHECK(r.st->faultCount == 0u);
+    fl::FlAdvancedState later{};
+    REQUIRE(ReadAdvanced(r, 7u, later, a.samples));
+    CHECK(LatStateOf(later) == fl::FL_LAT_SLOW);
+}
+
+TEST_CASE("a fault inside the driver's getter is caught, counted once, and ends the reads; the hooks stay",
+          "[guard][inject][shm][advanced][latency]") {
+    LatencyTarget t;
+    REQUIRE(StartLatencyTarget(t, LatencyArgs(L"--hold-presenting-d3d12 16"), true));
+    const MappedRing&   r = t.r;
+    fl::stubnv::Shared* stub = t.stub.words;
+    if (stub == nullptr || r.st == nullptr || r.ctl == nullptr) {
+        return;
+    }
+    REQUIRE(WaitForRecords(r));
+    SetStubWord(stub->mode, fl::stubnv::kModeFault);
+    SetAdvancedRequest(r, 7u);
+
+    fl::FlAdvancedState a{};
+    REQUIRE(WaitForLatState(r, 7u, fl::FL_LAT_FAULTED, a));
+    CHECK((a.validMask & fl::FL_ADV_VALID_LATENCY) == 0u);    // no read ever returned OK
+    CHECK(r.st->faultCount == 1u);
+    CHECK(StubWord(stub->latencyCalls) == 1u);
+
+    const std::uint64_t index = r.st->writeIndex;
+    TickFor(r, 3200);
+    CHECK(StubWord(stub->latencyCalls) == 1u);    // not called again: one fault cannot become three
+    CHECK(r.st->faultCount == 1u);
+    CHECK(r.st->status == fl::FL_STATUS_READY);    // the Overlay did not disable itself
+    CHECK(r.st->writeIndex > index + 30u);
+}
+
+TEST_CASE("a module that does not answer for the getters is asked once and never called",
+          "[guard][inject][shm][advanced][latency]") {
+    LatencyTarget t;
+    REQUIRE(StartLatencyTarget(t, LatencyArgs(L"--hold-presenting-d3d12 14"), true));
+    const MappedRing&   r = t.r;
+    fl::stubnv::Shared* stub = t.stub.words;
+    if (stub == nullptr || r.st == nullptr || r.ctl == nullptr) {
+        return;
+    }
+    REQUIRE(WaitForRecords(r));
+    SetStubWord(stub->hideGetters, 1u);
+    SetAdvancedRequest(r, 7u);
+
+    fl::FlAdvancedState a{};
+    REQUIRE(WaitForLatState(r, 7u, fl::FL_LAT_NO_GETTER, a));
+    CHECK(StubWord(stub->queries) == 2u);
+    SetStubWord(stub->hideGetters, 0u);    // too late, by design: the answer was final for the process
+    TickFor(r, 2600);
+    CHECK(StubWord(stub->queries) == 2u);
+    CHECK(StubWord(stub->latencyCalls) == 0u);
+    REQUIRE(ReadAdvanced(r, 7u, a, a.samples));
+    CHECK(LatStateOf(a) == fl::FL_LAT_NO_GETTER);
+    CHECK(r.st->faultCount == 0u);
+}
+
+TEST_CASE("a game that has not loaded nvapi64.dll is not given one", "[guard][inject][shm][advanced][latency]") {
+    LatencyTarget t;
+    REQUIRE(StartLatencyTarget(t, L"--real --hold-presenting-d3d12 12", false));
+    const MappedRing& r = t.r;
+    if (r.st == nullptr || r.ctl == nullptr) {
+        return;
+    }
+    REQUIRE(WaitForRecords(r));
+    REQUIRE_FALSE(TargetHasModule(t.child.pi.hProcess, L"nvapi64.dll"));    // or this case proves nothing
+    SetAdvancedRequest(r, 7u);
+
+    fl::FlAdvancedState a{};
+    REQUIRE(WaitForLatState(r, 7u, fl::FL_LAT_NO_MODULE, a));
+    CHECK((a.validMask & fl::FL_ADV_VALID_LATENCY) == 0u);
+    TickFor(r, 2200);
+    CHECK_FALSE(TargetHasModule(t.child.pi.hProcess, L"nvapi64.dll"));    // asked for by name, never loaded
+    CHECK(r.st->faultCount == 0u);
+}
+
+TEST_CASE("an nvapi64.dll in the executable's own folder is refused and never asked anything",
+          "[guard][inject][shm][advanced][latency]") {
+    // Owner decision D140. The driver's module lives in Windows' own directories; one beside the game is a
+    // replacement. A copy of the harness with a copy of the stand-in beside it is that arrangement.
+    FILETIME started{};
+    GetSystemTimeAsFileTime(&started);
+    wchar_t temp[MAX_PATH]{};
+    REQUIRE(GetTempPathW(MAX_PATH, temp) != 0);
+    const std::wstring dir = std::wstring(temp) + L"fl-latency-" + std::to_wstring(GetCurrentProcessId()) + L"-" +
+                             std::to_wstring(GetTickCount64());
+    REQUIRE(CreateDirectoryW(dir.c_str(), nullptr));
+    const std::wstring exe = dir + L"\\hook-harness.exe";
+    const std::wstring beside = dir + L"\\nvapi64.dll";
+    REQUIRE(CopyFileW(FL_HARNESS_EXE, exe.c_str(), TRUE));
+    REQUIRE(CopyFileW(FL_STUB_NVAPI64, beside.c_str(), TRUE));
+    {
+        LatencyTarget t;
+        REQUIRE(
+            StartLatencyTarget(t, L"--real --load \"" + beside + L"\" --hold-presenting-d3d12 12", true, exe.c_str()));
+        const MappedRing&   r = t.r;
+        fl::stubnv::Shared* stub = t.stub.words;
+        if (stub != nullptr && r.st != nullptr && r.ctl != nullptr) {
+            REQUIRE(WaitForRecords(r));
+            SetAdvancedRequest(r, 7u);
+            fl::FlAdvancedState a{};
+            CHECK(WaitForLatState(r, 7u, fl::FL_LAT_REFUSED, a));
+            TickFor(r, 2200);
+            CHECK(StubWord(stub->queries) == 0u);    // not even asked for the addresses
+            CHECK(StubWord(stub->latencyCalls) == 0u);
+            CHECK(r.st->faultCount == 0u);
+        }
+    }    // the target is gone before its files are removed
+    // The run's sweep removes the logs of THIS BUILD'S harness by its path; this copy has another, so its log is
+    // removed here -- or it would be left in the real data folder, which tools/test-artifacts-check.ps1 fails.
+    if (std::wstring logs; fl::testing::RealOverlayLogsDir(logs)) {
+        static_cast<void>(fl::testing::SweepHarnessLogs(logs, started, exe));
+    }
+    DeleteFileW(beside.c_str());
+    DeleteFileW(exe.c_str());
+    RemoveDirectoryW(dir.c_str());
+}
+
+TEST_CASE("a Direct3D 11 title is not read: the Overlay holds no device of its",
+          "[guard][inject][shm][advanced][latency]") {
+    LatencyTarget t;
+    REQUIRE(StartLatencyTarget(t, LatencyArgs(L"--hold-presenting 12"), true));
+    const MappedRing&   r = t.r;
+    fl::stubnv::Shared* stub = t.stub.words;
+    if (stub == nullptr || r.st == nullptr || r.ctl == nullptr) {
+        return;
+    }
+    REQUIRE(WaitForRecords(r));
+    SetAdvancedRequest(r, 7u);
+
+    fl::FlAdvancedState a{};
+    REQUIRE(WaitForLatState(r, 7u, fl::FL_LAT_NO_DEVICE, a));
+    TickFor(r, 2600);
+    CHECK(StubWord(stub->queries) == 0u);
+    CHECK(StubWord(stub->latencyCalls) == 0u);
+    CHECK((a.validMask & fl::FL_ADV_VALID_LATENCY) == 0u);
 }

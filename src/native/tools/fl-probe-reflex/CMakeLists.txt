@@ -1,16 +1,18 @@
 # fl-probe-reflex -- the instrument of docs/spike-notes §31 (Reflex route D, owner decision D132). A tool, NOT
 # SHIPPED, and it touches no game.
 #
-# BUILT WITH THE OVERLAY'S OWN FLAGS (fl_hostile_env_flags), as fl-probe-hookprofile is: fl_reflex_candidate.h is the
-# call sequence that would move into the Overlay if the owner says go, and a probe built otherwise would prove
-# nothing about it there.
+# BUILT WITH THE OVERLAY'S OWN FLAGS (fl_hostile_env_flags), as fl-probe-hookprofile is, AND FROM THE OVERLAY'S OWN
+# HEADER: the call sequence is FrameLedger.Overlay/include/fl_reflex.h since the owner said go (D136), and this probe
+# includes it. So its ctest runs what ships, with Control Flow Guard enforced -- which hook-harness, the target of
+# the injected tests, does not enforce.
 #
 # THE NVAPI HEADERS, NOT THE NVAPI LIBRARY. The include directory of the vendored MIT headers is taken by itself;
 # fl_nvapi -- which also links nvapi64.lib -- is deliberately not: the static library loads nvapi64.dll itself, from
 # a trusted location, with a signature check, and route D's shape is that the process already has the module.
 add_executable(fl-probe-reflex main.cpp)
 target_link_libraries(fl-probe-reflex PRIVATE fl_native_flags fl_hostile_env_flags d3d11 d3d12 dxgi)
-target_include_directories(fl-probe-reflex SYSTEM PRIVATE "${CMAKE_SOURCE_DIR}/third_party/nvapi")
+target_link_libraries(fl-probe-reflex PRIVATE fl_nvapi_headers)
+target_include_directories(fl-probe-reflex PRIVATE "${CMAKE_SOURCE_DIR}/FrameLedger.Overlay/include")
 target_compile_definitions(fl-probe-reflex PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX UNICODE _UNICODE)
 add_dependencies(fl-probe-reflex fl_stub_nvapi64)
 

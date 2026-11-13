@@ -28,9 +28,13 @@
 
     WHAT IT DOES NOT DO. It reads names, not arguments: an entry point that reads or writes depending on a command
     argument (NvAPI_Disp_ColorControl, NvAPI_Disp_HdrColorControl) could not be told apart by it, which is why rule 3
-    refuses every name ending in Control outright. It does not look at the other native targets: no other shipped
-    target links nvapi64.lib (the Overlay links none of it - tools/vendor-exports and the package closure hold that),
-    and the probe tools are not shipped.
+    refuses every name ending in Control outright. No other shipped target links nvapi64.lib, and the probe tools
+    are not shipped.
+
+    THE OVERLAY, since Advanced metrics train C (owner decisions D132, D136): it links none of NVAPI and calls two
+    of the driver's getters through addresses it asks an already-loaded nvapi64.dll for, by interface id. Rules 5 to
+    7, above Test-Overlay, hold which ids code loaded into a game may name - against tools/overlay-nvapi-allowed.txt
+    and the vendored nvapi_interface.h.
 
     -SelfTest proves every rule in both directions on in-memory sources.
 #>
@@ -47,14 +51,16 @@ $ErrorActionPreference = 'Stop'
 # end after it. So "SetSetting", "ClientRegisterFor..." and "ColorControl" match, and "GetThermalSettings",
 # "LoadSettings", "GetSetting" and "GetAllClockFrequencies" do not. It errs towards red: a noun that happens to end
 # in one of these words is refused until it is named below.
-$script:WriterVerb = '(Set|Save|Restore|Delete|Remove|Register|Unregister|Reset|Enable|Disable|Flash|Write|Apply|Lock|Unlock|Create|Destroy|Control)(?=[A-Z_]|$)'
+# `Sleep` since train C: NvAPI_D3D_Sleep stops the calling thread, and the Overlay's list is judged by this too.
+$script:WriterVerb = '(Set|Save|Restore|Delete|Remove|Register|Unregister|Reset|Enable|Disable|Flash|Write|Apply|Lock|Unlock|Create|Destroy|Control|Sleep)(?=[A-Z_]|$)'
 
 # The names the verb rule would refuse and that are reads. Named here one by one, each with its reason - never by a
 # pattern, so an exemption cannot grow to cover a writer.
 $script:WriterExempt = @(
     'NvAPI_DRS_CreateSession',     # the handle of a settings session that is only ever read from
     'NvAPI_DRS_DestroySession',    # ... and its release
-    'NvAPI_SYS_GetChipSetInfo'     # "ChipSet" is a noun: the chipset's vendor and name
+    'NvAPI_SYS_GetChipSetInfo',    # "ChipSet" is a noun: the chipset's vendor and name
+    'NvAPI_D3D_GetSleepStatus'     # reads what the driver's low-latency state is; it sets none and sleeps nobody
 )
 
 # D104. NVAPI's entry points that return something identifying a device, a person or another program.
@@ -110,6 +116,70 @@ function Test-Bridge([string]$Source, [string]$ListText) {
     return , @($problems)
 }
 
+# ---------------------------------------------------------------------------------------------------------------------
+# THE OVERLAY (Advanced metrics train C; owner decisions D132, D136). Code loaded into a game links no NVAPI and
+# calls no NvAPI_* function by name: it asks an nvapi64.dll the game had already loaded for two addresses, by
+# interface id (FrameLedger.Overlay/include/fl_reflex.h). A call through such an address carries no NvAPI_ token, so
+# the bridge's rules cannot see it. These can:
+#
+#   5. no NvAPI_* call token in any Overlay or Vulkan-layer source;
+#   6. every 8-digit hex literal there that IS one of the vendored nvapi_interface.h's ids belongs to a name on
+#      tools/overlay-nvapi-allowed.txt, and every name on that list has its id in the sources;
+#   7. the names on that list are judged as the bridge's are - no writer, no identifier - and, for code inside a
+#      game, `Sleep` is a writer verb too: NvAPI_D3D_Sleep stops the thread that calls it.
+#
+# WHAT IT DOES NOT DO: it cannot see an id that is computed, or one written in another base. No code does either.
+# ---------------------------------------------------------------------------------------------------------------------
+
+# name -> id (lower-case hex, no prefix), from the vendored nvapi_interface.h: { "NvAPI_X", 0x........ },
+function Read-InterfaceTable([string]$Text) {
+    $byId = @{}
+    foreach ($m in [regex]::Matches($Text, '\{\s*"(NvAPI_\w+)"\s*,\s*0x([0-9A-Fa-f]{1,8})\s*\}')) {
+        $id = $m.Groups[2].Value.ToLowerInvariant().PadLeft(8, '0')
+        if (-not $byId.ContainsKey($id)) { $byId[$id] = [System.Collections.Generic.List[string]]::new() }
+        $byId[$id].Add($m.Groups[1].Value)
+    }
+    return $byId
+}
+
+# $Sources: file name -> source, for every Overlay and Vulkan-layer source.
+function Test-Overlay([hashtable]$Sources, [string]$InterfaceText, [string]$ListText) {
+    $problems = [System.Collections.Generic.List[string]]::new()
+    $list = Read-AllowedList $ListText
+    foreach ($p in $list.Problems) { $problems.Add($p) }
+    $allowed = $list.Names
+    $byId = Read-InterfaceTable $InterfaceText
+    if ($byId.Count -eq 0) { $problems.Add('no interface id was read from nvapi_interface.h: the check read the wrong file, or nothing') }
+
+    $found = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($key in ($Sources.Keys | Sort-Object)) {
+        foreach ($name in (Get-NvapiCall $Sources[$key])) {
+            $problems.Add("$key calls $name by name: code loaded into a game links no NVAPI")
+        }
+        $code = [regex]::Replace($Sources[$key], '/\*.*?\*/', ' ', 'Singleline')
+        $code = [regex]::Replace($code, '//[^\r\n]*', ' ')
+        $code = [regex]::Replace($code, '"(\\.|[^"\\\r\n])*"', '""')
+        foreach ($m in [regex]::Matches($code, '(?<![\w])0[xX]([0-9A-Fa-f]{8})(?![0-9A-Fa-f])')) {
+            $id = $m.Groups[1].Value.ToLowerInvariant()
+            if (-not $byId.ContainsKey($id)) { continue }
+            foreach ($name in $byId[$id]) {
+                [void]$found.Add($name)
+                if ($allowed -cnotcontains $name) { $problems.Add("$key names the interface id of $name (0x$id), which the Overlay's list does not allow") }
+            }
+        }
+    }
+    foreach ($name in $allowed) {
+        if (-not $found.Contains($name)) { $problems.Add("the Overlay's list allows $name, whose interface id is in no Overlay source") }
+        if ($name -cmatch $script:WriterVerb -and $script:WriterExempt -cnotcontains $name) {
+            $problems.Add("$name changes something (its name carries '$($Matches[1])'): nothing loaded into a game calls a writer, whatever the list says")
+        }
+        if ($name -cmatch $script:Identifier) {
+            $problems.Add("$name returns an identifier ('$($Matches[1])'): never read (D104), whatever the list says")
+        }
+    }
+    return , @($problems)
+}
+
 if ($SelfTest) {
     $failed = 0
     $goodSource = @'
@@ -148,8 +218,34 @@ int Read() {
         Write-Host ("  {0,-4} {1}{2}" -f ($(if ($ok) { 'ok' } else { 'FAIL' })), $c.Name, ($(if (-not $ok) { " -> $($problems.Count): $($problems -join '; ')" } else { '' }))) -ForegroundColor ($(if ($ok) { 'DarkGray' } else { 'Red' }))
         if (-not $ok) { $failed++ }
     }
+    # The Overlay's rules, on a table of four ids and sources written here.
+    $table = @'
+    { "NvAPI_D3D_GetLatency", 0x1a587f9c },
+    { "NvAPI_D3D_GetSleepStatus", 0xaef96ca1 },
+    { "NvAPI_D3D_SetSleepMode", 0xac1ca9e0 },
+    { "NvAPI_D3D_Sleep", 0x852cd1d2 },
+'@
+    $goodOverlay = @{ 'fl_reflex.h' = "// 0xac1ca9e0 is NvAPI_D3D_SetSleepMode and is never asked for`ninline constexpr unsigned int kA = 0x1a587f9cu; inline constexpr unsigned int kB = 0xAEF96CA1u; const uint32_t none = 0xFFFFFFFFu; Log(`"0x852cd1d2`");" }
+    $goodOverlayList = "# the two getters`nNvAPI_D3D_GetLatency`nNvAPI_D3D_GetSleepStatus`n"
+    $overlayCases = @(
+        @{ Name = 'the two getters by id, a setter''s id only in a comment and a string, pass'; Sources = $goodOverlay; List = $goodOverlayList; Expect = 0 },
+        @{ Name = 'the id of a setter in Overlay code FAILS'; Sources = @{ 'fl_reflex.h' = $goodOverlay['fl_reflex.h']; 'dllmain.cpp' = 'void* p = query(0xac1ca9e0u);' }; List = $goodOverlayList; Expect = 1 },
+        @{ Name = 'the id of the sleep FAILS when it is listed: a writer verb, whatever the list says'; Sources = @{ 'fl_reflex.h' = $goodOverlay['fl_reflex.h'] + ' void* s = query(0x852cd1d2);' }; List = $goodOverlayList + "NvAPI_D3D_Sleep`n"; Expect = 1 },
+        @{ Name = 'a setter FAILS even when it is listed and its id is named'; Sources = @{ 'fl_reflex.h' = $goodOverlay['fl_reflex.h'] + ' void* s = query(0xac1ca9e0);' }; List = $goodOverlayList + "NvAPI_D3D_SetSleepMode`n"; Expect = 1 },
+        @{ Name = 'a name on the list whose id nothing names FAILS'; Sources = @{ 'fl_reflex.h' = 'inline constexpr unsigned int kA = 0x1a587f9cu;' }; List = $goodOverlayList; Expect = 1 },
+        @{ Name = 'an NvAPI function called by name in the Overlay FAILS'; Sources = @{ 'fl_reflex.h' = $goodOverlay['fl_reflex.h']; 'dllmain.cpp' = 'void X() { NvAPI_D3D_GetLatency(dev, &out); }' }; List = $goodOverlayList; Expect = 1 },
+        @{ Name = 'a hex literal that is no interface id passes'; Sources = @{ 'fl_reflex.h' = $goodOverlay['fl_reflex.h']; 'layer.cpp' = 'const uint32_t magic = 0x7F800000u; const uint64_t wide = 0x1a587f9c00000000ull;' }; List = $goodOverlayList; Expect = 0 },
+        @{ Name = 'an interface table nobody could read FAILS'; Sources = $goodOverlay; List = $goodOverlayList; Table = '// nothing'; Expect = 3 }
+    )
+    foreach ($c in $overlayCases) {
+        $tableText = if ($c.ContainsKey('Table')) { $c.Table } else { $table }
+        $problems = Test-Overlay $c.Sources $tableText $c.List
+        $ok = $problems.Count -eq $c.Expect
+        Write-Host ("  {0,-4} {1}{2}" -f ($(if ($ok) { 'ok' } else { 'FAIL' })), $c.Name, ($(if (-not $ok) { " -> $($problems.Count): $($problems -join '; ')" } else { '' }))) -ForegroundColor ($(if ($ok) { 'DarkGray' } else { 'Red' }))
+        if (-not $ok) { $failed++ }
+    }
     if ($failed -gt 0) { Write-Host "nvapi-readonly-check self-test FAILED ($failed)" -ForegroundColor Red; exit 1 }
-    Write-Host "nvapi-readonly-check self-test: $($cases.Count) cases, both directions" -ForegroundColor Green
+    Write-Host "nvapi-readonly-check self-test: $($cases.Count + $overlayCases.Count) cases, both directions" -ForegroundColor Green
     exit 0
 }
 
@@ -165,5 +261,28 @@ if ($problems.Count -gt 0) {
     exit 1
 }
 $count = (Get-NvapiCall (Get-Content -LiteralPath $sourcePath -Raw)).Count
-Write-Host "nvapi-readonly-check OK - the bridge calls $count NVAPI entry points, each on the list, none a writer or an identifier" -ForegroundColor Green
+
+# The Overlay and the Vulkan layer: what is loaded into a game.
+$interfacePath = Join-Path $RepoRoot 'src/native/third_party/nvapi/nvapi_interface.h'
+$overlayListPath = Join-Path $RepoRoot 'tools/overlay-nvapi-allowed.txt'
+foreach ($path in $interfacePath, $overlayListPath) {
+    if (-not (Test-Path -LiteralPath $path)) { Write-Host "NVAPI READ-ONLY CHECK FAILED: $path is missing" -ForegroundColor Red; exit 1 }
+}
+$overlaySources = @{}
+foreach ($dir in 'src/native/FrameLedger.Overlay', 'src/native/FrameLedger.VkLayer') {
+    $root = Join-Path $RepoRoot $dir
+    if (-not (Test-Path -LiteralPath $root)) { Write-Host "NVAPI READ-ONLY CHECK FAILED: $root is missing" -ForegroundColor Red; exit 1 }
+    foreach ($file in Get-ChildItem -LiteralPath $root -Recurse -File -Include '*.cpp', '*.h', '*.inl') {
+        $overlaySources[[IO.Path]::GetRelativePath($RepoRoot, $file.FullName).Replace('\', '/')] = Get-Content -LiteralPath $file.FullName -Raw
+    }
+}
+if ($overlaySources.Count -eq 0) { Write-Host 'NVAPI READ-ONLY CHECK FAILED: no Overlay or Vulkan-layer source was found' -ForegroundColor Red; exit 1 }
+$overlayProblems = Test-Overlay $overlaySources (Get-Content -LiteralPath $interfacePath -Raw) (Get-Content -LiteralPath $overlayListPath -Raw)
+if ($overlayProblems.Count -gt 0) {
+    Write-Host 'NVAPI READ-ONLY CHECK FAILED (the Overlay):' -ForegroundColor Red
+    foreach ($p in $overlayProblems) { Write-Host "  - $p" -ForegroundColor Red }
+    exit 1
+}
+$overlayNames = (Read-AllowedList (Get-Content -LiteralPath $overlayListPath -Raw)).Names
+Write-Host "nvapi-readonly-check OK - the bridge calls $count NVAPI entry points, each on the list, none a writer or an identifier; the Overlay names $($overlayNames.Count) interface ids ($($overlayNames -join ', ')), calls no NvAPI function by name, and $($overlaySources.Count) of its sources were read" -ForegroundColor Green
 exit 0

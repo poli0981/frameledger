@@ -19,7 +19,7 @@ add_executable(hook-harness main.cpp vk_hold.cpp gl_hold.cpp hwnd_hold.cpp proxy
 # --probe-upscaler-resolve calls the OVERLAY'S resolver, not a copy of it, or it
 # would prove a fact about GetProcAddress.
 target_link_libraries(hook-harness PRIVATE FrameLedger.Shm fl_dxgi_vtable fl_native_flags fl_streamline_headers
-    fl_fidelityfx_headers fl_fsr3_host_headers fl_vulkan_headers opengl32 gdi32)
+    fl_fidelityfx_headers fl_fsr3_host_headers fl_vulkan_headers fl_nvapi_headers opengl32 gdi32)
 target_include_directories(hook-harness PRIVATE "${CMAKE_SOURCE_DIR}/FrameLedger.Overlay/include")
 target_compile_definitions(hook-harness PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 

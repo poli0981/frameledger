@@ -168,6 +168,20 @@ game the same lines are in `logs\overlay-<pid>-….log` — read there on 2026-1
 batches, 81–262 ms for sixteen of them and 0.61 s and 1.26 s for two (`17_HOOK_ENGINE` §Unhooking, *Batches*); no
 restore line yet, because no session was stopped while its game ran.
 
+**The call into the driver (train C, 2026-11-13; in no release yet) is tested in three places, each for what the
+others cannot say.** `fl_reflex_summary` (Catch2) drives `fl_adv_fields.h`'s reader on reports written by hand: the
+two newest frames held back, a frame summed once, a span the driver did not report, a span no frame can have, frame
+ids that start again, and the ten words of a publication. `fl_guard`'s seven `[latency]` cases inject the Overlay
+into a Direct3D 12 target that has loaded a stand-in `nvapi64.dll`, and read that module's call counts from outside
+through its named section (`fl_stub_nvapi_shared.h`) — so "the driver was not called" is a count: not asked → not
+even asked for the addresses; asked → about one read a second, sums equal to the stand-in's, every counted read a
+received call; an error; a span not reported; the request off; a second session; the stop; a call of 50 ms (the
+last one); a fault (counted once, the hooks stay); a module without the getters; no module (none is loaded); a
+module beside the executable (refused, never asked); Direct3D 11 (not read). `fl_reflex_probe_stub` runs the same
+header, `fl_reflex.h`, in a process that **enforces Control Flow Guard** — the injected cases do not: `hook-harness`
+is not a CFG image. **None of them is a driver.** `fl-probe-reflex --real` is the measurement against the installed
+one, run by hand (`spike-notes` §31), and a real game is owner-only item 45.
+
 ## Tier cross-validation (accuracy regression net) — **GONE, 2026-08-28, and this is the entry to read before planning P5**
 
 ~~Run the same game session with Tier 1 and Tier 2 simultaneously where possible (ETW does not conflict with hooking) and compare frametime distributions: Avg/1% Low must agree within **1%**. Divergence beyond that means one of the two paths is wrong and blocks the release. This is also the check that would have caught the original detection-accuracy problem.~~

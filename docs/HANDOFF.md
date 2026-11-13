@@ -215,7 +215,12 @@ of mine was wrong in six places — and that no other file carries yet:
   an `nvapi64.dll` that is *already loaded* (never loads it), only while a session asks for Advanced metrics and a
   Direct3D 12 device is held; it keeps one reference and never releases it; it refuses a module in the executable's
   own folder (D140); it fetches `nvapi_QueryInterface` and the two ids under a guard and checks with `VirtualQuery`
-  that both addresses lie inside that module. "No module", "no getter" and "refused" are final for the process.
+  that both addresses lie inside ~~that module~~ an image the process has loaded. "No getter" and "refused" are
+  final for the process; "no module" is asked again each second. **Found when the header was run against the
+  installed driver: `nvapi64.dll` is a shim and the two getters are in `nvapi64_impl.dll`** (`spike-notes` §31,
+  *What moving the sequence into the Overlay found*) — so the check accepts another loaded image, a reference is
+  kept on that image as well, and the code that is called *is* a Control Flow Guard image (the plan's review had
+  reasoned from the shim, which is not).
 - **One atomic gate with four states** — idle, armed, reading, off — not a busy flag beside accumulators (two
   presenting threads could read back to back, and the watchdog could drain half a read). The watchdog drains only
   when it sees *idle* and arms at most once a second by its own clock (the loader detour wakes it more often); a
@@ -228,6 +233,10 @@ of mine was wrong in six places — and that no other file carries yet:
   more (D141); the watchdog finding *reading* on two ticks running — logged and flushed at once, published as
   stalled, and **nothing can stop a call that does not return**. An error status or an empty report is recorded and
   reading goes on.
+- **What D141 costs, measured once on a busy PC** (`spike-notes` §31, *A run on a busy PC*): the 2 ms latch will
+  sometimes fire on a pause that was Windows' and not the driver's — a few sessions in a hundred at worst, by a
+  reading of one run. The owner chose one call over two knowing it errs towards the game; item 45's outcomes must
+  say how the two are told apart (the microseconds published with *slow*).
 - **The summary**: only frames newer than the last one summed; the two newest of a report skipped (§31: not final);
   a zero end point is "span not reported" (published as all ones), not a refused frame; a frame is refused for a
   span that runs backwards, one over a second, or no total; frame ids that go backwards restart the sequence.
