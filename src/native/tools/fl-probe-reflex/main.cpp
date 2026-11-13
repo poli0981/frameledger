@@ -437,7 +437,7 @@ struct Cost {
 };
 
 template <class Call>
-Cost Measure(int n, Call&& call) noexcept {
+Cost Measure(int n, const Call& call) noexcept {
     static double samples[4096];
     if (n > 4096) {
         n = 4096;
