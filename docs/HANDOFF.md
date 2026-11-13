@@ -169,8 +169,25 @@ makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.~~ **Recorded
+  2026-11-13: 0.1.0-beta.46 was released 2026-11-13T11:10:28Z** (18:10 in the owner's time zone) from the signed
+  tag on `47f010a` (#435), by run 43412434074 — green at the first attempt, one run for the one tag push. Eight
+  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the four shipped natives carry
+  `FL_BUILD_ID v0.1.0-beta.46`. The delta from beta.45 is 634,023 bytes beside a full package of 110,767,120 —
+  "Delta processed 0452 files. 0021 patched, 0431 unchanged". The wiki was published by run 43414965433. The
+  rehearsal on the release branch (run 43409330961, at `7b4ecd7`, the released tree) had made a delta of 668,012
+  bytes with the same file counts. **SonarCloud answered on `47f010a`: the quality gate passed and no issue is open
+  on `main`. Qodana's two reports are green on that commit.** On the way SonarCloud was red on #434 (six issues
+  in the new code, fixed before it merged — §Traps), and no required check failed.
+- **A local gate once counted `fl_guard` as passed after 0.66 s** (2026-11-13 17:30, the spike's branch). The
+  security software on the development PC was switched on for three minutes while the gate ran; the freshly linked
+  `fl_guard_test.exe` was removed from the build tree, **ctest reported the run that was cut short as `Passed`**
+  (the suite takes 181 s), and the gate went red only because the next test, `fl_prescan`, runs the same executable
+  and could not find it. Run again with that software off, the gate was green. Nothing was changed for it: a test
+  whose process ends early with a zero exit code is a pass to ctest, and the suite has no line it must print to
+  count. Worth a guard of its own (a `PASS_REGULAR_EXPRESSION` on Catch2's last line, or a minimum number of test
+  cases); proposed, not done.
 - **No real game was run on this build.** The order in which patches reach a game changed for every game.
 - **Off means off has never been exercised on a real game** (item 43 (f), now item 44 (g)); nor (c) and (h) of
   item 43, which only the owner sees.
