@@ -205,6 +205,8 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                #                      (--vulkan since #140, --opengl since #141)
                                #   fl-probe-*      -> guard, hook profile, interposer, NVAPI, process
                                #                      stats, signer, Vulkan layer; fl-baseline-probe;
+                               #                      and fl-probe-reflex (2026-11-13, D132: the spike of Reflex route D,
+                               #                      spike-notes §31 - unshipped, with a stand-in nvapi64.dll among the stubs);
                                #   vendor-stubs/   -> fixture DLLs with the vendors' export names
 rules/detection-rules.json     # engine/platform/capability + anticheat blocklist
 guide/                         # the user guide (beta.12, D44): ~~eight~~ short English pages for players, embedded in the
