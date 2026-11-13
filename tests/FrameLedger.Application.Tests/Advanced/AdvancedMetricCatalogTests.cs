@@ -86,10 +86,31 @@ public sealed partial class AdvancedMetricCatalogTests
     [Fact]
     public void OnlyWhatTheAgentOrTheOverlayReadsCountsAsRead()
     {
-        _all.Where(static m => m.IsRead).Should().OnlyContain(static m => m.Reach == AdvancedReach.Agent || m.Reach == AdvancedReach.AgentElevated || m.Reach == AdvancedReach.Game);
-        _all.Where(static m => !m.IsRead).Should().NotContain(static m => m.Reach == AdvancedReach.Agent || m.Reach == AdvancedReach.AgentElevated || m.Reach == AdvancedReach.Game);
+        _all.Where(static m => m.IsRead).Should().OnlyContain(static m => m.Reach == AdvancedReach.Agent || m.Reach == AdvancedReach.AgentElevated || m.Reach == AdvancedReach.Game || m.Reach == AdvancedReach.GameDriver);
+        _all.Where(static m => !m.IsRead).Should().NotContain(static m => m.Reach == AdvancedReach.Agent || m.Reach == AdvancedReach.AgentElevated || m.Reach == AdvancedReach.Game || m.Reach == AdvancedReach.GameDriver);
         _all.Should().Contain(static m => m.IsRead);
         _all.Should().Contain(static m => !m.IsRead);
+    }
+
+    [Fact]
+    public void WhatThePartInsideAGameAsksTheDriverForItselfIsTwoEntriesOfNvapiAndNothingMore()
+    {
+        // Train C (owner decisions D132, D136, D138): the one reach that is not an argument of a hooked call. The
+        // Overlay calls NVIDIA's two read-only latency getters; tools/nvapi-readonly-check.ps1 holds that those two
+        // are the only NVAPI functions code loaded into a game may name. Two entries, and they stay two until an
+        // owner's ruling of the same kind names another.
+        string[] driver = [.. _all.Where(static m => m.Reach == AdvancedReach.GameDriver).Select(static m => m.Id)];
+        driver.Should().Equal("nvapi.reflex.sleep_status", "nvapi.reflex.frame_report");
+        _all.Where(static m => m.Reach == AdvancedReach.GameDriver).Should().OnlyContain(static m => m.Source == AdvancedSource.Nvapi && m.IsRead);
+        _all.Where(static m => m.Reach == AdvancedReach.GameDriver).Should().OnlyContain(static m => m.Scope != AdvancedScope.MachineFact, "what a driver says of a game's frames is of a session");
+        AdvancedMetricCatalog.Find("nvapi.reflex.frame_report")!.IsFamily.Should().BeTrue("seven series, one a span");
+        AdvancedMetricCatalog.Find("nvapi.reflex.frame_report")!.Unit.Should().Be(AdvancedUnit.Microseconds);
+
+        // What the GAME asked of Reflex, and Reflex through Streamline, are not read and will not be: each needs a
+        // route that was refused (a patch at a run-time address; a call from a thread the vendor forbids - D133).
+        AdvancedMetricCatalog.Find("nvapi.reflex.mode")!.Reach.Should().Be(AdvancedReach.RefusedRoute);
+        AdvancedMetricCatalog.Find("sl.reflex.state")!.Reach.Should().Be(AdvancedReach.RefusedRoute);
+        _all.Where(static m => m.Reach == AdvancedReach.RefusedRoute).Should().OnlyContain(static m => !m.IsRead);
     }
 
     [Fact]

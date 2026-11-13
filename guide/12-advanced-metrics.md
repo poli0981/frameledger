@@ -83,6 +83,33 @@ the session says, for each call, whether it was *read*, *hooked — the game did
 the game did not load the library that has the call*; the six calls of 0.1.0-beta.45 are named in one sentence,
 under which of the three happened to each.
 
+### What NVIDIA's driver says about each frame's stages
+
+On an NVIDIA card, in a **Direct3D 12** game that uses **NVIDIA Reflex**, a session with Advanced metrics on also
+stores the driver's own latency report: how long the driver says each stage of a frame took — *simulation*,
+*render submit*, *present*, *driver*, *operating system's render queue*, *GPU render*, and the *total* from the start
+of simulation to the end of the graphics card's work. They are seven lines under **Latency**, one point about every
+second, each the average of the frames the driver reported since the point before, in microseconds. A table beside
+them shows the driver's low-latency state as five switches, by NVIDIA's own names, each *On*, *Off* or *On at times,
+off at others*.
+
+Three things to know about them:
+
+- **They are the driver's numbers, not FrameLedger's.** FrameLedger does not measure these stages; it stores what
+  the driver reports and has not checked it against another tool. They are not the delay from a click to the screen.
+- **FrameLedger asks for them from inside the game**, about once a second — the one thing it does in a game that is
+  not reading what the game itself passes along. It asks only through NVIDIA's library where the game had already
+  loaded it, and never loads that library itself. A copy of the library sitting in the game's own folder (some
+  mods put one there) is not the driver's, and FrameLedger does not use it.
+- **It switches itself off rather than disturb the game.** If one request takes two thousandths of a second or
+  more, or goes wrong, FrameLedger makes no further request until the game is closed. The line under the session
+  then says *stopped*, and why; the next time the game starts it reads again. On a busy PC this can happen for a
+  pause that was Windows' and not the driver's.
+
+The line under the session says what happened: *read*; *asked, and the driver reported no frame* (the game does not
+use Reflex); *not read* with the reason — the game does not present through Direct3D 12, it has not loaded NVIDIA's
+library, or that library is in the game's own folder; or *stopped*.
+
 **Many games will show nothing here**, and the line under the session says why: *the game made none of the calls
 these are read from* — most games set their DLSS options through a call FrameLedger cannot see, and only games that
 use FSR 3.1 or later through AMD's own library show the FSR rows — or *the session was not measured inside the game*.
@@ -111,6 +138,9 @@ comes from, and whether it is read. Where it is not, the reason is written out:
 - **not present on this PC** — the driver's own figures exist on NVIDIA cards only;
 - **read inside a game FrameLedger measures, when the game makes the call** — what the game tells DLSS and FSR
   (above). Some further readings inside the game **come with a later release**;
+- **read inside a game FrameLedger measures, from the graphics driver** — NVIDIA's latency report (above);
+- **not read: it would take a patch at an address found while the game runs, or a call the vendor forbids from
+  outside the game's own threads** — what the game asked of Reflex, and Reflex's state through Streamline;
 - **the game makes this call once, before FrameLedger is inside it** — what the game started Streamline with. It is
   not read, and no later release will read it;
 - **never read** — a serial number, a display's identification data, which other programs are encoding, the camera's

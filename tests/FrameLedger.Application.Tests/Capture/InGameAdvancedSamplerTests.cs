@@ -581,4 +581,149 @@ public sealed class InGameAdvancedSamplerTests
         AdvancedJson.Storable(sampler.Facts).Should().HaveCount(sampler.Facts.Count, "what the game said may be stored");
         readings.Select(static r => AdvancedMetricCatalog.Find(r.Series[AdvancedMetric.SeriesPrefix.Length..])!.Reach).Should().OnlyContain(static reach => reach == AdvancedReach.Game);
     }
+
+    // ---- The driver's latency report (train C): not one of the game's calls --------------------------------------
+
+    private static FlAdvancedState Latency(FlLatencyState state, uint frames = 0, uint samples = 1, uint slowestUs = 3) =>
+        InGameStates.Empty() with
+        {
+            Samples = samples,
+            ValidMask = frames == 0 ? FlAdvancedValid.None : FlAdvancedValid.Latency,
+            // The stand-in driver's status: low-latency mode and the game's sleep on, the other three off, x2.
+            LatState = (uint)state | ((1u | 8u) << FlAdvancedState.LatSleepSeenOnShift) | ((2u | 4u | 16u) << FlAdvancedState.LatSleepSeenOffShift) | (2u << FlAdvancedState.LatFgMultiplierShift),
+            LatReads = 1u | (slowestUs << 16),
+            LatFrames = frames,
+            LatSimulationSumUs = frames * 800,
+            LatSubmitSumUs = frames * 1150,
+            LatPresentSumUs = frames * 150,
+            LatDriverSumUs = frames * 400,
+            LatOsQueueSumUs = frames * 1200,
+            LatGpuSumUs = frames * 3700,
+            LatTotalSumUs = frames * 7500,
+        };
+
+    [Fact]
+    public void OneReadOfTheDriversReportIsOnePointASpanTheMeanOfTheFramesItSummed()
+    {
+        var sampler = new InGameAdvancedSampler();
+
+        IReadOnlyList<AdvancedReading> readings = sampler.Take(new InGameAdvanced(Latency(FlLatencyState.Reading, frames: 62)))!;
+
+        readings.Should().Equal(
+            new AdvancedReading("adv.nvapi.reflex.frame_report.simulation", 800.0),
+            new AdvancedReading("adv.nvapi.reflex.frame_report.render_submit", 1150.0),
+            new AdvancedReading("adv.nvapi.reflex.frame_report.present", 150.0),
+            new AdvancedReading("adv.nvapi.reflex.frame_report.driver", 400.0),
+            new AdvancedReading("adv.nvapi.reflex.frame_report.os_queue", 1200.0),
+            new AdvancedReading("adv.nvapi.reflex.frame_report.gpu_render", 3700.0),
+            new AdvancedReading("adv.nvapi.reflex.frame_report.total", 7500.0));
+        readings.Select(static r => r.Series).Should().OnlyContain(static name => name.StartsWith(InGameAdvancedSampler.LatencySeriesStem, StringComparison.Ordinal));
+        InGameAdvancedSampler.LatencySpans.Should().HaveCount(7);
+        sampler.DriverRead(hooked: true).Should().Be(AdvancedDriverRead.Read);
+        sampler.DriverSlowestUs.Should().Be(3);
+
+        // A publication with no read since the one before carries no frames: no point, and not a zero.
+        sampler.Take(new InGameAdvanced(Latency(FlLatencyState.Reading, frames: 62, samples: 2) with { LatFrames = 0 })).Should().BeNull();
+    }
+
+    [Fact]
+    public void ASpanTheDriverDidNotReportHasNoPointAndTheOthersDo()
+    {
+        var sampler = new InGameAdvancedSampler();
+
+        // Without a sleep mode the driver reports no driver span: the capture side publishes all ones for its sum.
+        IReadOnlyList<AdvancedReading> readings = sampler.Take(new InGameAdvanced(
+            Latency(FlLatencyState.Reading, frames: 10) with { LatDriverSumUs = FlAdvancedState.LatSumNone }))!;
+
+        readings.Should().HaveCount(6);
+        readings.Should().NotContain(static r => r.Series.EndsWith(".driver", StringComparison.Ordinal));
+        readings.Should().Contain(new AdvancedReading("adv.nvapi.reflex.frame_report.total", 7500.0));
+    }
+
+    [Fact]
+    public void TheDriversReportIsNotOneOfTheGamesCalls()
+    {
+        var sampler = new InGameAdvancedSampler();
+
+        sampler.Take(new InGameAdvanced(Latency(FlLatencyState.Reading, frames: 62)));
+
+        // "The game's calls were read" stays false: FrameLedger made this read, the game made no call.
+        sampler.SawAnything.Should().BeFalse();
+        sampler.Status(hooked: true).Should().Be(AdvancedInGameStatus.NothingSeen);
+        // ...and the one fact is the driver's five switches by the vendor's own names, as seen, and its multiplier.
+        Rows(Fact(sampler, "nvapi.reflex.sleep_status")).Should().Equal(
+            "bLowLatencyMode=on", "bFsVrr=off", "bCplVsyncOn=off", "bUseGameSleep=on", "bFullscreenIFlip=off", "fgMultiplier=2");
+        sampler.Facts.Should().ContainSingle();
+    }
+
+    [Theory]
+    [InlineData(FlLatencyState.NoDevice, AdvancedDriverRead.NoDirect3D12)]
+    [InlineData(FlLatencyState.NoModule, AdvancedDriverRead.NoModule)]
+    [InlineData(FlLatencyState.Refused, AdvancedDriverRead.Refused)]
+    [InlineData(FlLatencyState.NoGetter, AdvancedDriverRead.NoGetter)]
+    [InlineData(FlLatencyState.Reading, AdvancedDriverRead.NothingReported)]
+    [InlineData(FlLatencyState.Error, AdvancedDriverRead.Error)]
+    [InlineData(FlLatencyState.Slow, AdvancedDriverRead.Slow)]
+    [InlineData(FlLatencyState.Faulted, AdvancedDriverRead.Faulted)]
+    [InlineData(FlLatencyState.Stalled, AdvancedDriverRead.Stalled)]
+    public void WhereTheReadStandsIsTakenEvenFromAPublicationThatReadNothing(FlLatencyState state, AdvancedDriverRead expected)
+    {
+        var sampler = new InGameAdvancedSampler();
+
+        // No bit of the mask: nothing was read. The state is published all the same, and is why.
+        sampler.Take(new InGameAdvanced(Latency(state) with { LatState = (uint)state })).Should().BeNull();
+
+        sampler.DriverRead(hooked: true).Should().Be(expected);
+        sampler.DriverRead(hooked: false).Should().BeNull("a session not measured inside the game has no such question");
+        sampler.Facts.Should().BeEmpty();
+        sampler.SawAnything.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ASessionTheCaptureSideSaidNothingAboutHasNoAnswerAndAStopAfterFramesStillSaysItStopped()
+    {
+        var silent = new InGameAdvancedSampler();
+        silent.Take(new InGameAdvanced(InGameStates.Empty()));
+        silent.DriverRead(hooked: true).Should().BeNull();
+        silent.DriverSlowestUs.Should().BeNull();
+
+        // Frames were reported, then one call took 2,400 microseconds: the series are there, and the state is the stop.
+        var stopped = new InGameAdvancedSampler();
+        stopped.Take(new InGameAdvanced(Latency(FlLatencyState.Reading, frames: 62)));
+        stopped.Take(new InGameAdvanced(Latency(FlLatencyState.Slow, frames: 10, samples: 2, slowestUs: 2400)));
+        stopped.DriverRead(hooked: true).Should().Be(AdvancedDriverRead.Slow);
+        stopped.DriverSlowestUs.Should().Be(2400);
+
+        // An error after frames is still "read": the series are the answer, and reading went on.
+        var erred = new InGameAdvancedSampler();
+        erred.Take(new InGameAdvanced(Latency(FlLatencyState.Reading, frames: 62)));
+        erred.Take(new InGameAdvanced(Latency(FlLatencyState.Error, samples: 2) with { ValidMask = FlAdvancedValid.Latency }));
+        erred.DriverRead(hooked: true).Should().Be(AdvancedDriverRead.Read);
+    }
+
+    [Fact]
+    public void TheGamesCallsAndTheDriversReportAreTakenFromOnePublication()
+    {
+        var sampler = new InGameAdvancedSampler();
+        FlAdvancedState both = InGameStates.Ffx(samples: 1) with
+        {
+            ValidMask = InGameStates.Ffx().ValidMask | FlAdvancedValid.Latency,
+            LatState = (uint)FlLatencyState.Reading,
+            LatFrames = 10,
+            LatTotalSumUs = 75_000,
+            LatSimulationSumUs = FlAdvancedState.LatSumNone,
+            LatSubmitSumUs = FlAdvancedState.LatSumNone,
+            LatPresentSumUs = FlAdvancedState.LatSumNone,
+            LatDriverSumUs = FlAdvancedState.LatSumNone,
+            LatOsQueueSumUs = FlAdvancedState.LatSumNone,
+            LatGpuSumUs = FlAdvancedState.LatSumNone,
+        };
+
+        IReadOnlyList<AdvancedReading> readings = sampler.Take(new InGameAdvanced(both))!;
+
+        readings.Should().Contain(new AdvancedReading("adv.nvapi.reflex.frame_report.total", 7500.0));
+        readings.Should().Contain(static r => r.Series == InGameAdvancedSampler.FrameTimeSeries);
+        sampler.SawAnything.Should().BeTrue("the FSR dispatch is one of the game's calls");
+        sampler.Facts.Should().NotContain(static f => f.Id == "nvapi.reflex.sleep_status", "no switch of the sleep status was seen");
+    }
 }

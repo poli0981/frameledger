@@ -205,6 +205,11 @@ and the logs, and from Windows' application log. None of the five is under the u
 ### The train after 0.1.0-beta.46: Reflex route D in a game, and D137 (plan approved 2026-11-13)
 
 *Nothing of this is in a release. The release pull request is not opened before the owner has run item 44 (d).*
+**Where it stands (2026-11-13, night):** PR-0 #440 merged; PR-1 #441 (D137), PR-2 #442 (the words), PR-3 #443 (the
+Overlay) and PR-4 (the Agent, the App, the legal texts, owner-only item 45) are written and stacked. What is left
+is the release, which waits for the owner. **Not verified by any test: the whole path through the real Agent** —
+the injected tests stop at the shared memory, the sampler's tests start from it; no end-to-end case loads the
+stand-in module under an Agent session. The Japanese strings are new and unreviewed, as every `ja` string is.
 The owner approved the plan the evening item 44 was read. Its order: **PR-0** the decisions and the probe's leg
 with a sleep (done: `spike-notes` §31 — no stop condition) → **PR-1** D137 → **PR-2** the words in region 5, written
 by nobody → **PR-3** the Overlay, the gates, the fixtures → **PR-4** the Agent, the App, strings, documents, legal
@@ -236,7 +241,8 @@ of mine was wrong in six places — and that no other file carries yet:
 - **What D141 costs, measured once on a busy PC** (`spike-notes` §31, *A run on a busy PC*): the 2 ms latch will
   sometimes fire on a pause that was Windows' and not the driver's — a few sessions in a hundred at worst, by a
   reading of one run. The owner chose one call over two knowing it errs towards the game; item 45's outcomes must
-  say how the two are told apart (the microseconds published with *slow*).
+  say how the two are told apart (the microseconds published with *slow*). **Asked again with this run in hand,
+  the owner kept it: one call (2026-11-13). Do not re-ask.**
 - **The summary**: only frames newer than the last one summed; the two newest of a report skipped (§31: not final);
   a zero end point is "span not reported" (published as all ones), not a refused frame; a frame is refused for a
   span that runs backwards, one over a second, or no total; frame ids that go backwards restart the sequence.
@@ -326,7 +332,7 @@ of mine was wrong in six places — and that no other file carries yet:
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** item 44 (d), (e), (g) and what (c) felt like; the go or no on `spike-notes` §31 (one real title); one session each of Valor Mortis and
+**Owner-only:** item 44 (d), (e), (g) and what (c) felt like — **(d) is what the next release waits for**; item 45 once that release exists; the go or no on `spike-notes` §31 (one real title); one session each of Valor Mortis and
 Black Myth: Wukong with hooking off; what item 41 left unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
@@ -820,6 +826,48 @@ Black Myth: Wukong with hooking off; what item 41 left unexercised; item 40 (d).
    same hooks as on beta.45, rates and factor as before, the two known faults on the way out at their old offsets.
    **(d), (e) and (g) were not exercised; (c) is the owner's to say.** Not passed: (d) is the half of this release
    that no real game has run.
+45. **The release after beta.46 — NVIDIA's latency report, read inside a game** (D132, D136, D138–D141; **the
+   release does not exist yet**: it is cut after item 44 (d) has been run). **Cyberpunk 2077 first** (D136), **and
+   not first on a game under the user-mode exception's trial** (D38): a crash there ends the exception for good.
+   This is the first release in which the part inside a game *makes a call of its own* — into the graphics driver,
+   about once a second, on the game's presenting thread — so read (a) before (b). (a) **The update**: Help ▸ Check
+   for updates, *Restart to update* with no game running; **the terms window shows once, with Privacy Policy 2.20
+   and Disclaimer 2.16** — the Disclaimer's §2 has a new paragraph, *One call it makes itself, into the graphics
+   driver*. Settings ▸ *Advanced metrics* says the same in its description. (b) **Cyberpunk 2077, Advanced metrics
+   on, frame generation OFF, Reflex on in the game's menu**, five minutes of play, then close the game as usual.
+   Its `logs\overlay-<pid>-….log` has `LATENCY` lines: *reading the driver's latency report*, and two more with
+   the end of two paths — `…\System32\nvapi64.dll` and `…\nvapi64_impl.dll`. On the Advanced page, the session
+   has a group **Latency**: the table *What the driver's low-latency state is* (five rows by NVIDIA's names, and
+   `fgMultiplier`) and, in the chart's list, *Latency per frame* with seven lines. The line under the session ends
+   with *NVIDIA's latency report, which FrameLedger asks the graphics driver for inside the game: read.* Say the
+   *total* line's usual value, and **whether the game felt any different with the option on** — a hitch once a
+   second is the thing to look for. (c) **The same with frame generation ON** (DLSS ×2 or more): the driver's
+   pacer is another thread, and this is the arrangement the probe could not make. (d) **Reflex switched off in the
+   game's menu**, if the game lets you: say what the line reads — *read* or *asked, and the driver reported no
+   frame*; both are possible and neither is wrong. (e) **Only after (b) and (c) are clean, a second game** that
+   uses Reflex through Streamline (Phantom Blade Zero, Clair Obscur, Black Myth: Wukong, Hogwarts Legacy). (f) **A
+   game that is not Direct3D 12 or has no NVIDIA library** (Kingdom Come: Deliverance II, Lies of P): the line
+   reads *not read*, with which of the two. (g) **Off means off**: with Advanced metrics off, start a game afresh;
+   its log has no `LATENCY` line. (h) **Nothing else moved**: no fault counted, frame rates and the
+   frame-generation factor as before, the game closes as it did.
+   **What each outcome means, written before the run.** *Read*, with a total of a few to a few tens of
+   milliseconds that moves with the frame rate: route D works in a real game; what comes next — more titles, the
+   session summary — is the owner's to say. *Asked, and the driver reported no frame* in a game whose Reflex is
+   on: the driver has a report for another object than the device FrameLedger holds; nothing is harmed, and the
+   title is not readable this way. *Not read — the game has not loaded nvapi64.dll* in Cyberpunk 2077: what its
+   files said did not happen at run time; another title is tried. *Stopped — a call took N µs*: **one call of a few
+   thousand microseconds, once, is most likely a pause of the game's thread on a busy PC** (`spike-notes` §31, *A
+   run on a busy PC*) — start the game again and see whether it repeats; if it repeats, or N is ten thousand or
+   more, the driver holds the call in that game and **route D stops for it** — say so with the number. *Stopped — a
+   call into the driver faulted*, or a fault counted in the session: **route D stops** (the commitment of §30) —
+   say so at once, with the log. **A game that freezes** with a `LATENCY` line saying a call has not returned, or
+   that freezes at all with the option on and not with it off: close it, say so at once; Advanced metrics off is
+   the way to play it, and route D ends. **A hitch once a second** with the option on that is not there with it
+   off: say so at once — the two-millisecond latch did not catch what a player can feel. **The game closing by
+   itself a second or two after it starts, only with the option on** (Windows' Application log: exception
+   `0xc0000409`): a Control Flow Guard refusal of the call — say so at once with the entry; that game enforces
+   what the probe could only check for this driver. Spans that make no sense — a part larger than the total, a
+   line that is always zero: say which; they are the driver's numbers and are shown as it reported them.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI

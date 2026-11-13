@@ -87,8 +87,15 @@ app too (Help ▸ User guide, Help ▸ Limitations, Help ▸ Accessibility), and
 >   mean, median and peak. The game's other processes (launchers, helpers) are not counted.
 > - **Video memory:** in use on the whole graphics card, recorded from Windows and GPU-driver telemetry
 >   and charted. **Not measured at all:** the video-memory budget Windows gives a game, which frame
->   spikes were shader compilation, PC latency (Reflex), and HDR. Stutter count and stutter time are
+>   spikes were shader compilation, end-to-end PC latency, and HDR. Stutter count and stutter time are
 >   measured from frame times.
+> - **NVIDIA's latency report (only with Advanced metrics on; Direct3D 12; a game that uses NVIDIA Reflex):** how
+>   long the driver says each stage of a frame took — simulation, render submit, present, driver, the operating
+>   system's queue, the graphics card — read from the graphics driver about once a second and shown as the driver
+>   reported it: **the driver's numbers, not a measurement by FrameLedger**, an average of the frames of one read,
+>   never checked against another tool, and not the delay from a click to the screen. Read with a test program
+>   against one driver and one card; **no real game had been read when this was written**. A game that does not use
+>   Reflex has none. The session summary's latency fields stay N/A.
 > - **Pacing, VSync and the graphics card (since beta.14):** the share of the time below 30 FPS, below 60 FPS and below
 >   the monitor's refresh rate, measured from frame times with small margins so that a game held at its limit is not
 >   counted as below it (a rate less than 2 % under the line reads partly as at it), and how much one frame's time

@@ -59,6 +59,21 @@ public sealed record AdvancedSources(
 
     public AdvancedInGameCall? StreamlineShutdown { get; init; }
 
+    /// <summary>
+    /// What became of the graphics driver's latency report (the <c>nvapi.reflex.</c> entries of reach
+    /// <see cref="AdvancedReach.GameDriver"/>) in the session this describes (train C). Null where that is not a
+    /// question - the machine's live state, a session not measured inside the game, a game the part inside it
+    /// publishes nothing for - and in every row stored before.
+    /// </summary>
+    public AdvancedDriverRead? DriverLatency { get; init; }
+
+    /// <summary>
+    /// The slowest call into the driver the session saw, in microseconds; null with <see cref="DriverLatency"/> and
+    /// where no call was made. It is what tells a driver that held a call from a pause of the game's thread when
+    /// <see cref="DriverLatency"/> is <see cref="AdvancedDriverRead.Slow"/>.
+    /// </summary>
+    public int? DriverLatencySlowestUs { get; init; }
+
     /// <summary>Nothing asked yet.</summary>
     public static AdvancedSources Unknown { get; } = new(AdvancedSourceStatus.Unknown, NvapiCode: null, AdvancedSourceStatus.Unknown, AdvancedSourceStatus.Unknown);
 }

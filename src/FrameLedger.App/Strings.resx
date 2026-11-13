@@ -504,6 +504,9 @@
   <data name="Advanced_InGameCallsLine" xml:space="preserve">
     <value>What the game tells Streamline each frame: {0}. How it configures FSR frame generation: {1}.</value>
   </data>
+  <data name="Advanced_InGameDriverLine" xml:space="preserve">
+    <value>NVIDIA's latency report, which FrameLedger asks the graphics driver for inside the game: {0}.</value>
+  </data>
   <data name="Advanced_InGameFeatureCallsLine" xml:space="preserve">
     <value>Which version each Streamline feature is: {0}. What each requires: {1}.</value>
   </data>
@@ -573,6 +576,9 @@
   <data name="Advanced_Status_InGame" xml:space="preserve">
     <value>Read inside a game FrameLedger measures, when the game makes the call</value>
   </data>
+  <data name="Advanced_Status_InGameDriver" xml:space="preserve">
+    <value>Read inside a game FrameLedger measures, from the graphics driver: FrameLedger asks for it about once a second</value>
+  </data>
   <data name="Advanced_Status_Read" xml:space="preserve">
     <value>Read</value>
   </data>
@@ -590,6 +596,39 @@
   </data>
   <data name="Advanced_Tab_Sources" xml:space="preserve">
     <value>Sources</value>
+  </data>
+  <data name="AdvDriverRead_Error" xml:space="preserve">
+    <value>the driver answered with an error</value>
+  </data>
+  <data name="AdvDriverRead_Faulted" xml:space="preserve">
+    <value>stopped until the game closed - a call into the driver faulted</value>
+  </data>
+  <data name="AdvDriverRead_NoDirect3D12" xml:space="preserve">
+    <value>not read - the game does not present through Direct3D 12</value>
+  </data>
+  <data name="AdvDriverRead_NoGetter" xml:space="preserve">
+    <value>not read - the library did not answer for the two functions</value>
+  </data>
+  <data name="AdvDriverRead_NoModule" xml:space="preserve">
+    <value>not read - the game has not loaded NVIDIA's nvapi64.dll, and FrameLedger never loads it</value>
+  </data>
+  <data name="AdvDriverRead_NothingReported" xml:space="preserve">
+    <value>asked, and the driver reported no frame - the game does not use NVIDIA Reflex</value>
+  </data>
+  <data name="AdvDriverRead_Read" xml:space="preserve">
+    <value>read</value>
+  </data>
+  <data name="AdvDriverRead_Refused" xml:space="preserve">
+    <value>not read - the nvapi64.dll in the game is in the game's own folder, not the driver's</value>
+  </data>
+  <data name="AdvDriverRead_Slow" xml:space="preserve">
+    <value>stopped until the game closed - a call into the driver took {0:N0} µs, and one of 2,000 µs or more is the last</value>
+  </data>
+  <data name="AdvDriverRead_Stalled" xml:space="preserve">
+    <value>stopped - a call into the driver did not return</value>
+  </data>
+  <data name="AdvDriverRead_Unknown" xml:space="preserve">
+    <value>not stated</value>
   </data>
   <data name="AdvGroup_Board" xml:space="preserve">
     <value>Motherboard</value>
@@ -681,6 +720,9 @@
   <data name="AdvReach_Refused" xml:space="preserve">
     <value>Not read: it would make the sensor library search every USB device</value>
   </data>
+  <data name="AdvReach_RefusedRoute" xml:space="preserve">
+    <value>Not read: it would take a patch at an address found while the game runs, or a call the vendor forbids from outside the game's own threads - both refused</value>
+  </data>
   <data name="AdvReach_Spike" xml:space="preserve">
     <value>Being studied; not decided</value>
   </data>
@@ -732,6 +774,9 @@
   <data name="AdvToken_dolby_vision" xml:space="preserve">
     <value>Dolby Vision</value>
   </data>
+  <data name="AdvToken_driver" xml:space="preserve">
+    <value>driver</value>
+  </data>
   <data name="AdvToken_driver_default" xml:space="preserve">
     <value>Driver default</value>
   </data>
@@ -746,6 +791,9 @@
   </data>
   <data name="AdvToken_game_ready" xml:space="preserve">
     <value>Game Ready</value>
+  </data>
+  <data name="AdvToken_gpu_render" xml:space="preserve">
+    <value>GPU render</value>
   </data>
   <data name="AdvToken_gsync_module" xml:space="preserve">
     <value>G-SYNC module</value>
@@ -795,11 +843,20 @@
   <data name="AdvToken_on_and_off" xml:space="preserve">
     <value>On at times, off at others</value>
   </data>
+  <data name="AdvToken_os_queue" xml:space="preserve">
+    <value>operating system's render queue</value>
+  </data>
   <data name="AdvToken_pci" xml:space="preserve">
     <value>PCI</value>
   </data>
   <data name="AdvToken_pci_express" xml:space="preserve">
     <value>PCI Express</value>
+  </data>
+  <data name="AdvToken_present" xml:space="preserve">
+    <value>present</value>
+  </data>
+  <data name="AdvToken_render_submit" xml:space="preserve">
+    <value>render submit</value>
   </data>
   <data name="AdvToken_rtx_new_feature" xml:space="preserve">
     <value>RTX new-feature branch</value>
@@ -810,11 +867,17 @@
   <data name="AdvToken_scrgb_linear" xml:space="preserve">
     <value>scRGB (linear)</value>
   </data>
+  <data name="AdvToken_simulation" xml:space="preserve">
+    <value>simulation</value>
+  </data>
   <data name="AdvToken_srgb" xml:space="preserve">
     <value>sRGB</value>
   </data>
   <data name="AdvToken_studio" xml:space="preserve">
     <value>Studio</value>
+  </data>
+  <data name="AdvToken_total" xml:space="preserve">
+    <value>total, simulation start to GPU render end</value>
   </data>
   <data name="AdvToken_ulmb" xml:space="preserve">
     <value>ULMB</value>
@@ -1120,7 +1183,7 @@
     <value>The agent did not answer the rules update.</value>
   </data>
   <data name="Settings_Advanced_Body" xml:space="preserve">
-    <value>Read more from the graphics driver and the hardware sensors during a session - the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game - and, in a game FrameLedger measures from inside, what the game tells DLSS, Streamline and FSR (sizes, presets, sharpening, exposure, the depth range, how frame generation is configured - never where the camera is). All of it is stored with the session. Off: nothing more is read or stored, inside a game either. It applies from the next session, and a session recorded while it was off is not filled in later.</value>
+    <value>Read more from the graphics driver and the hardware sensors during a session - the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game - and, in a game FrameLedger measures from inside, what the game tells DLSS, Streamline and FSR (sizes, presets, sharpening, exposure, the depth range, how frame generation is configured - never where the camera is). On an NVIDIA card, in a Direct3D 12 game that uses NVIDIA's own library, FrameLedger also asks the graphics driver about once a second, from inside the game, how long each stage of a frame took - a call it makes itself on the thread that shows the game's frames. All of it is stored with the session. Off: nothing more is read or stored, inside a game either. It applies from the next session, and a session recorded while it was off is not filled in later.</value>
   </data>
   <data name="Settings_Advanced_Label" xml:space="preserve">
     <value>Advanced metrics</value>

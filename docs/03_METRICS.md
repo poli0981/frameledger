@@ -36,7 +36,7 @@ Let `D` = session duration (first → last present), `F_app` = frames the *game*
 | **Frametime σ** | population stddev of `ft_app` (ms) | 1 |
 | **Stutter count** | `ft_app[i] > 2 × rollingMedian(ft_app, 19)` (centered, window in **frames**) | 1 |
 | **Stutter time %** | `Σ ft_app[stutter] / Σ ft_app × 100` | 1 |
-| **PC latency** | mean/p95 of `reflexLatencyUs` when Reflex reports it | **1 only** |
+| **PC latency** | mean/p95 of `reflexLatencyUs` when Reflex reports it *(nothing fills `reflexLatencyUs`: a report arrives after its frame's record is written. Since train C, 2026-11-13, the driver's stage report is read as seven Advanced series beside the frames — `18_GPU_VENDOR_APIS` §The inventory — and these session fields stay N/A)* | **1 only** |
 | **PSO stutter %** | share of stutter frames with `psoCreatedThisFrame > 0` | **1 only** |
 | **Time below 30 / 60 FPS** (beta.14) | share of `Σ ft_app` in frames that count as below X — `ft > 1.10 × 1000/X`, or the nine-frame rolling median `> 1.02 × 1000/X` (§Pacing) | 1 |
 | **Time below refresh** (beta.14) | the same over **presents**, X = `display_monitor_hz` — the display's rate, so over what the display received | 1 |

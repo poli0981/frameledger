@@ -57,4 +57,20 @@ public enum AdvancedReach
     /// instruction, and no hook is ever installed on a game's thread. Never read (owner decision D129).
     /// </summary>
     BeforeAttach = 13,
+
+    /// <summary>
+    /// Read inside a game FrameLedger measures, while the session records Advanced metrics — but not from a call the
+    /// game makes: the part inside the game asks the graphics driver itself, about once a second, for what the driver
+    /// reports (Advanced metrics train C; owner decisions D132, D136, D138). Only where the game presents through
+    /// Direct3D 12 and had already loaded the driver's library; <see cref="AdvancedDriverRead"/> says what became of
+    /// it in a session.
+    /// </summary>
+    GameDriver = 14,
+
+    /// <summary>
+    /// Reading it needs a route the project refused, whatever the source: a patch at an address learned at run time
+    /// (what a game asks of Reflex is an argument of a function no module exports), or a call the vendor's own header
+    /// forbids from a thread that is not the game's (owner decision D133). Never read.
+    /// </summary>
+    RefusedRoute = 15,
 }

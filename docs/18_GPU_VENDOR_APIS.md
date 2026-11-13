@@ -872,6 +872,12 @@ planning, the design reviewed against the code before it was approved.
 - **Privacy Policy 2.18** at beta.44 (approved with that release's plan): 2.17 named two further calls and what
   they give; Streamline's answers about a feature are in neither list, so they are named, with what of the answer
   is never read — the lists it points to.
+- **Privacy Policy 2.20 and Disclaimer 2.16** with train C (wording approved with the plan of 2026-11-13; in no
+  release yet): the first thing read inside a game that is **not an argument of a call the game made**. The Privacy
+  Policy names what is stored — how long each stage of a frame took, as the driver reports it, and the driver's
+  low-latency state; never a time of day, never an input's moment. The Disclaimer drops "API arguments and nothing
+  else" for what is true, and §2 gains the paragraph on the one call the component makes itself: where, how often,
+  on which thread, what it never calls, what ends it, and that a call which never returned could not be stopped.
 - **Privacy Policy 2.17** at beta.43 (approved with that release's plan): 2.16 listed DLSS's and FSR's upscaling
   parameters by name, and Streamline's per-frame constants and the frame-generation configuration are in neither
   list, so they are named — and §4 says the two calls are intercepted only once a session with the option on has
@@ -1075,13 +1081,27 @@ before FrameLedger is inside it, so no hook could read it — D129), `Spike` (Tr
 | `sl.init.preferences` | The preferences the game started Streamline with | SessionFact | Streamline | BeforeAttach | Text |
 | `sl.constants.camera` | Camera position, axes and matrices | SessionFact | Streamline | PlayerState | Text |
 
+**Inside the game: what the graphics driver reports, asked for by the part inside the game itself** *(train C,
+owner decisions D132, D136, D138 — `17_HOOK_ENGINE` §Calls the Overlay makes into a driver; in no release yet)*
+
+Not an argument of a hooked call: the Overlay calls the driver's two read-only latency getters about once a second,
+only while a session records Advanced metrics, only for a Direct3D 12 game that had already loaded the driver's
+`nvapi64.dll`. The report becomes seven series — `adv.nvapi.reflex.frame_report.` and `simulation`,
+`render_submit`, `present`, `driver`, `os_queue`, `gpu_render`, `total` — each point the mean, in microseconds, of
+the frames one read summed; the sleep status becomes one table of the driver's five switches as seen over the
+session. What the *game* asked of Reflex (`nvapi.reflex.mode`) is an argument of a function no module exports:
+reading it takes a patch at an address learned at run time, which is refused.
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `nvapi.reflex.mode` | Reflex: low-latency mode, boost, the frame-rate limit | SessionFact | Nvapi | RefusedRoute | Text |
+| `nvapi.reflex.sleep_status` | What the driver's low-latency state is | SessionFact | Nvapi | GameDriver | Table |
+| `nvapi.reflex.frame_report` | Latency per frame: simulation, render submit, present, driver, OS queue, GPU render | Series, one per device | Nvapi | GameDriver | Microseconds |
+
 **Inside the game: routes a spike decides**
 
 | Id | What it is | Scope | Source | Reach | Unit |
 |---|---|---|---|---|---|
-| `nvapi.reflex.mode` | Reflex: low-latency mode, boost, the frame-rate limit | SessionFact | Nvapi | Spike | Text |
-| `nvapi.reflex.sleep_status` | What the driver's low-latency state is | SessionFact | Nvapi | Spike | Text |
-| `nvapi.reflex.frame_report` | Latency per frame: simulation, render submit, present, driver, OS queue, GPU render | Series, one per device | Nvapi | Spike | Microseconds |
 | `sl.dlss.optimal_settings` | The render size and sharpness DLSS recommends | SessionFact | Streamline | Spike | Text |
 | `sl.dlss.vram_estimate` | DLSS's own estimate of its video memory | Series | Streamline | Spike | Mebibytes |
 | `sl.dlssg.options` | DLSS frame generation: mode, frames to generate | SessionFact | Streamline | Spike | Text |
@@ -1091,7 +1111,7 @@ before FrameLedger is inside it, so no hook could read it — D129), `Spike` (Tr
 | `sl.dlssd.options` | Ray reconstruction's options | SessionFact | Streamline | Spike | Text |
 | `sl.nis.options` | NVIDIA Image Scaling's options | SessionFact | Streamline | Spike | Text |
 | `sl.deepdvc.options` | RTX Dynamic Vibrance's options | SessionFact | Streamline | Spike | Text |
-| `sl.reflex.state` | Reflex through Streamline: availability and its frame reports | SessionFact | Streamline | Spike | Table |
+| `sl.reflex.state` | Reflex through Streamline: availability and its frame reports | SessionFact | Streamline | RefusedRoute | Table |
 | `sl.pcl.markers` | PC-latency markers the game sets | Series | Streamline | Spike | Count |
 
 **Closed by a licence**

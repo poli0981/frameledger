@@ -397,4 +397,64 @@ public sealed class AdvancedPresenterTests
     }
 
     private static string Label(string id) => AdvancedLabels.Of(AdvancedMetricCatalog.Find(id)!);
+
+    // ---- The driver's latency report (train C): a call FrameLedger makes itself, so words of its own -------------
+
+    [Fact]
+    public void TheDriversLatencyReportHasASentenceOfItsOwnAndARowStoredBeforeHasNone()
+    {
+        AdvancedSources before = AdvancedSources.Unknown with { InGame = AdvancedInGameStatus.Reading };
+        string without = AdvancedPresenter.SourcesLine(before);
+
+        string read = AdvancedPresenter.SourcesLine(before with { DriverLatency = AdvancedDriverRead.Read, DriverLatencySlowestUs = 3 });
+        read.Should().StartWith(without, "what was said before is said as before");
+        read.Should().EndWith(string.Format(CultureInfo.CurrentCulture, Strings.Advanced_InGameDriverLine, Strings.AdvDriverRead_Read));
+
+        // Stopped for being slow says how slow: that number is what tells a driver that held a call from a pause.
+        string slow = AdvancedPresenter.SourcesLine(before with { DriverLatency = AdvancedDriverRead.Slow, DriverLatencySlowestUs = 2400 });
+        slow.Should().Contain(2400.ToString("N0", CultureInfo.CurrentCulture));
+        slow.Should().NotContain("{0");
+
+        // A row that says nothing about it - stored before, or a game the capture side publishes nothing for.
+        AdvancedPresenter.SourcesLine(before with { DriverLatency = AdvancedDriverRead.Unknown }).Should().Be(without);
+        AdvancedPresenter.SourcesLine(before with { DriverLatency = null }).Should().Be(without);
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("vi")]
+    [InlineData("ja")]
+    public void EveryOutcomeOfTheDriversReadHasItsWordsInEveryLanguage(string culture)
+    {
+        CultureInfo c = CultureInfo.GetCultureInfo(culture);
+        foreach (AdvancedDriverRead outcome in Enum.GetValues<AdvancedDriverRead>())
+        {
+            string? words = Strings.ResourceManager.GetString("AdvDriverRead_" + outcome, c);
+            words.Should().NotBeNullOrEmpty(outcome.ToString());
+            (words ?? string.Empty).Contains("{0", StringComparison.Ordinal).Should().Be(outcome == AdvancedDriverRead.Slow, "only the slow stop carries its microseconds");
+        }
+
+        Strings.ResourceManager.GetString(nameof(Strings.Advanced_InGameDriverLine), c).Should().Contain("{0}");
+        Strings.ResourceManager.GetString(nameof(Strings.Advanced_Status_InGameDriver), c).Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void TheSevenSpansOfTheDriversReportAreSeriesOfOneEntryLabelledInWords()
+    {
+        (AdvancedMetric? metric, string label) = AdvancedPresenter.Resolve("adv.nvapi.reflex.frame_report.os_queue", []);
+
+        metric!.Id.Should().Be("nvapi.reflex.frame_report");
+        label.Should().Be(AdvancedLabels.Member(AdvancedLabels.Of(metric), Strings.AdvToken_os_queue));
+        label.Should().NotContain("os_queue", "the member is one of ours and is said in words");
+
+        // Seven lines of one entry: within what a chart can show, so no band.
+        string[] series = [.. InGameAdvancedSampler.LatencySpans.Select(static span => InGameAdvancedSampler.LatencySeriesStem + span)];
+        AdvancedPresenter.Metrics(series, []).Should().ContainSingle().Which.Id.Should().Be("nvapi.reflex.frame_report");
+        series.Length.Should().BeLessThanOrEqualTo(AdvancedPresenter.MaxLines);
+
+        // On the Sources tab the two entries say where they are read, and it is not "when the game makes the call".
+        AdvancedPresenter.Sources(now: null)
+            .Where(static row => string.Equals(row.Label, AdvancedLabels.Of(AdvancedMetricCatalog.Find("nvapi.reflex.frame_report")!), StringComparison.Ordinal))
+            .Should().ContainSingle().Which.Status.Should().Be(Strings.Advanced_Status_InGameDriver);
+    }
 }

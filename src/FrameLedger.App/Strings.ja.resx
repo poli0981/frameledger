@@ -665,6 +665,10 @@
     <value>ゲームが毎フレーム Streamline に伝える内容: {0}。FSR フレーム生成の設定方法: {1}。</value>
     <comment>review</comment>
   </data>
+  <data name="Advanced_InGameDriverLine" xml:space="preserve">
+    <value>NVIDIA の遅延レポート (FrameLedger がゲーム内でグラフィックス ドライバーに問い合わせます): {0}。</value>
+    <comment>review</comment>
+  </data>
   <data name="Advanced_InGameFeatureCallsLine" xml:space="preserve">
     <value>各 Streamline 機能のバージョン: {0}。各機能の要件: {1}。</value>
     <comment>review</comment>
@@ -757,6 +761,10 @@
     <value>FrameLedger が計測するゲーム内で、ゲームがその呼び出しを行ったときに読み取り</value>
     <comment>review</comment>
   </data>
+  <data name="Advanced_Status_InGameDriver" xml:space="preserve">
+    <value>FrameLedger が計測するゲーム内で、グラフィックス ドライバーから読み取り: FrameLedger が約 1 秒に 1 回問い合わせます</value>
+    <comment>review</comment>
+  </data>
   <data name="Advanced_Status_Read" xml:space="preserve">
     <value>読み取り中</value>
     <comment>review</comment>
@@ -779,6 +787,50 @@
   </data>
   <data name="Advanced_Tab_Sources" xml:space="preserve">
     <value>ソース</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_Error" xml:space="preserve">
+    <value>ドライバーがエラーを返しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_Faulted" xml:space="preserve">
+    <value>ゲーム終了まで停止 - ドライバーへの呼び出しでフォールトが発生しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_NoDirect3D12" xml:space="preserve">
+    <value>読み取っていません - このゲームは Direct3D 12 で表示していません</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_NoGetter" xml:space="preserve">
+    <value>読み取っていません - ライブラリが 2 つの関数を返しませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_NoModule" xml:space="preserve">
+    <value>読み取っていません - ゲームが NVIDIA の nvapi64.dll を読み込んでおらず、FrameLedger がそれを読み込むことはありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_NothingReported" xml:space="preserve">
+    <value>問い合わせましたが、ドライバーはフレームを報告しませんでした - このゲームは NVIDIA Reflex を使用していません</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_Read" xml:space="preserve">
+    <value>読み取りました</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_Refused" xml:space="preserve">
+    <value>読み取っていません - ゲーム内の nvapi64.dll はゲーム自身のフォルダーにあり、ドライバーのものではありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_Slow" xml:space="preserve">
+    <value>ゲーム終了まで停止 - ドライバーへの呼び出しに {0:N0} µs かかりました。2,000 µs 以上かかった呼び出しが最後になります</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_Stalled" xml:space="preserve">
+    <value>停止 - ドライバーへの呼び出しが戻りませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvDriverRead_Unknown" xml:space="preserve">
+    <value>記録なし</value>
     <comment>review</comment>
   </data>
   <data name="AdvGroup_Board" xml:space="preserve">
@@ -901,6 +953,10 @@
     <value>読み取らない: センサー ライブラリがすべての USB デバイスを探索することになるため</value>
     <comment>review</comment>
   </data>
+  <data name="AdvReach_RefusedRoute" xml:space="preserve">
+    <value>読み取りません: ゲーム実行中にしか分からないアドレスへのパッチ、またはゲーム自身のスレッド以外からの呼び出しをベンダーが禁じている関数が必要になるためです - どちらも行いません</value>
+    <comment>review</comment>
+  </data>
   <data name="AdvReach_Spike" xml:space="preserve">
     <value>調査中 (未決定)</value>
     <comment>review</comment>
@@ -969,6 +1025,10 @@
     <value>Dolby Vision</value>
     <comment>review</comment>
   </data>
+  <data name="AdvToken_driver" xml:space="preserve">
+    <value>ドライバー</value>
+    <comment>review</comment>
+  </data>
   <data name="AdvToken_driver_default" xml:space="preserve">
     <value>ドライバーの既定値</value>
     <comment>review</comment>
@@ -987,6 +1047,10 @@
   </data>
   <data name="AdvToken_game_ready" xml:space="preserve">
     <value>Game Ready</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_gpu_render" xml:space="preserve">
+    <value>GPU 描画</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_gsync_module" xml:space="preserve">
@@ -1053,12 +1117,24 @@
     <value>オンのときとオフのときがあります</value>
     <comment>review</comment>
   </data>
+  <data name="AdvToken_os_queue" xml:space="preserve">
+    <value>OS の描画キュー</value>
+    <comment>review</comment>
+  </data>
   <data name="AdvToken_pci" xml:space="preserve">
     <value>PCI</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_pci_express" xml:space="preserve">
     <value>PCI Express</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_present" xml:space="preserve">
+    <value>プレゼント</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_render_submit" xml:space="preserve">
+    <value>描画コマンドの送信</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_rtx_new_feature" xml:space="preserve">
@@ -1073,12 +1149,20 @@
     <value>scRGB (リニア)</value>
     <comment>review</comment>
   </data>
+  <data name="AdvToken_simulation" xml:space="preserve">
+    <value>シミュレーション</value>
+    <comment>review</comment>
+  </data>
   <data name="AdvToken_srgb" xml:space="preserve">
     <value>sRGB</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_studio" xml:space="preserve">
     <value>Studio</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_total" xml:space="preserve">
+    <value>合計 (シミュレーション開始から GPU 描画終了まで)</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_ulmb" xml:space="preserve">
@@ -1486,7 +1570,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_Advanced_Body" xml:space="preserve">
-    <value>セッション中にグラフィックス ドライバーとハードウェア センサーからさらに多くを読み取り、セッションと一緒に保存します - グラフィックス カードのメモリと負荷の詳細、各ファンと電圧、ディスプレイの対応機能、ゲームに対するドライバーの設定など。FrameLedger が内部から計測するゲームでは、ゲームが DLSS、Streamline、FSR に渡す内容 (サイズ、プリセット、シャープニング、露出、深度範囲、フレーム生成の設定) も読み取ります - カメラの位置は決して読み取りません。オフ: ゲーム内も含め、追加の読み取りも保存も行いません。次のセッションから適用され、オフの間に記録したセッションが後から補われることはありません。</value>
+    <value>セッション中にグラフィックス ドライバーとハードウェア センサーからさらに多くを読み取り、セッションと一緒に保存します - グラフィックス カードのメモリと負荷の詳細、各ファンと電圧、ディスプレイの対応機能、ゲームに対するドライバーの設定など。FrameLedger が内部から計測するゲームでは、ゲームが DLSS、Streamline、FSR に渡す内容 (サイズ、プリセット、シャープニング、露出、深度範囲、フレーム生成の設定) も読み取ります - カメラの位置は決して読み取りません。NVIDIA のカードで、NVIDIA のライブラリを使用する Direct3D 12 のゲームでは、フレームの各段階にかかった時間を、FrameLedger がゲーム内から約 1 秒に 1 回グラフィックス ドライバーに問い合わせます - これは、ゲームのフレームを表示するスレッド上で FrameLedger 自身が行う呼び出しです。オフ: ゲーム内も含め、追加の読み取りも保存も行いません。次のセッションから適用され、オフの間に記録したセッションが後から補われることはありません。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_Advanced_Label" xml:space="preserve">
