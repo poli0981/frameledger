@@ -431,7 +431,7 @@ public sealed class AdvancedPresenterTests
         {
             string? words = Strings.ResourceManager.GetString("AdvDriverRead_" + outcome, c);
             words.Should().NotBeNullOrEmpty(outcome.ToString());
-            (words!.Contains("{0", StringComparison.Ordinal)).Should().Be(outcome == AdvancedDriverRead.Slow, "only the slow stop carries its microseconds");
+            (words ?? string.Empty).Contains("{0", StringComparison.Ordinal).Should().Be(outcome == AdvancedDriverRead.Slow, "only the slow stop carries its microseconds");
         }
 
         Strings.ResourceManager.GetString(nameof(Strings.Advanced_InGameDriverLine), c).Should().Contain("{0}");
@@ -448,7 +448,7 @@ public sealed class AdvancedPresenterTests
         label.Should().NotContain("os_queue", "the member is one of ours and is said in words");
 
         // Seven lines of one entry: within what a chart can show, so no band.
-        string[] series = [.. FrameLedger.Application.Capture.InGameAdvancedSampler.LatencySpans.Select(static span => FrameLedger.Application.Capture.InGameAdvancedSampler.LatencySeriesStem + span)];
+        string[] series = [.. InGameAdvancedSampler.LatencySpans.Select(static span => InGameAdvancedSampler.LatencySeriesStem + span)];
         AdvancedPresenter.Metrics(series, []).Should().ContainSingle().Which.Id.Should().Be("nvapi.reflex.frame_report");
         series.Length.Should().BeLessThanOrEqualTo(AdvancedPresenter.MaxLines);
 
