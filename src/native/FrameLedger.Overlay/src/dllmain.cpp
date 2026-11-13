@@ -165,6 +165,7 @@ enum FlLogCode : uint32_t {
     kLogRuntimeCensus,
     kLogFfxConfigureType,
     kLogPatchBatch,
+    kLogLatency,
 };
 
 const char* LogCodeName(uint32_t code) noexcept {
@@ -207,6 +208,8 @@ const char* LogCodeName(uint32_t code) noexcept {
         return "FFX_CONFIGURE";
     case kLogPatchBatch:
         return "PATCH_BATCH";
+    case kLogLatency:
+        return "LATENCY";
     default:
         return "?";
     }
@@ -580,6 +583,9 @@ struct SwapChainSlot {
     uint32_t swapEffect = 0;    // DXGI_SWAP_EFFECT + 1 (fl_shm.h §Region 4: DISCARD is 0); 0 = not read
     uint32_t swapFlags = 0;     // DXGI_SWAP_CHAIN_DESC.Flags
     uint64_t displayQpc = 0;    // the QPC of this chain's last display sample
+    // This chain's device is the one g_d3d12Device holds -- the first Direct3D 12 device seen, which is not "this
+    // chain's" for a title with two. The driver's latency report is read only at such a chain's present.
+    bool heldDevice = false;
 };
 
 // Region 4 (fl_shm.h, layout 4, beta.10): set in InitThread beside g_state, written only through PublishDisplay.
@@ -735,6 +741,266 @@ void PublishD3D12Device(ID3D12Device* device) noexcept {
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// REFLEX LATENCY: THE ONE CALL THE OVERLAY MAKES INTO A DRIVER (Advanced metrics train C; owner decisions D132, D136,
+// D138-D141; fl_reflex.h; spike-notes §31; 17_HOOK_ENGINE §Memory / latency).
+//
+// While a session asks for Advanced metrics, and only then, the driver's two read-only latency getters are called
+// about once a second with the Direct3D 12 device held above -- through an nvapi64.dll THE GAME had already loaded.
+// Nothing is hooked for it and nothing is loaded for it.
+//
+// WHO DOES WHAT. The WATCHDOG finds the module and the two addresses, once for the process, and arms the gate at
+// most once a second. A PRESENTING THREAD that finds the gate armed makes the read, after its frame's record is
+// published: a call the driver holds stops the thread that made it, and the watchdog -- which supervises, installs
+// and flushes -- must never be that thread (spike-notes §31, M2). So the call delays one present a second by its own
+// length: 0.5-2.6 us measured, and one of 2 ms or more is the last one this process makes (D141).
+//
+// THE GATE, four states in one word, is what makes that safe without a lock:
+//     idle     nobody is reading. g_latRead is the watchdog's: it takes what the last read left, then may arm.
+//     armed    one read is wanted. Only the watchdog stores this.
+//     reading  a presenting thread took `armed` by compare-exchange and is inside the read. g_latRead and
+//              g_latReport are that thread's. Two presenting threads cannot both be here, and the watchdog reads
+//              nothing of theirs while one is.
+//     off      a read ended in a fault or took too long. Final for the process; g_latRead is the watchdog's again.
+// A present pays one relaxed load for all of it.
+//
+// WHAT STOPS IT, each until the game exits: a fault in a getter (guarded, counted once in faultCount -- with the
+// gate off it cannot be counted again, so it cannot reach the three that self-disable); a call of 2 ms or more; and
+// a call that has not returned after two seconds, which nothing can stop -- that one is logged, flushed at once and
+// published as stalled, and the gate is left where the stuck thread holds it.
+// ---------------------------------------------------------------------------------------------------------------------
+constexpr uint32_t kLatGateIdle = 0u;
+constexpr uint32_t kLatGateArmed = 1u;
+constexpr uint32_t kLatGateReading = 2u;
+constexpr uint32_t kLatGateOff = 3u;
+constexpr uint32_t kLatSlowMicros = 2000u;    // owner decision D141
+
+std::atomic<uint32_t> g_latGate{kLatGateIdle};
+
+// Written by the watchdog before the gate is first armed, and never after.
+fl::reflex::Api g_latApi;
+
+// What one read left behind. Owned by whoever the gate says (above).
+struct LatencyRead {
+    fl::adv::LatencyTally  tally;
+    fl::adv::LatencyCursor cursor;
+    uint32_t               fresh = 0;         // a read finished since the watchdog last looked
+    uint32_t               ok = 0;            // its report came back NVAPI_OK
+    uint32_t               state = 0;         // FL_LAT_READING, _ERROR, _SLOW or _FAULTED after it
+    uint32_t               micros = 0;        // the slower of its two calls
+    uint32_t               sleepValid = 0;    // the sleep status came back NVAPI_OK
+    fl::adv::LatencySleep  sleep;
+};
+LatencyRead g_latRead;
+
+// 15.4 KB, in static storage: the report is never on a game thread's stack.
+NV_LATENCY_RESULT_PARAMS g_latReport;
+
+// The watchdog's own.
+fl::adv::LatencyOut g_latOut;
+bool                g_latResolved = false;    // the two addresses are in g_latApi
+bool                g_latFinal = false;       // the module was looked at and will not be read; g_latOut.state says why
+bool                g_latStalled = false;
+int64_t             g_latArmedQpc = 0;
+int64_t             g_latReadingSinceQpc = 0;
+uint32_t            g_latLoggedState = FL_LAT_NONE;
+
+// One read, on a presenting thread that found the gate armed. Not inlined: RecordPresent stays as small as it was.
+__declspec(noinline) void ReadLatencyOnce() noexcept {
+    uint32_t armed = kLatGateArmed;
+    if (!g_latGate.compare_exchange_strong(armed, kLatGateReading, std::memory_order_acq_rel,
+                                           std::memory_order_relaxed)) {
+        return;    // another presenting thread has it
+    }
+    auto*        device = static_cast<IUnknown*>(g_d3d12Device.load(std::memory_order_acquire));
+    LatencyRead& read = g_latRead;
+    read.fresh = 1u;
+    read.ok = 0u;
+    read.sleepValid = 0u;
+    read.tally = fl::adv::LatencyTally{};
+
+    DWORD              fault = 0;
+    const int64_t      began = QpcNow();
+    const NvAPI_Status status = fl::reflex::ReadLatency(g_latApi, device, g_latReport, fault);
+    uint32_t           micros = MicrosSince(began);
+    if (status == fl::reflex::kFaulted) {
+        read.state = FL_LAT_FAULTED;
+        read.micros = micros;
+        g_latGate.store(kLatGateOff, std::memory_order_release);
+        NoteFault(fault, "NvAPI_D3D_GetLatency (the driver's)");
+        return;
+    }
+    if (status == NVAPI_OK) {
+        fl::adv::ObserveLatencyReport(g_latReport, read.cursor, read.tally);
+        read.ok = 1u;
+        read.state = FL_LAT_READING;
+    } else {
+        read.state = FL_LAT_ERROR;
+    }
+
+    if (micros < kLatSlowMicros) {
+        NV_GET_SLEEP_STATUS_PARAMS sleepStatus;    // 128 bytes
+        const int64_t              beganStatus = QpcNow();
+        const NvAPI_Status         second = fl::reflex::ReadSleepStatus(g_latApi, device, sleepStatus, fault);
+        const uint32_t             microsStatus = MicrosSince(beganStatus);
+        micros = microsStatus > micros ? microsStatus : micros;
+        if (second == fl::reflex::kFaulted) {
+            read.state = FL_LAT_FAULTED;
+            read.micros = micros;
+            g_latGate.store(kLatGateOff, std::memory_order_release);
+            NoteFault(fault, "NvAPI_D3D_GetSleepStatus (the driver's)");
+            return;
+        }
+        if (second == NVAPI_OK) {
+            read.sleep = fl::adv::ObserveSleepStatus(sleepStatus);
+            read.sleepValid = 1u;
+        }
+    }
+    read.micros = micros;
+    if (micros >= kLatSlowMicros) {
+        read.state = FL_LAT_SLOW;
+        g_latGate.store(kLatGateOff, std::memory_order_release);
+        return;
+    }
+    g_latGate.store(kLatGateIdle, std::memory_order_release);
+}
+
+const char* LatencyStateName(uint32_t state) noexcept {
+    switch (state) {
+    case FL_LAT_NO_DEVICE:
+        return "no Direct3D 12 device behind a hooked swap chain";
+    case FL_LAT_NO_MODULE:
+        return "the game has not loaded nvapi64.dll";
+    case FL_LAT_REFUSED:
+        return "refused: nvapi64.dll is in the game's own folder";
+    case FL_LAT_NO_GETTER:
+        return "nvapi64.dll does not answer for the two getters";
+    case FL_LAT_READING:
+        return "reading the driver's latency report";
+    case FL_LAT_ERROR:
+        return "the driver answered with an error";
+    case FL_LAT_SLOW:
+        return "off: a call into the driver was slow";
+    case FL_LAT_FAULTED:
+        return "off: a call into the driver faulted";
+    case FL_LAT_STALLED:
+        return "off: a call into the driver has not returned";
+    default:
+        return "not asked";
+    }
+}
+
+// THE WATCHDOG'S HALF, once a tick while a session asks. `now` is this tick's QPC.
+void TickLatency(bool newRequest, int64_t now) noexcept {
+    if (newRequest) {
+        // A session's counts are its own; where the read stands is the process's and stays.
+        g_latOut.reads = 0u;
+        g_latOut.worstUs = 0u;
+        g_latOut.sleepSeenOn = 0u;
+        g_latOut.sleepSeenOff = 0u;
+        g_latOut.multiplier = 0u;
+        g_latOut.tally = fl::adv::LatencyTally{};
+    }
+    if (g_latStalled) {
+        return;    // the gate belongs to a thread that is not coming back; nothing of g_latRead is read again
+    }
+    const uint32_t gate = g_latGate.load(std::memory_order_acquire);
+    if (gate == kLatGateReading) {
+        if (g_latReadingSinceQpc == 0) {
+            g_latReadingSinceQpc = now;
+        } else if (static_cast<uint64_t>(now - g_latReadingSinceQpc) >= 2u * g_logQpcFreq) {
+            g_latStalled = true;
+            g_latOut.state = FL_LAT_STALLED;
+            g_latLoggedState = FL_LAT_STALLED;
+            LogNote(kLogLatency, LatencyStateName(FL_LAT_STALLED), FL_LAT_STALLED, 0u);
+            FlushLog();    // the game is about to be closed by hand: what is known is written now
+        }
+        return;
+    }
+    g_latReadingSinceQpc = 0;
+
+    // Idle, armed or off: nobody is reading. What the last read left is taken here.
+    if (gate != kLatGateArmed && g_latRead.fresh != 0u) {
+        g_latRead.fresh = 0u;
+        g_latOut.reads += 1u;
+        g_latOut.worstUs = g_latRead.micros > g_latOut.worstUs ? g_latRead.micros : g_latOut.worstUs;
+        g_latOut.state = g_latRead.state;
+        if (g_latRead.ok != 0u) {
+            g_latOut.tally = g_latRead.tally;
+            fl::adv::NoteBits(g_adv.validMask, FL_ADV_VALID_LATENCY);
+        }
+        if (g_latRead.sleepValid != 0u) {
+            g_latOut.sleepSeenOn |= g_latRead.sleep.on & FL_LAT_SLEEP_BITS;
+            g_latOut.sleepSeenOff |= ~g_latRead.sleep.on & FL_LAT_SLEEP_BITS;
+            g_latOut.multiplier = g_latRead.sleep.multiplier;
+        }
+        if (g_latOut.state != g_latLoggedState) {
+            g_latLoggedState = g_latOut.state;
+            LogNote(kLogLatency, LatencyStateName(g_latOut.state), g_latOut.state, g_latRead.micros);
+        }
+    }
+    if (gate != kLatGateIdle || g_latFinal) {
+        return;    // armed and waiting for a present, or off for good
+    }
+
+    if (!g_latResolved) {
+        uint32_t state = FL_LAT_NO_DEVICE;
+        if (g_d3d12Device.load(std::memory_order_acquire) != nullptr) {
+            DWORD fault = 0;
+            switch (fl::reflex::Resolve(g_latApi, fault)) {
+            case fl::reflex::Resolved::Ok:
+                g_latResolved = true;
+                state = FL_LAT_READING;
+                break;
+            case fl::reflex::Resolved::NoModule:
+                state = FL_LAT_NO_MODULE;    // asked again next tick: a game may load it late
+                break;
+            case fl::reflex::Resolved::Refused:
+                g_latFinal = true;
+                state = FL_LAT_REFUSED;
+                break;
+            case fl::reflex::Resolved::Faulted:
+                g_latFinal = true;
+                state = FL_LAT_FAULTED;
+                NoteFault(fault, "nvapi_QueryInterface (the driver's)");
+                break;
+            default:
+                g_latFinal = true;
+                state = FL_LAT_NO_GETTER;
+                break;
+            }
+        }
+        g_latOut.state = state;
+        if (state != g_latLoggedState) {
+            g_latLoggedState = state;
+            LogNote(kLogLatency, LatencyStateName(state), state, reinterpret_cast<uint64_t>(g_latApi.nvapi));
+            // Where nvapi64.dll was loaded from, and the image its getters are in (the driver's own
+            // nvapi64_impl.dll on the driver the probe ran against): the end of each path, which is what fits a line.
+            const size_t room = sizeof(FlLogEvent::text) - 1u;
+            for (const wchar_t* path : {g_latApi.modulePath, g_latApi.ownerPath}) {
+                if (path[0] != L'\0') {
+                    const size_t length = wcslen(path);
+                    LogNoteW(kLogLatency, path + (length > room ? length - room : 0u), state,
+                             reinterpret_cast<uint64_t>(path == g_latApi.modulePath ? g_latApi.nvapi : g_latApi.owner));
+                }
+            }
+        }
+        if (!g_latResolved) {
+            return;
+        }
+    }
+    if (g_latArmedQpc == 0 || static_cast<uint64_t>(now - g_latArmedQpc) >= g_logQpcFreq) {
+        g_latArmedQpc = now;
+        g_latGate.store(kLatGateArmed, std::memory_order_release);
+    }
+}
+
+// The request went off: a read that was wanted and not yet made is not made in a session that never asked.
+void DisarmLatency() noexcept {
+    uint32_t armed = kLatGateArmed;
+    g_latGate.compare_exchange_strong(armed, kLatGateIdle, std::memory_order_acq_rel, std::memory_order_relaxed);
+}
+
 // Which API this swapchain belongs to, asked of the swapchain itself.
 //
 // One hook sees every swapchain in the process, and a D3D11 title and a D3D12
@@ -750,7 +1016,8 @@ void PublishD3D12Device(ID3D12Device* device) noexcept {
 // FL_API_UNKNOWN when neither answers. 0 is the honest value for "we could not
 // tell", and it is what the enum reserves it for -- guessing D3D11 is how the
 // field became wrong in the first place.
-uint8_t ResolveApi(IDXGISwapChain* sc) noexcept {
+uint8_t ResolveApi(IDXGISwapChain* sc, bool& heldDevice) noexcept {
+    heldDevice = false;
     IUnknown* dev = nullptr;
     if (FAILED(sc->GetDevice(__uuidof(IUnknown), reinterpret_cast<void**>(&dev))) || dev == nullptr) {
         return FL_API_UNKNOWN;
@@ -776,6 +1043,7 @@ uint8_t ResolveApi(IDXGISwapChain* sc) noexcept {
         // installer needs a live device to read a command list's vtable off, and it
         // runs on the watchdog thread, which has no swapchain of its own.
         PublishD3D12Device(d12);
+        heldDevice = g_d3d12Device.load(std::memory_order_acquire) == static_cast<void*>(d12);
         d12->Release();
     } else if (SUCCEEDED(dev->QueryInterface(__uuidof(ID3D12CommandQueue), reinterpret_cast<void**>(&queue))) &&
                queue != nullptr) {
@@ -807,7 +1075,7 @@ SwapChainSlot* FindOrAdd(IDXGISwapChain* sc) noexcept {
             if (SUCCEEDED(sc->GetDesc(&desc))) {
                 RememberDesc(s, desc);
             }
-            s.api = ResolveApi(sc);
+            s.api = ResolveApi(sc, s.heldDevice);
             // apiMask records what we have ACTUALLY seen present, not what the
             // process happens to have loaded: a game can link d3d12.dll and
             // present through D3D11.
@@ -3291,7 +3559,8 @@ DWORD WatchdogLoop() noexcept {
         // a count never spans two sessions of a game that kept running.
         std::atomic_ref<uint32_t> advancedReq{g_control->advancedRequested};
         const uint32_t            advancedNow = advancedReq.load(std::memory_order_acquire);
-        if (advancedNow != 0u && advancedNow != g_advancedSeen) {
+        const bool                advancedIsNew = advancedNow != 0u && advancedNow != g_advancedSeen;
+        if (advancedIsNew) {
             fl::adv::Reset(g_adv);
             g_advancedSeen = advancedNow;
         }
@@ -3300,7 +3569,12 @@ DWORD WatchdogLoop() noexcept {
             // Initialised through QuadPart, the member read below, so that it is the active one (cpp:S6232).
             LARGE_INTEGER advancedQpc{.QuadPart = 0};
             QueryPerformanceCounter(&advancedQpc);
-            fl::adv::Publish(g_adv, g_advanced, advancedNow, static_cast<uint64_t>(advancedQpc.QuadPart));
+            // The driver's latency report (train C): what the last read left is taken, and the next one armed,
+            // BEFORE the publication -- so the publication carries the read, and carries it once.
+            TickLatency(advancedIsNew, advancedQpc.QuadPart);
+            fl::adv::Publish(g_adv, g_advanced, advancedNow, static_cast<uint64_t>(advancedQpc.QuadPart), &g_latOut);
+        } else {
+            DisarmLatency();
         }
 
         // The in-process stop, for a title that is NOT presenting (menu, hung,
@@ -3952,6 +4226,13 @@ void RecordPresent(IDXGISwapChain* sc, UINT syncInterval, UINT flags) noexcept {
     // a writer that FORGETS is now honest by construction.
 
     g_writer.Publish(rec);
+
+    // THE DRIVER'S LATENCY REPORT (train C), after the record: one relaxed load a present, and a call only when the
+    // watchdog armed one -- about once a second, while a session asks for Advanced metrics, at a chain whose device
+    // is the one held. See ReadLatencyOnce.
+    if (g_latGate.load(std::memory_order_relaxed) == kLatGateArmed && slot != nullptr && slot->heldDevice) {
+        ReadLatencyOnce();
+    }
 }
 
 // ---------------------------------------------------------------------------

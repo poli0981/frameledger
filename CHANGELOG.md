@@ -54,6 +54,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Added
 
+- **Not in a release yet: the part inside a game can read NVIDIA's own latency report** (owner decisions D132, D136,
+  D138-D141). While a session records Advanced metrics, and only then, it asks the graphics driver about once a
+  second for its report of a frame's stages - simulation, render submit, present, driver, the operating system's
+  queue, the graphics card - and for its low-latency state. It is a call FrameLedger makes itself, on the thread
+  that presents the game's frames, through NVIDIA's `nvapi64.dll` only where the game had already loaded it;
+  Direct3D 12 only. A copy of that library sitting in the game's own folder is refused. A call that faults or takes
+  two milliseconds is the last one until the game is closed. Nothing shows these numbers yet: the Agent and the App
+  come next, with the legal texts.
+
 - **For developers: room in the shared memory for NVIDIA Reflex latency** (owner decisions D136, D138). Ten reserved
   words of the block that carries Advanced metrics from a game are now named for the driver's latency report -
   where the read stands, and a sum for each stage of a frame. Nothing writes them yet and nothing reads them; the

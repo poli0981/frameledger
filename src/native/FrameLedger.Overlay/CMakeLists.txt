@@ -34,6 +34,8 @@ add_dependencies(FrameLedger.Overlay fl_ac_floor_gen)
 target_link_libraries(FrameLedger.Overlay PRIVATE fl_ac_floor)
 target_link_libraries(FrameLedger.Overlay PRIVATE FrameLedger.Shm fl_dxgi_vtable fl_native_flags fl_hostile_env_flags minhook
     fl_streamline_headers fl_fidelityfx_headers fl_fsr3_host_headers
+    # NVAPI's headers and NOT its library (third_party/CMakeLists.txt says why): fl_reflex.h's structs and ids.
+    fl_nvapi_headers
     # Advapi32: the ring's DACL. User32: WindowFromDC / GetClientRect for the OpenGL
     # output size. Shell32 + Ole32: SHGetKnownFolderPath for the native log's
     # directory (§S21's resolution, not the environment), init/watchdog thread only.

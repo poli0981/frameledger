@@ -1,0 +1,10 @@
+# The NVAPI interface ids that code loaded into a game may name (Advanced metrics train C; owner decisions D132,
+# D136; rule 4's note of 2026-11-13). The Overlay links no NVAPI: it asks an nvapi64.dll the game had already
+# loaded for these two addresses, by the ids nvapi_interface.h gives them, and calls them with the Direct3D 12
+# device behind the swap chain it hooks (FrameLedger.Overlay/include/fl_reflex.h).
+#
+# tools/nvapi-readonly-check.ps1 fails the build when an Overlay or Vulkan-layer source names the id of any other
+# NVAPI function, when a name here has no id in those sources, or when a name here is a writer - a setter, a
+# marker, a sleep - or returns an identifier. Getters only.
+NvAPI_D3D_GetLatency
+NvAPI_D3D_GetSleepStatus

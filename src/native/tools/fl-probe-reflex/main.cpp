@@ -729,6 +729,22 @@ int RunReal(int pollSeconds) noexcept {
     static NV_LATENCY_RESULT_PARAMS report;
     NV_GET_SLEEP_STATUS_PARAMS      sleep{};
 
+    // WHERE THE TWO ADDRESSES ARE. The module answers with addresses that need not be its own: the image each one
+    // lies in is printed, because the Overlay refuses an address that is in no image at all (fl_reflex.h, InImage).
+    const unsigned int getterIds[2] = {fl::reflex::kIdGetLatency, fl::reflex::kIdGetSleepStatus};
+    for (const unsigned int id : getterIds) {
+        const void*              address = query(id);
+        MEMORY_BASIC_INFORMATION info{};
+        wchar_t                  owner[MAX_PATH]{};
+        if (address != nullptr && VirtualQuery(address, &info, sizeof(info)) != 0) {
+            GetModuleFileNameW(static_cast<HMODULE>(info.AllocationBase), owner, MAX_PATH);
+        }
+        std::printf("id 0x%08x -> %p: type 0x%lx, protect 0x%lx, in %ls%s\n", id, address,
+                    static_cast<unsigned long>(info.Type), static_cast<unsigned long>(info.Protect),
+                    owner[0] != 0 ? owner : L"(no image)",
+                    info.AllocationBase == static_cast<void*>(nvapi) ? " (nvapi64.dll itself)" : "");
+    }
+
     // R0. THE GETTERS BEFORE NvAPI_Initialize -- a game that has the module but has not initialised it.
     std::printf("Resolve with the module loaded: %u (0 = Ok)\n", static_cast<unsigned>(fl::reflex::Resolve(api)));
     PrintDigest("R0 before NvAPI_Initialize:", fl::reflex::ReadLatency(api, dx11.device, report), report);

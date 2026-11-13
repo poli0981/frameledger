@@ -186,7 +186,10 @@ function Get-ImportName([string]$DumpbinText) {
 function Get-ForbiddenImport([string[]]$ImportNames) {
     $bad = @()
     foreach ($n in $ImportNames) {
-        if ($n -match '^(sl\.|_?nvngx|libxess|ffx_|amd_fidelityfx)') { $bad += $n }
+        # `nvapi` since Advanced metrics train C: the Overlay calls two getters of an nvapi64.dll the GAME loaded and
+        # must never be what loads it - linking nvapi64.lib would not show here (it is static and loads the DLL at
+        # its first call; tools/nvapi-readonly-check.ps1 refuses the call tokens), a real import would.
+        if ($n -match '^(sl\.|_?nvngx|libxess|ffx_|amd_fidelityfx|nvapi)') { $bad += $n }
     }
     return , $bad
 }
@@ -270,6 +273,8 @@ if ($SelfTest) {
            Got  = ((Get-ImportName "  Summary`r`n`r`n        1000 .data`r`n").Count -eq 0); Want = $true }
         @{ Name = 'a clean import list is clean'
            Got  = ((Get-ForbiddenImport @('KERNEL32.dll', 'd3d11.dll', 'd3d12.dll', 'dxgi.dll')).Count -eq 0); Want = $true }
+        @{ Name = 'an imported nvapi64.dll is caught, and a module that only ends in the name is not'
+           Got  = (((Get-ForbiddenImport @('KERNEL32.dll', 'nvapi64.dll', 'NVAPI64.DLL', 'mynvapi.dll')) -join ',') -eq 'nvapi64.dll,NVAPI64.DLL'); Want = $true }
         @{ Name = 'a LINKED sl.interposer.dll is caught - the whole reason Pass C exists'
            Got  = ((Get-ForbiddenImport @('KERNEL32.dll', 'sl.interposer.dll')) -contains 'sl.interposer.dll'); Want = $true }
         @{ Name = 'the driver-store NGX core is caught despite its leading underscore'

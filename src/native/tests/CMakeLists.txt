@@ -148,12 +148,16 @@ target_compile_definitions(fl_guard_test PRIVATE
     FL_STUB_SL_INTERPOSER=L"$<TARGET_FILE:fl_stub_sl_interposer>"
     # The ffx-api loader stub, so a test can read one of its exports' first bytes out of a target (0.1.0-beta.43).
     FL_STUB_FFX_LOADER=L"$<TARGET_FILE:fl_stub_ffx_loader>"
+    # The stand-in nvapi64.dll (train C): the target loads it, and the tests turn its knobs and read its call counts
+    # through the named section fl_stub_nvapi_shared.h describes.
+    FL_STUB_NVAPI64=L"$<TARGET_FILE:fl_stub_nvapi64>"
     FL_OVERLAY_DLL=L"${FL_STAGED_OVERLAY}"
     # The un-staged original, so a test can prove the check discriminates on
     # DIRECTORY rather than on filename: same bytes, same name, wrong place.
     FL_OVERLAY_DLL_ELSEWHERE=L"$<TARGET_FILE:FrameLedger.Overlay>"
 )
-add_dependencies(fl_guard_test hook-harness FrameLedger.Overlay fl_stage_overlay_payload)
+add_dependencies(fl_guard_test hook-harness FrameLedger.Overlay fl_stage_overlay_payload fl_stub_nvapi64)
+target_include_directories(fl_guard_test PRIVATE "${CMAKE_SOURCE_DIR}/tools/vendor-stubs")
 
 add_test(NAME fl_guard COMMAND fl_guard_test)
 fl_catch2_test_completes(fl_guard)
@@ -190,6 +194,18 @@ target_compile_options(fl_unhook_inline_test PRIVATE /EHsc)
 target_compile_definitions(fl_unhook_inline_test PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 add_test(NAME fl_unhook_inline COMMAND fl_unhook_inline_test)
 fl_catch2_test_completes(fl_unhook_inline)
+
+# fl_adv_fields.h's reader of the driver's latency report (Advanced metrics train C): the header the Overlay
+# compiles, on reports written by hand -- the two newest frames held back, a span the driver did not report, a span
+# no frame can have, frame ids that start again, and the ten words of a publication.
+add_executable(fl_reflex_summary_test reflex_summary_test.cpp)
+target_include_directories(fl_reflex_summary_test PRIVATE "${CMAKE_SOURCE_DIR}/FrameLedger.Overlay/include")
+target_link_libraries(fl_reflex_summary_test PRIVATE FrameLedger.Shm fl_native_flags fl_streamline_headers
+    fl_fidelityfx_headers fl_nvapi_headers Catch2::Catch2WithMain)
+target_compile_options(fl_reflex_summary_test PRIVATE /EHsc)
+target_compile_definitions(fl_reflex_summary_test PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+add_test(NAME fl_reflex_summary COMMAND fl_reflex_summary_test)
+fl_catch2_test_completes(fl_reflex_summary)
 
 # fl_ffx_types.h (0.1.0-beta.42, D121): the descriptor types an ffx-api module was handed, kept by the detours for
 # the native log. The header the Overlay compiles, driven without the Overlay -- including from eight threads.

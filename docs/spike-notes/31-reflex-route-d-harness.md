@@ -132,3 +132,48 @@ Three runs of `fl-probe-reflex --real 10` on 2026-11-13 (RTX 5080, driver 32.0.1
 
 **What it does not say**: a game's own sleep, on a game's own threads, with a real frame's work between the sleep
 and the present; frame generation's pacer; another driver. Those are what the first real title is for (D136).
+
+### What moving the sequence into the Overlay found (2026-11-13, the same evening)
+
+The call sequence became `FrameLedger.Overlay/include/fl_reflex.h`, with one check the candidate did not have: that
+the two addresses the module answers with are code of the module. **Run against the installed driver, that check
+refused the driver.** `C:\Windows\System32\nvapi64.dll` is a shim: it answers both ids with addresses inside
+`nvapi64_impl.dll`, in the driver's own store (`…\DriverStore\FileRepository\nv_dispi.inf_amd64_…`), an image of
+its own. Three consequences, all in the header now:
+
+- An address is accepted when it is **executable code of an image the process has loaded** — which still refuses
+  the heap, a stack and nowhere — not only when it is inside `nvapi64.dll`.
+- **A reference is kept on that image too.** The addresses are code only while `nvapi64_impl.dll` stays loaded, and
+  what the shim does with it when a game unloads NVAPI was not looked at.
+- **The note above was wrong about Control Flow Guard.** It reasoned from `nvapi64.dll`, which is not a CFG image;
+  the code that is called is in `nvapi64_impl.dll`, which is one (`dumpbin`: instrumented, a function table of
+  5 332 entries). The probe enforces CFG and has made the calls from the shipped header, so on this driver the two
+  getters are valid targets. A game that enforces CFG, on a driver the probe was not run against, is not covered:
+  a target that were not valid is a fast-fail no guard catches.
+
+The stand-in module answers with addresses of its own, which is why the stub leg could not find this; only the
+real run could. The probe's `--real` now prints the image each address lies in.
+
+### A run on a busy PC, and what it says about the 2 ms latch (D141)
+
+The run that confirmed the corrected header (`Resolve` OK, the reads as before) was made while a native build and an
+injected test ran on the same PC — the probe's own loop made 9 000 frames a second where it had made 16 000. It is
+the only run so far that was not alone, and it is the nearer one to a game:
+
+| | Alone (three runs) | Busy (one run) |
+|---|---|---|
+| `GetLatency` after a sleeping frame, on the thread that sleeps and presents (2000 reads) | median 2.5–2.6 µs, worst 8–67 µs | median 3.4 µs, worst 130 µs, none of 2 ms |
+| From another thread without a pause, while the first sleeps: reads of 1 ms or more / of 2 ms or more | 0 / 0 in 10.3 million | **536 / 25 in 2.9 million**, worst 3.5 ms |
+| The same before the sleep mode was set | 1 / 0 in 9.9 million | 6 / 2 in 3.2 million, worst 2.2 ms |
+| Four reads a second for 20 s | worst 12–82 µs | worst 110 µs, none of 1 ms |
+
+**A reading, not a measurement of a game**: a thread that does nothing but call is taken off its processor now and
+then on a busy PC, and a read that was under way then is as long as the pause. Twenty-five such pauses of 2 ms or
+more in ten seconds of calling is 2.5 a second; a read of 3 µs made once a second is inside one of them about once
+in a hundred thousand reads. **So the latch of D141 will, on a busy PC, sometimes switch the read off for a pause
+that was Windows' and not the driver's** — of the order of a few sessions in a hundred, for sessions of two hours,
+if a game's presenting thread is paused as often as this probe's poller was; a presenting thread usually is not.
+The session then says *stopped: slow* with the microseconds, and the next start of the game reads again. That is the
+trade the owner chose with D141 (one call, not two): it errs towards the game. The number published with the state
+is what tells the two apart afterwards — a driver that holds a call does it again and for longer; a pause is a few
+milliseconds, once.

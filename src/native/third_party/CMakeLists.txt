@@ -156,6 +156,16 @@ add_library(fl_nvapi INTERFACE)
 target_include_directories(fl_nvapi SYSTEM INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/nvapi"
 )
+
+# THE HEADERS ALONE, for code that is loaded into a game (Advanced metrics train C, owner decision D136). The Overlay
+# calls two of the driver's getters through an nvapi64.dll the GAME had already loaded (fl_reflex.h); it takes the
+# vendored MIT headers' structs and ids and must never link nvapi64.lib, whose first call loads the DLL. So this is
+# the include directory and nothing else. tools/hookinventory-check.ps1 Pass C reads the built Overlay's import table
+# for an nvapi module, and tools/nvapi-readonly-check.ps1 holds which ids the Overlay may name.
+add_library(fl_nvapi_headers INTERFACE)
+target_include_directories(fl_nvapi_headers SYSTEM INTERFACE
+    "${CMAKE_CURRENT_SOURCE_DIR}/nvapi"
+)
 target_link_libraries(fl_nvapi INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/nvapi/amd64/nvapi64.lib"
 )
