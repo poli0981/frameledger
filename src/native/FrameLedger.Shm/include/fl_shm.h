@@ -69,6 +69,12 @@
 // moved from 0x100 to 0x6C0 to make room for it. What a hooked game told its upscaler is neither a frame fact nor a
 // display fact, and no region had room. The region is sized ONCE for the three releases of train B (beta.40, .41,
 // .42): a member a later release fills is declared here and stays zero until then, so those releases bump nothing.
+//
+// STILL 5 (2026-11-13, Advanced metrics train C, owner decisions D136 and D138): the ten reserved words that ended
+// region 5's first line became the Reflex latency words (latState .. latTotalSumUs). No offset and no size moved, a
+// reader of an older build finds zeros where it was told to expect zeros, and the build-id handshake refuses a
+// mismatched pair before either reads the other -- the precedent is slShutdowns. A trial must also be removable
+// without a layout 7.
 #define FL_SHM_LAYOUT_VERSION 5u
 
 #define FL_SHM_HANDSHAKE_OFFSET 0x00u
@@ -968,7 +974,47 @@ enum FlAdvancedValid : uint32_t {
     FL_ADV_VALID_SL_CONSTANTS = 1u << 4,     // (0.1.0-beta.43) slSetConstants seen
     FL_ADV_VALID_SL_FEATURES = 1u << 5,      // (0.1.0-beta.44) at least one feature slot filled
     FL_ADV_VALID_SL_SHUTDOWN = 1u << 6,      // (0.1.0-beta.45) slShutdown seen; slShutdowns counts
+    // (train C, declared 2026-11-13 and written by nothing until the Overlay reads the driver's latency report) a
+    // read of the driver's latency report returned OK for this request. NOT "the game's calls were read": this group
+    // comes from a call the Overlay makes itself, and latState says where that stands even while the bit is clear.
+    FL_ADV_VALID_LATENCY = 1u << 7,
 };
+
+// REFLEX LATENCY (train C; owner decisions D132, D136, D138-D141; spike-notes §31; 17_HOOK_ENGINE §Memory / latency).
+// Not a hook and not an argument of one: while a session asks for Advanced metrics, the Overlay CALLS the NVIDIA
+// driver's two read-only getters about once a second on the presenting thread, with the Direct3D 12 device behind
+// the swap chain it hooks, and only through an nvapi64.dll the game had already loaded. These words are what it
+// publishes -- by the watchdog, in the same seqlock as the rest of the region.
+//
+// FlAdvancedState.latState, bits 0..7. REFUSED, NO_GETTER, SLOW, FAULTED and STALLED are final for the process:
+// nothing is retried, and a later session of the same process reads the same word.
+enum FlLatencyState : uint32_t {
+    FL_LAT_NONE = 0,         // not asked, or nothing looked at yet
+    FL_LAT_NO_DEVICE = 1,    // asked; no Direct3D 12 device has been seen behind a hooked swap chain
+    FL_LAT_NO_MODULE = 2,    // the game has not loaded nvapi64.dll (asked again each second: a game may load it late)
+    FL_LAT_REFUSED =
+        3,    // the nvapi64.dll in the process sits in the executable's own folder: not the driver's (D140)
+    FL_LAT_NO_GETTER = 4,    // the module does not answer for both getters, or answered with an address outside itself
+    FL_LAT_READING = 5,      // resolved; a read is made about once a second
+    FL_LAT_ERROR = 6,        // the last read returned an NVAPI status that is not OK; reading goes on
+    FL_LAT_SLOW = 7,         // one call took 2 ms or more: off until the game exits (D141)
+    FL_LAT_FAULTED = 8,      // a getter faulted: off until the game exits, and counted once in faultCount
+    FL_LAT_STALLED = 9,      // a call had not returned after a second: nothing can stop it; reported and left
+};
+
+// latState, above the state: the driver's sleep status as SEEN -- a switch can be in both groups in one session.
+// Bit n of each group, in the order of NV_GET_SLEEP_STATUS_PARAMS: low-latency mode, fullscreen VRR, the control
+// panel's vsync, the game's own sleep, fullscreen independent flip. They are the DRIVER'S words: on the driver the
+// spike ran against, low-latency mode read 0 for a device whose game had just switched it on.
+#define FL_LAT_STATE_MASK 0x000000FFu
+#define FL_LAT_SLEEP_SEEN_ON_SHIFT 8u      // bits 8..12
+#define FL_LAT_SLEEP_SEEN_OFF_SHIFT 16u    // bits 16..20
+#define FL_LAT_SLEEP_BITS 0x1Fu
+#define FL_LAT_FG_MULTIPLIER_SHIFT 24u    // bits 24..31: the last fgMultiplier the status gave, stopping at 255
+
+// A span the driver did not report for a frame that was summed (an end point of zero): the whole sum reads this.
+// Without a sleep mode the driver leaves driverStartTime zero in every frame; with one it fills it in.
+#define FL_LAT_SUM_NONE 0xFFFFFFFFu
 
 // A float nobody saw. An all-ones pattern is a NaN no detour stores: every value is checked finite first -- with the
 // one exception below.
@@ -1005,12 +1051,28 @@ enum FlAdvancedValid : uint32_t {
 
 struct alignas(64) FlAdvancedState {
     // ---- line 0: the header ------------------------------------------------------------------------------------
-    uint32_t seq;                   // @0    seqlock: odd while the watchdog is inside, +2 per publication
-    uint32_t validMask;             // @4    FlAdvancedValid
-    uint32_t samples;               // @8    publications (wraps)
-    uint32_t request;               // @12   the FlControlBlock::advancedRequested this publication answers
-    uint64_t sampleQpc;             // @16   QueryPerformanceCounter at the last publication
-    uint32_t reservedHeader[10];    // @24..63  must be zero
+    uint32_t seq;          // @0    seqlock: odd while the watchdog is inside, +2 per publication
+    uint32_t validMask;    // @4    FlAdvancedValid
+    uint32_t samples;      // @8    publications (wraps)
+    uint32_t request;      // @12   the FlControlBlock::advancedRequested this publication answers
+    uint64_t sampleQpc;    // @16   QueryPerformanceCounter at the last publication
+    // Reflex latency (train C) -- the ten words that were reservedHeader. Written by nothing until the Overlay makes
+    // the read; all zero in a process nobody asked.
+    uint32_t latState;     // @24   FlLatencyState, and the sleep status as seen (the masks above)
+    uint32_t latReads;     // @28   bits 0..15 reads made since the request; bits 16..31 the slowest call
+                           //       in microseconds -- each stops at 65535
+    uint32_t latFrames;    // @32   of the newest read not yet published: bits 0..15 frames summed,
+                           //       bits 16..31 frames refused (a span that runs backwards or lasts over a
+                           //       second, or no total). Zero when no read was made since the publication
+                           //       before.
+    // Sums over the frames summed, microseconds; FL_LAT_SUM_NONE = a summed frame did not report the span.
+    uint32_t latSimulationSumUs;    // @36   simStartTime .. simEndTime
+    uint32_t latSubmitSumUs;        // @40   renderSubmitStartTime .. renderSubmitEndTime
+    uint32_t latPresentSumUs;       // @44   presentStartTime .. presentEndTime
+    uint32_t latDriverSumUs;        // @48   driverStartTime .. driverEndTime
+    uint32_t latOsQueueSumUs;       // @52   osRenderQueueStartTime .. osRenderQueueEndTime
+    uint32_t latGpuSumUs;           // @56   gpuRenderStartTime .. gpuRenderEndTime
+    uint32_t latTotalSumUs;         // @60   simStartTime .. gpuRenderEndTime
 
     // ---- line 1: sl::DLSSOptions as last seen in slEvaluateFeature's inputs -----------------------------------
     uint32_t dlssStructVersion;        // @64   the structVersion the game's struct declared; 0 = none seen
@@ -1335,7 +1397,10 @@ static_assert(offsetof(FlAdvancedState, seq) == 0);
 static_assert(offsetof(FlAdvancedState, validMask) == 4);
 static_assert(offsetof(FlAdvancedState, samples) == 8);
 static_assert(offsetof(FlAdvancedState, sampleQpc) == 16);
-static_assert(offsetof(FlAdvancedState, reservedHeader) == 24);
+static_assert(offsetof(FlAdvancedState, latState) == 24);
+static_assert(offsetof(FlAdvancedState, latFrames) == 32);
+static_assert(offsetof(FlAdvancedState, latSimulationSumUs) == 36);
+static_assert(offsetof(FlAdvancedState, latTotalSumUs) == 60);
 static_assert(offsetof(FlAdvancedState, dlssStructVersion) == 64);
 static_assert(offsetof(FlAdvancedState, dlssPreExposureBits) == 80);
 static_assert(offsetof(FlAdvancedState, dlssPresets) == 88);

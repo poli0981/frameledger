@@ -165,6 +165,21 @@ What the region is, as a contract between the two sides:
   counts `slShutdown` calls, with `FL_ADV_VALID_SL_SHUTDOWN` (bit 6 of the mask) set once one was seen. All three
   are a session's and a new request clears them. `FL_HOOK_SL_ALLOCATE_RESOURCES` (bit 20),
   `FL_HOOK_SL_FREE_RESOURCES` (21) and `FL_HOOK_SL_SHUTDOWN` (22) are published with their patches.
+- **Reflex latency words (train C; declared 2026-11-13, written by nothing yet; owner decisions D136, D138).** The
+  ten reserved words that ended the first line (@24..63) are `latState`, `latReads`, `latFrames` and seven sums:
+  simulation, render submit, present, driver, OS render queue, GPU render, and the total from simulation start to
+  GPU render end. **The layout is still 5**: no offset and no size moved, and the handshake's build id refuses a
+  mismatched pair before either side reads the other. Unlike every other group here they are **not what the game
+  passed to a call the Overlay hooks**: the Overlay makes a call of its own, about once a second, on the presenting
+  thread, to the driver's two read-only getters, through an `nvapi64.dll` the game had already loaded
+  (`17_HOOK_ENGINE` §Memory / latency). `latState`'s low byte is a `FlLatencyState` — no device, no module, refused
+  (a module in the executable's own folder, D140), no getter, reading, error, slow (D141), faulted, stalled — and
+  above it the driver's sleep status as switches *seen on* and *seen off* and the last frame-generation multiplier.
+  `latFrames` and the sums are **of the newest read not yet published** — zero when no read was made since the
+  publication before — so a reader divides one publication's sum by its frames and never adds publications up. A
+  sum of all ones is a span some summed frame did not report. `FL_ADV_VALID_LATENCY` (bit 7 of the mask) is set once
+  a read returned OK for the request; it is not one of "the game's calls were read", and `latState` is published
+  whether or not it is set.
 - The Vulkan layer never writes it. `ShmLayoutMirrorTests.TheAdvancedStateMirrorMatches` checks every member's
   offset against `fl-layout-dump`; `ShmRingReaderTests` the three reads and that the request is stored either way.
 

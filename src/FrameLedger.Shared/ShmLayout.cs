@@ -809,6 +809,51 @@ public enum FlAdvancedValid : uint
 
     /// <summary>0.1.0-beta.45: <c>slShutdown</c> was seen; <see cref="FlAdvancedState.SlShutdowns"/> counts.</summary>
     SlShutdown = 1u << 6,
+
+    /// <summary>
+    /// Train C (declared 2026-11-13, written by nothing yet): a read of the driver's latency report returned OK for
+    /// this request. Not one of the game's calls: the Overlay makes this read itself, and
+    /// <see cref="FlAdvancedState.LatState"/> says where it stands even while this bit is clear.
+    /// </summary>
+    Latency = 1u << 7,
+}
+
+/// <summary>
+/// The low byte of <see cref="FlAdvancedState.LatState"/> (<c>fl_shm.h</c>'s <c>FlLatencyState</c>).
+/// <see cref="Refused"/>, <see cref="NoGetter"/>, <see cref="Slow"/>, <see cref="Faulted"/> and <see cref="Stalled"/>
+/// are final for the process: nothing is retried, and a later session of the same process reads the same word.
+/// </summary>
+public enum FlLatencyState : uint
+{
+    /// <summary>Not asked, or nothing looked at yet.</summary>
+    None = 0,
+
+    /// <summary>Asked; no Direct3D 12 device has been seen behind a hooked swap chain.</summary>
+    NoDevice = 1,
+
+    /// <summary>The game has not loaded <c>nvapi64.dll</c>.</summary>
+    NoModule = 2,
+
+    /// <summary>The <c>nvapi64.dll</c> in the process sits in the executable's own folder: not the driver's (D140).</summary>
+    Refused = 3,
+
+    /// <summary>The module does not answer for both getters, or answered with an address outside itself.</summary>
+    NoGetter = 4,
+
+    /// <summary>Resolved; a read is made about once a second.</summary>
+    Reading = 5,
+
+    /// <summary>The last read returned an NVAPI status that is not OK; reading goes on.</summary>
+    Error = 6,
+
+    /// <summary>One call took 2 ms or more: off until the game exits (D141).</summary>
+    Slow = 7,
+
+    /// <summary>A getter faulted: off until the game exits.</summary>
+    Faulted = 8,
+
+    /// <summary>A call had not returned after a second: nothing can stop it.</summary>
+    Stalled = 9,
 }
 
 /// <summary>
@@ -842,6 +887,24 @@ public unsafe struct FlAdvancedState
     /// </summary>
     public const uint FloatInfinite = 0x7F800000u;
 
+    /// <summary>The bits of <see cref="LatState"/> that hold the <see cref="FlLatencyState"/>.</summary>
+    public const uint LatStateMask = 0x000000FFu;
+
+    /// <summary>Bits 8..12 of <see cref="LatState"/>: sleep-status switches seen on, in the vendor struct's order.</summary>
+    public const int LatSleepSeenOnShift = 8;
+
+    /// <summary>Bits 16..20 of <see cref="LatState"/>: the same switches seen off.</summary>
+    public const int LatSleepSeenOffShift = 16;
+
+    /// <summary>The five switches of one group.</summary>
+    public const uint LatSleepBits = 0x1Fu;
+
+    /// <summary>Bits 24..31 of <see cref="LatState"/>: the last frame-generation multiplier the status gave, stopping at 255.</summary>
+    public const int LatFgMultiplierShift = 24;
+
+    /// <summary>A span sum: a summed frame did not report the span.</summary>
+    public const uint LatSumNone = 0xFFFFFFFFu;
+
     /// <summary>How many feature slots <see cref="Features"/> holds.</summary>
     public const int FeatureSlots = 12;
 
@@ -865,8 +928,42 @@ public unsafe struct FlAdvancedState
     /// <summary>QueryPerformanceCounter at the last publication.</summary>
     public ulong SampleQpc;
 
-    /// <summary>Must be zero.</summary>
-    public fixed uint ReservedHeader[10];
+    /// <summary>
+    /// Reflex latency (train C, declared 2026-11-13; the ten words that were <c>ReservedHeader</c>). The low byte is a
+    /// <see cref="FlLatencyState"/>; above it the driver's sleep status as seen (<see cref="LatSleepSeenOnShift"/>,
+    /// <see cref="LatSleepSeenOffShift"/>, <see cref="LatFgMultiplierShift"/>). Zero in a process nobody asked.
+    /// </summary>
+    public uint LatState;
+
+    /// <summary>Bits 0..15: reads made since the request. Bits 16..31: the slowest call, microseconds. Each stops at 65535.</summary>
+    public uint LatReads;
+
+    /// <summary>
+    /// Of the newest read not yet published: bits 0..15 frames summed, bits 16..31 frames refused. Zero when no read
+    /// was made since the publication before.
+    /// </summary>
+    public uint LatFrames;
+
+    /// <summary>Sum over the frames summed, microseconds, simulation start to end; <see cref="LatSumNone"/> = not reported.</summary>
+    public uint LatSimulationSumUs;
+
+    /// <summary>Render submit start to end.</summary>
+    public uint LatSubmitSumUs;
+
+    /// <summary>Present start to end.</summary>
+    public uint LatPresentSumUs;
+
+    /// <summary>Driver start to end.</summary>
+    public uint LatDriverSumUs;
+
+    /// <summary>OS render queue start to end.</summary>
+    public uint LatOsQueueSumUs;
+
+    /// <summary>GPU render start to end.</summary>
+    public uint LatGpuSumUs;
+
+    /// <summary>Simulation start to GPU render end.</summary>
+    public uint LatTotalSumUs;
 
     /// <summary>The <c>structVersion</c> the game's <c>sl::DLSSOptions</c> declared; 0 = none seen.</summary>
     public uint DlssStructVersion;
