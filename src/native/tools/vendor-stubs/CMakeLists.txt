@@ -84,3 +84,20 @@ fl_add_vendor_stub(fl_stub_ffx_loader "amd_fidelityfx_loader_dx12" stub_amd_fide
 # is therefore hookinventory-check Pass C's SECOND positive control for the export
 # parser, beside the ffx-api leaf.
 fl_add_vendor_stub(fl_stub_ffx_fsr3_host "ffx_fsr3_x64" stub_ffx_fsr3_x64.cpp)
+
+# --- NVIDIA NVAPI, for the spike of Reflex route D (docs/spike-notes §31, owner decision D132) ---
+#
+# A stand-in for nvapi64.dll: the real module's one way in (nvapi_QueryInterface) answering the two getters route D
+# would call, with knobs for what a driver cannot be made to do on demand -- a missing getter, a report of nothing,
+# an error, a call that does not return for seconds. Used by fl-probe-reflex only; the Overlay is not involved and
+# no inventory row names it, so it takes the vendored NVAPI headers (the include directory alone -- nvapi64.lib is
+# not linked) and nothing of the hook inventory.
+#
+# ITS OWN SUBDIRECTORY for its outputs: a file called nvapi64.lib beside the other stubs' import libraries would be
+# one careless link line away from being taken for the vendored one.
+fl_add_vendor_stub(fl_stub_nvapi64 "nvapi64" stub_nvapi64.cpp)
+target_include_directories(fl_stub_nvapi64 SYSTEM PRIVATE "${CMAKE_SOURCE_DIR}/third_party/nvapi")
+set_target_properties(fl_stub_nvapi64 PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/nvapi"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/nvapi"
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/nvapi")
