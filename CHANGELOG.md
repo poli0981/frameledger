@@ -37,6 +37,14 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Added
 
+- **Two more lines from NVIDIA's latency report: how long the graphics card was really at work** (owner decision
+  D142). In a real game the driver's *GPU render* stage turned out longer than the whole frame: it runs from the
+  card's start to its end and includes the time the card waited. With Advanced metrics on, a session now also
+  stores two figures the driver works out itself — **GPU active render**, the same stage without the waiting, and
+  **GPU frame time**, from the end of one frame's work to the end of the next — as a second chart under *Latency*.
+  They come from the report FrameLedger already asks the driver for; nothing more is asked. A driver may give
+  neither, and the chart is then not there. Sessions recorded before this release do not have them.
+
 - **For developers: the part inside a game reads two more figures of NVIDIA's latency report, and keeps every
   frame-generation multiplier a session saw** (owner decisions D142, D144; nothing a user sees until the Agent and
   the App read them). In a real game the driver's span between its two GPU marks was longer than the frame's whole
@@ -44,6 +52,18 @@ numeric core and does not move; the heading is the full version — corrected 20
   the report FrameLedger already fetches; they are read from it, with **no further call into the driver**. Four
   reserved words of the shared memory carry them and the multipliers seen (layout 5 as it was). `fl_reflex_summary`
   and the injected `[latency]` cases hold it. Measured: +36 ns a read, once a second.
+
+### Changed
+
+- **The *GPU render* line says what it includes** (owner decision D143): *GPU render, start to end (idle time
+  included)*, in the three languages. The numbers are the same.
+- **The driver's frame-generation multiplier is every value the session saw** (owner decision D144). The table of
+  the driver's low-latency state kept only the last one: a session that generated frames at ×2 and ended in a menu
+  showed 1. It now shows *1, 2*. Sessions already recorded keep what they stored.
+- **The texts say what was read** (owner decision D145). The accuracy statement, the README and the guide said no
+  real game had been read; two have been, on one driver. They also say now that the stages overlap and do not add
+  up to the total. **Privacy Policy 2.21** names the two new averages; **Disclaimer 2.17** changes only with the
+  accuracy statement it carries. The terms window shows once.
 
 ### Fixed
 

@@ -93,9 +93,12 @@ app too (Help ▸ User guide, Help ▸ Limitations, Help ▸ Accessibility), and
 >   long the driver says each stage of a frame took — simulation, render submit, present, driver, the operating
 >   system's queue, the graphics card — read from the graphics driver about once a second and shown as the driver
 >   reported it: **the driver's numbers, not a measurement by FrameLedger**, an average of the frames of one read,
->   never checked against another tool, and not the delay from a click to the screen. Read with a test program
->   against one driver and one card; **no real game had been read when this was written**. A game that does not use
->   Reflex has none. The session summary's latency fields stay N/A.
+>   never checked against another tool, and not the delay from a click to the screen. **The stages overlap and do
+>   not add up to the total.** The graphics card's stage runs from its start to its end and includes the time the
+>   card waited — in one game it was longer than the whole frame — so since beta.48 two figures the driver works
+>   out itself are shown beside it: the card's active time, and the time from one frame's end to the next. A
+>   driver may give neither, and then there is no line. Read in two real games, on one driver and one card
+>   (2026-11-14). A game that does not use Reflex has none. The session summary's latency fields stay N/A.
 > - **Pacing, VSync and the graphics card (since beta.14):** the share of the time below 30 FPS, below 60 FPS and below
 >   the monitor's refresh rate, measured from frame times with small margins so that a game held at its limit is not
 >   counted as below it (a rate less than 2 % under the line reads partly as at it), and how much one frame's time
@@ -258,7 +261,7 @@ FrameLedger is GPL-3.0-only free software, and you are welcome to build it, chan
 | `FrameLedger.Overlay.dll` | Inside the game | C++20 hooks + lock-free shared-memory writer. Records only; never analyzes, allocates, or blocks |
 | `FrameLedger.VkLayer.dll` | Inside the game | Vulkan implicit layer (Vulkan titles use this instead of injection) |
 
-GPU telemetry is layered so the project never depends on a proprietary vendor licence: a vendor-neutral DXGI/performance-counter baseline, LibreHardwareMonitor (MPL-2.0) for sensors on all vendors, and NVIDIA's NVAPI SDK (MIT) for NVIDIA-only extras (telemetry and the driver's DLSS record today; Reflex latency is not read yet). No Intel or AMD GPU *telemetry* SDK is bundled — see `docs/18_GPU_VENDOR_APIS.md` for why. The one AMD component in the tree is five MIT headers from the FidelityFX SDK, used for types only so the upscaler hook can read an FSR title's own dispatch descriptor; nothing AMD-built is linked or redistributed.
+GPU telemetry is layered so the project never depends on a proprietary vendor licence: a vendor-neutral DXGI/performance-counter baseline, LibreHardwareMonitor (MPL-2.0) for sensors on all vendors, and NVIDIA's NVAPI SDK (MIT) for NVIDIA-only extras (telemetry and the driver's DLSS record; and, with Advanced metrics on, the driver's own latency report, read inside a Direct3D 12 game that uses NVIDIA Reflex). No Intel or AMD GPU *telemetry* SDK is bundled — see `docs/18_GPU_VENDOR_APIS.md` for why. The one AMD component in the tree is five MIT headers from the FidelityFX SDK, used for types only so the upscaler hook can read an FSR title's own dispatch descriptor; nothing AMD-built is linked or redistributed.
 
 ---
 

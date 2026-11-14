@@ -591,6 +591,7 @@ public sealed class InGameAdvancedSamplerTests
             ValidMask = frames == 0 ? FlAdvancedValid.None : FlAdvancedValid.Latency,
             // The stand-in driver's status: low-latency mode and the game's sleep on, the other three off, x2.
             LatState = (uint)state | ((1u | 8u) << FlAdvancedState.LatSleepSeenOnShift) | ((2u | 4u | 16u) << FlAdvancedState.LatSleepSeenOffShift) | (2u << FlAdvancedState.LatFgMultiplierShift),
+            LatMultipliersSeen = 1u << 2,
             LatReads = 1u | (slowestUs << 16),
             LatFrames = frames,
             LatSimulationSumUs = frames * 800,
@@ -624,6 +625,65 @@ public sealed class InGameAdvancedSamplerTests
 
         // A publication with no read since the one before carries no frames: no point, and not a zero.
         sampler.Take(new InGameAdvanced(Latency(FlLatencyState.Reading, frames: 62, samples: 2) with { LatFrames = 0 })).Should().BeNull();
+    }
+
+    [Fact]
+    public void TheDriversTwoOwnTimesArePointsOfAnEntryOfTheirOwnEachTheMeanOfTheFramesThatGaveOne()
+    {
+        // 0.1.0-beta.48 (D142): sixty of sixty-two frames gave an active time, all of them a frame time.
+        IReadOnlyList<AdvancedReading> readings = new InGameAdvancedSampler().Take(new InGameAdvanced(Latency(FlLatencyState.Reading, frames: 62) with
+        {
+            LatGpuActiveSumUs = 60 * 3500,
+            LatGpuFrameSumUs = 62 * 4200,
+            LatGpuCounts = 60u | (62u << 16),
+        }))!;
+
+        readings.Should().HaveCount(9);
+        readings.Should().Contain(new AdvancedReading("adv.nvapi.reflex.gpu_times.active_render", 3500.0));
+        readings.Should().Contain(new AdvancedReading("adv.nvapi.reflex.gpu_times.frame_time", 4200.0));
+        readings.Should().Contain(new AdvancedReading("adv.nvapi.reflex.frame_report.gpu_render", 3700.0), "the span between the driver's two marks is kept beside them");
+        InGameAdvancedSampler.GpuTimes.Should().Equal("active_render", "frame_time");
+
+        // One and not the other: a frame can give either.
+        IReadOnlyList<AdvancedReading> one = new InGameAdvancedSampler().Take(new InGameAdvanced(Latency(FlLatencyState.Reading, frames: 62) with
+        {
+            LatGpuFrameSumUs = 10 * 4200,
+            LatGpuCounts = 10u << 16,
+        }))!;
+        one.Where(static r => r.Series.StartsWith(InGameAdvancedSampler.GpuTimesSeriesStem, StringComparison.Ordinal))
+            .Should().Equal(new AdvancedReading("adv.nvapi.reflex.gpu_times.frame_time", 4200.0));
+
+        // A driver that gives neither - an older one leaves both zero: no point, and not a zero.
+        new InGameAdvancedSampler().Take(new InGameAdvanced(Latency(FlLatencyState.Reading, frames: 62)))!
+            .Should().NotContain(static r => r.Series.StartsWith(InGameAdvancedSampler.GpuTimesSeriesStem, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void TheMultiplierRowListsEveryValueTheSessionSawNotTheLastOne()
+    {
+        // D144: x2 while the game generated frames, then a menu - the last value is 1, and the session saw both.
+        var sampler = new InGameAdvancedSampler();
+        FlAdvancedState state = Latency(FlLatencyState.Reading, frames: 62) with
+        {
+            LatState = (uint)FlLatencyState.Reading | (1u << FlAdvancedState.LatSleepSeenOnShift) | (1u << FlAdvancedState.LatFgMultiplierShift),
+            LatMultipliersSeen = (1u << 1) | (1u << 2),
+        };
+
+        sampler.Take(new InGameAdvanced(state));
+        Rows(Fact(sampler, "nvapi.reflex.sleep_status")).Should().Equal("bLowLatencyMode=on", "fgMultiplier=1, 2");
+
+        // The last multiplier moves with every menu and is not in the table: the facts are not made again for it...
+        IReadOnlyList<AdvancedFact> before = sampler.Facts;
+        sampler.Take(new InGameAdvanced(state with { Samples = 2, LatState = state.LatState ^ (3u << FlAdvancedState.LatFgMultiplierShift) }));
+        sampler.Facts.Should().BeSameAs(before);
+
+        // ...and are for a value not seen before. Thirty-one and more share a bit; a status that gave none is not one.
+        sampler.Take(new InGameAdvanced(state with { Samples = 3, LatMultipliersSeen = 1u | (1u << 1) | (1u << 2) | (1u << 4) | (1u << 31) }));
+        Rows(Fact(sampler, "nvapi.reflex.sleep_status")).Should().Equal("bLowLatencyMode=on", "fgMultiplier=1, 2, 4, \u2265 31");
+
+        var none = new InGameAdvancedSampler();
+        none.Take(new InGameAdvanced(state with { LatMultipliersSeen = 1u }));
+        Rows(Fact(none, "nvapi.reflex.sleep_status")).Should().Equal("bLowLatencyMode=on");
     }
 
     [Fact]

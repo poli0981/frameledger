@@ -385,6 +385,10 @@
     <value>フレームごとの遅延: シミュレーション、レンダー送信、プレゼント、ドライバー、OS キュー、GPU レンダー</value>
     <comment>review</comment>
   </data>
+  <data name="Adv_nvapi_reflex_gpu_times" xml:space="preserve">
+    <value>ドライバーが算出するフレームごとの GPU 時間: 実描画時間、フレーム間隔</value>
+    <comment>review</comment>
+  </data>
   <data name="Adv_nvapi_reflex_mode" xml:space="preserve">
     <value>Reflex: 低遅延モード、ブースト、フレーム レート制限</value>
     <comment>review</comment>
@@ -1049,8 +1053,16 @@
     <value>Game Ready</value>
     <comment>review</comment>
   </data>
+  <data name="AdvToken_active_render" xml:space="preserve">
+    <value>GPU 実描画 (待機時間を除く)</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_frame_time" xml:space="preserve">
+    <value>GPU フレーム時間 (前のフレームの終了から次の終了まで)</value>
+    <comment>review</comment>
+  </data>
   <data name="AdvToken_gpu_render" xml:space="preserve">
-    <value>GPU 描画</value>
+    <value>GPU 描画、開始から終了まで (待機時間を含む)</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_gsync_module" xml:space="preserve">

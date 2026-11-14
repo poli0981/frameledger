@@ -128,8 +128,10 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   shader-compilation stutter are **not measured yet** — they read N/A. ([Accuracy](legal/ACCURACY.md))
 - **NVIDIA's own latency report** is read only with *Advanced metrics* on, only on an NVIDIA card, only in a
   Direct3D 12 game that uses NVIDIA Reflex: how long the driver says each stage of a frame took, about once a
-  second. They are the driver's numbers, not FrameLedger's measurement. FrameLedger asks the driver for them from
-  inside the game; a read that is slow or faults is switched off until the game is closed, and the session says so.
+  second. They are the driver's numbers, not FrameLedger's measurement. **The stages overlap and do not add up to
+  the total**, and the graphics card's stage includes the time the card waited — in one game it is longer than the
+  whole frame; the driver's own figure for the card's active time is shown beside it where the driver gives one.
+  FrameLedger asks the driver for them from inside the game; a read that is slow or faults is switched off until the game is closed, and the session says so.
   ([Advanced metrics](guide/12-advanced-metrics.md))
 
 ## The game's memory

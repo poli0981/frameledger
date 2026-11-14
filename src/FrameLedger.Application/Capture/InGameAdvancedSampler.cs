@@ -44,10 +44,25 @@ public sealed class InGameAdvancedSampler
     /// </summary>
     public const string LatencySeriesStem = AdvancedMetric.SeriesPrefix + "nvapi.reflex.frame_report.";
 
+    /// <summary>
+    /// The stem of the two series of the driver's own times (0.1.0-beta.48, D142): <c>adv.nvapi.reflex.gpu_times.</c>
+    /// and one of <see cref="GpuTimes"/>. An entry of their own: they are figures the driver works out, not spans
+    /// between two of its marks, and the seven spans stay within what one chart draws as lines.
+    /// </summary>
+    public const string GpuTimesSeriesStem = AdvancedMetric.SeriesPrefix + "nvapi.reflex.gpu_times.";
+
     private const double _mebibyte = 1024.0 * 1024.0;
+
+    // The two groups of LatState that say which sleep switches were seen on and off.
+    private const uint _sleepSeenBits =
+        (FlAdvancedState.LatSleepBits << FlAdvancedState.LatSleepSeenOnShift) | (FlAdvancedState.LatSleepBits << FlAdvancedState.LatSleepSeenOffShift);
 
     // The spans of a frame the driver reports, in the order the capture side publishes their sums.
     private static readonly string[] _latencySpans = ["simulation", "render_submit", "present", "driver", "os_queue", "gpu_render", "total"];
+
+    // The two times the driver works out itself: the card at work without its idle time, and one frame's GPU end to
+    // the next's. In the order the capture side publishes their sums.
+    private static readonly string[] _gpuTimes = ["active_render", "frame_time"];
 
     // NV_GET_SLEEP_STATUS_PARAMS's five switches, by bit: the vendor's own names, shown as they are.
     private static readonly string[] _sleepSwitches = ["bLowLatencyMode", "bFsVrr", "bCplVsyncOn", "bUseGameSleep", "bFullscreenIFlip"];
@@ -91,10 +106,13 @@ public sealed class InGameAdvancedSampler
     /// switch seen over a session, the flags of the dispatch that have a name, "none", and what a field of view
     /// that cannot be radians is said to be (D128). A flag bit nobody named is <c>bit_N</c> and is shown as it is.
     /// </summary>
-    public static IReadOnlyList<string> Tokens { get; } = ["on", "off", "on_and_off", "none", _notRadians, .. _flagTokens, .. _latencySpans];
+    public static IReadOnlyList<string> Tokens { get; } = ["on", "off", "on_and_off", "none", _notRadians, .. _flagTokens, .. _latencySpans, .. _gpuTimes];
 
     /// <summary>The seven spans of a frame, as the last part of a series' name; the App translates each (<c>AdvToken_*</c>).</summary>
     public static IReadOnlyList<string> LatencySpans => _latencySpans;
+
+    /// <summary>The driver's two own times, as the last part of a series' name; the App translates each (<c>AdvToken_*</c>).</summary>
+    public static IReadOnlyList<string> GpuTimes => _gpuTimes;
 
     private InGameAdvanced? _last;
     private FlLatencyState _latencyState;
@@ -272,12 +290,24 @@ public sealed class InGameAdvancedSampler
 
         _latencyFrames = true;
         uint[] sums = [s.LatSimulationSumUs, s.LatSubmitSumUs, s.LatPresentSumUs, s.LatDriverSumUs, s.LatOsQueueSumUs, s.LatGpuSumUs, s.LatTotalSumUs];
-        var readings = new List<AdvancedReading>(sums.Length);
+        var readings = new List<AdvancedReading>(sums.Length + _gpuTimes.Length);
         for (int span = 0; span < sums.Length; span++)
         {
             if (sums[span] != FlAdvancedState.LatSumNone)
             {
                 readings.Add(new AdvancedReading(LatencySeriesStem + _latencySpans[span], sums[span] / (double)frames));
+            }
+        }
+
+        // The driver's two own times (D142): each the mean over the frames that gave one, so each has its own count.
+        // A driver that gives neither - an older one leaves both zero - has no point here, and not a zero.
+        uint[] gpuSums = [s.LatGpuActiveSumUs, s.LatGpuFrameSumUs];
+        uint[] gpuFrames = [s.LatGpuCounts & 0xFFFFu, s.LatGpuCounts >> 16];
+        for (int time = 0; time < gpuSums.Length; time++)
+        {
+            if (gpuFrames[time] != 0)
+            {
+                readings.Add(new AdvancedReading(GpuTimesSeriesStem + _gpuTimes[time], gpuSums[time] / (double)gpuFrames[time]));
             }
         }
 
@@ -326,7 +356,8 @@ public sealed class InGameAdvancedSampler
     }
 
     // The driver's sleep status (train C): its five switches as seen over the session, by the vendor's own names, and
-    // the frame-generation multiplier it last gave. THE DRIVER'S WORDS: on the driver the probe ran against,
+    // every frame-generation multiplier it gave (D144: a session that generated x2 and ended in a menu read 1 while
+    // only the last one was kept). THE DRIVER'S WORDS: on the driver the probe ran against,
     // bLowLatencyMode read off for a device whose game had just switched low latency on (spike-notes §31) - so this
     // is never worded as "the game uses Reflex".
     private static void AddDriverSleepStatus(InGameAdvanced published, List<AdvancedFact> facts)
@@ -346,13 +377,33 @@ public sealed class InGameAdvancedSampler
             AddSwitch(rows, _sleepSwitches[bit], ((off >> bit) & 1u) | (((on >> bit) & 1u) << 1));
         }
 
-        uint multiplier = s.LatState >> FlAdvancedState.LatFgMultiplierShift;
-        if (multiplier != 0)
+        if (MultipliersSeen(s.LatMultipliersSeen) is { } multipliers)
         {
-            rows.Add(new AdvancedRow("fgMultiplier", multiplier.ToString(CultureInfo.InvariantCulture)));
+            rows.Add(new AdvancedRow("fgMultiplier", multipliers));
         }
 
         facts.Add(Fact("nvapi.reflex.sleep_status", AdvancedValue.OfRows(rows)));
+    }
+
+    // The multipliers a session saw, lowest first: bit n of the word is multiplier n, bit 31 stands for 31 and more.
+    // Bit 0 is a status that gave none, which is not a multiplier and is not listed.
+    private static string? MultipliersSeen(uint seen)
+    {
+        var values = new List<string>(4);
+        for (int multiplier = 1; multiplier < 31; multiplier++)
+        {
+            if ((seen & (1u << multiplier)) != 0)
+            {
+                values.Add(multiplier.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        if ((seen & (1u << 31)) != 0)
+        {
+            values.Add("\u2265 31");
+        }
+
+        return values.Count == 0 ? null : string.Join(", ", values);
     }
 
     // Whether Streamline says each feature is supported and loaded, and what the game did with it while the session
@@ -847,7 +898,7 @@ public sealed class InGameAdvancedSampler
         uint SlAspect,
         ulong SlFlags,
         ulong SlFeatures,
-        uint DriverSleep)
+        ulong DriverSleep)
     {
         public static FactKey Of(InGameAdvanced published)
         {
@@ -889,8 +940,9 @@ public sealed class InGameAdvancedSampler
                 s.SlAspectBits,
                 Pair(s.SlFlagsSeenTrue, s.SlFlagsSeenFalse),
                 FeaturesHash(published),
-                // The driver's sleep status as seen and its multiplier: what the one latency fact is made of.
-                s.ValidMask.HasFlag(FlAdvancedValid.Latency) ? s.LatState >> FlAdvancedState.LatSleepSeenOnShift : 0u);
+                // The driver's sleep status as seen and the multipliers seen: what the one latency fact is made of.
+                // Not the LAST multiplier, which is no longer in the fact - it moves with every menu.
+                s.ValidMask.HasFlag(FlAdvancedValid.Latency) ? Pair(s.LatState & _sleepSeenBits, s.LatMultipliersSeen) : 0UL);
         }
 
         // The feature slots as one number (FNV-1a over the words of the slots in use): an answer that arrives, or one

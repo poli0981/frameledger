@@ -294,6 +294,9 @@
   <data name="Adv_nvapi_reflex_frame_report" xml:space="preserve">
     <value>Latency per frame: simulation, render submit, present, driver, OS queue, GPU render</value>
   </data>
+  <data name="Adv_nvapi_reflex_gpu_times" xml:space="preserve">
+    <value>The graphics card's time per frame, as the driver works it out: active render, frame to frame</value>
+  </data>
   <data name="Adv_nvapi_reflex_mode" xml:space="preserve">
     <value>Reflex: low-latency mode, boost, the frame-rate limit</value>
   </data>
@@ -792,8 +795,14 @@
   <data name="AdvToken_game_ready" xml:space="preserve">
     <value>Game Ready</value>
   </data>
+  <data name="AdvToken_active_render" xml:space="preserve">
+    <value>GPU active render (idle time excluded)</value>
+  </data>
+  <data name="AdvToken_frame_time" xml:space="preserve">
+    <value>GPU frame time, one frame's end to the next</value>
+  </data>
   <data name="AdvToken_gpu_render" xml:space="preserve">
-    <value>GPU render</value>
+    <value>GPU render, start to end (idle time included)</value>
   </data>
   <data name="AdvToken_gsync_module" xml:space="preserve">
     <value>G-SYNC module</value>

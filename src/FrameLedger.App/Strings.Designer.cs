@@ -193,6 +193,7 @@ public static class Strings
         nameof(Adv_nvapi_load_video),
         nameof(Adv_nvapi_pstate),
         nameof(Adv_nvapi_reflex_frame_report),
+        nameof(Adv_nvapi_reflex_gpu_times),
         nameof(Adv_nvapi_reflex_mode),
         nameof(Adv_nvapi_reflex_sleep_status),
         nameof(Adv_nvapi_session_driver_profile),
@@ -346,6 +347,7 @@ public static class Strings
         nameof(AdvSource_PawnIoMissing),
         nameof(AdvSource_Reading),
         nameof(AdvSource_Unknown),
+        nameof(AdvToken_active_render),
         nameof(AdvToken_adaptive_sync),
         nameof(AdvToken_agp),
         nameof(AdvToken_axi),
@@ -358,6 +360,7 @@ public static class Strings
         nameof(AdvToken_driver_default),
         nameof(AdvToken_edr),
         nameof(AdvToken_fpci),
+        nameof(AdvToken_frame_time),
         nameof(AdvToken_game_ready),
         nameof(AdvToken_gpu_render),
         nameof(AdvToken_gsync_module),
@@ -1887,6 +1890,8 @@ public static class Strings
 
     public static string Adv_nvapi_reflex_frame_report => ResourceManager.GetString(nameof(Adv_nvapi_reflex_frame_report), Culture) ?? nameof(Adv_nvapi_reflex_frame_report);
 
+    public static string Adv_nvapi_reflex_gpu_times => ResourceManager.GetString(nameof(Adv_nvapi_reflex_gpu_times), Culture) ?? nameof(Adv_nvapi_reflex_gpu_times);
+
     public static string Adv_nvapi_reflex_mode => ResourceManager.GetString(nameof(Adv_nvapi_reflex_mode), Culture) ?? nameof(Adv_nvapi_reflex_mode);
 
     public static string Adv_nvapi_reflex_sleep_status => ResourceManager.GetString(nameof(Adv_nvapi_reflex_sleep_status), Culture) ?? nameof(Adv_nvapi_reflex_sleep_status);
@@ -2193,6 +2198,8 @@ public static class Strings
 
     public static string AdvSource_Unknown => ResourceManager.GetString(nameof(AdvSource_Unknown), Culture) ?? nameof(AdvSource_Unknown);
 
+    public static string AdvToken_active_render => ResourceManager.GetString(nameof(AdvToken_active_render), Culture) ?? nameof(AdvToken_active_render);
+
     public static string AdvToken_adaptive_sync => ResourceManager.GetString(nameof(AdvToken_adaptive_sync), Culture) ?? nameof(AdvToken_adaptive_sync);
 
     public static string AdvToken_agp => ResourceManager.GetString(nameof(AdvToken_agp), Culture) ?? nameof(AdvToken_agp);
@@ -2216,6 +2223,8 @@ public static class Strings
     public static string AdvToken_edr => ResourceManager.GetString(nameof(AdvToken_edr), Culture) ?? nameof(AdvToken_edr);
 
     public static string AdvToken_fpci => ResourceManager.GetString(nameof(AdvToken_fpci), Culture) ?? nameof(AdvToken_fpci);
+
+    public static string AdvToken_frame_time => ResourceManager.GetString(nameof(AdvToken_frame_time), Culture) ?? nameof(AdvToken_frame_time);
 
     public static string AdvToken_game_ready => ResourceManager.GetString(nameof(AdvToken_game_ready), Culture) ?? nameof(AdvToken_game_ready);
 

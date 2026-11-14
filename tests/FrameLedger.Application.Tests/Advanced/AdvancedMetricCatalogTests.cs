@@ -93,14 +93,17 @@ public sealed partial class AdvancedMetricCatalogTests
     }
 
     [Fact]
-    public void WhatThePartInsideAGameAsksTheDriverForItselfIsTwoEntriesOfNvapiAndNothingMore()
+    public void WhatThePartInsideAGameAsksTheDriverForItselfIsThreeEntriesOfNvapiAndNothingMore()
     {
         // Train C (owner decisions D132, D136, D138): the one reach that is not an argument of a hooked call. The
         // Overlay calls NVIDIA's two read-only latency getters; tools/nvapi-readonly-check.ps1 holds that those two
-        // are the only NVAPI functions code loaded into a game may name. Two entries, and they stay two until an
-        // owner's ruling of the same kind names another.
+        // are the only NVAPI functions code loaded into a game may name. Two entries until 0.1.0-beta.48; the third
+        // (owner decision D142) is two more members of the report the first getter already filled - no further call.
+        // They stay three until an owner's ruling of the same kind names another.
         string[] driver = [.. _all.Where(static m => m.Reach == AdvancedReach.GameDriver).Select(static m => m.Id)];
-        driver.Should().Equal("nvapi.reflex.sleep_status", "nvapi.reflex.frame_report");
+        driver.Should().Equal("nvapi.reflex.sleep_status", "nvapi.reflex.frame_report", "nvapi.reflex.gpu_times");
+        AdvancedMetricCatalog.Find("nvapi.reflex.gpu_times")!.IsFamily.Should().BeTrue("two series, the driver's own figures");
+        AdvancedMetricCatalog.Find("nvapi.reflex.gpu_times")!.Unit.Should().Be(AdvancedUnit.Microseconds);
         _all.Where(static m => m.Reach == AdvancedReach.GameDriver).Should().OnlyContain(static m => m.Source == AdvancedSource.Nvapi && m.IsRead);
         _all.Where(static m => m.Reach == AdvancedReach.GameDriver).Should().OnlyContain(static m => m.Scope != AdvancedScope.MachineFact, "what a driver says of a game's frames is of a session");
         AdvancedMetricCatalog.Find("nvapi.reflex.frame_report")!.IsFamily.Should().BeTrue("seven series, one a span");

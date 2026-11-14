@@ -289,6 +289,9 @@
   <data name="Adv_nvapi_reflex_frame_report" xml:space="preserve">
     <value>Độ trễ từng khung hình: mô phỏng, gửi lệnh dựng hình, present, driver, hàng đợi hệ điều hành, GPU dựng hình</value>
   </data>
+  <data name="Adv_nvapi_reflex_gpu_times" xml:space="preserve">
+    <value>Thời gian của card đồ hoạ cho mỗi khung hình, do driver tự tính: lúc thực sự vẽ, và từ khung này sang khung kế</value>
+  </data>
   <data name="Adv_nvapi_reflex_mode" xml:space="preserve">
     <value>Reflex: chế độ độ trễ thấp, boost, giới hạn tốc độ khung hình</value>
   </data>
@@ -787,8 +790,14 @@
   <data name="AdvToken_game_ready" xml:space="preserve">
     <value>Game Ready</value>
   </data>
+  <data name="AdvToken_active_render" xml:space="preserve">
+    <value>GPU thực sự vẽ (không tính lúc nghỉ)</value>
+  </data>
+  <data name="AdvToken_frame_time" xml:space="preserve">
+    <value>nhịp khung của GPU, từ lúc xong khung này tới lúc xong khung kế</value>
+  </data>
   <data name="AdvToken_gpu_render" xml:space="preserve">
-    <value>GPU vẽ</value>
+    <value>GPU vẽ, từ lúc bắt đầu tới lúc xong (gồm cả lúc nghỉ)</value>
   </data>
   <data name="AdvToken_gsync_module" xml:space="preserve">
     <value>Mô-đun G-SYNC</value>
