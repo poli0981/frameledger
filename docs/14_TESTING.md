@@ -174,7 +174,12 @@ others cannot say.** `fl_reflex_summary` (Catch2) drives `fl_adv_fields.h`'s rea
 two newest frames held back, a frame summed once, a span the driver did not report, a span no frame can have, frame
 ids that start again, and the ten words of a publication — and since 0.1.0-beta.48 the driver's two own times
 (summed over the frames that gave one, each with its own count; zero and more than a second are not counted and
-refuse nothing) and the bit a multiplier has. `fl_guard`'s seven `[latency]` cases inject the Overlay
+refuse nothing) and the bit a multiplier has — and since 0.1.0-beta.49 the counts for the native log: every place
+a summed frame can be in, a span of a microsecond, an active time as long as the span, a refused frame, when a
+batch is due, a batch closed by a change of state and the thirty-two such closings a request has, the six lines
+and what each carries; a hidden `[.bench]` case is the measurement of one report's cost. `fl_guard`'s eight
+`[latency]` cases (the eighth reads the log: the first batch after ten reads, by number, and what is left when a
+flush is asked for — against the stand-in's `kModeGpuShapes`) inject the Overlay
 into a Direct3D 12 target that has loaded a stand-in `nvapi64.dll`, and read that module's call counts from outside
 through its named section (`fl_stub_nvapi_shared.h`) — so "the driver was not called" is a count: not asked → not
 even asked for the addresses; asked → about one read a second, sums equal to the stand-in's, every counted read a

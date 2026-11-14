@@ -143,7 +143,10 @@ void PublishHandshake() noexcept {
 // the log that should have said which hooks went in and what they were handed
 // ended before the game had loaded its upscaler. Events are few and bounded
 // (installs, a handful of first sights, three faults at most), so this is a few
-// appends per session, on the watchdog's own tick.
+// appends per session, on the watchdog's own tick -- and, since 0.1.0-beta.49,
+// six lines a batch of the driver read's frame counts (LATENCY_FRAMES: a batch
+// a minute at most once a session is under way), only while a session asks for
+// Advanced metrics and the driver is being read.
 // ---------------------------------------------------------------------------
 enum FlLogCode : uint32_t {
     kLogRingCreated = 1,
@@ -166,6 +169,7 @@ enum FlLogCode : uint32_t {
     kLogFfxConfigureType,
     kLogPatchBatch,
     kLogLatency,
+    kLogLatencyFrames,
 };
 
 const char* LogCodeName(uint32_t code) noexcept {
@@ -210,6 +214,8 @@ const char* LogCodeName(uint32_t code) noexcept {
         return "PATCH_BATCH";
     case kLogLatency:
         return "LATENCY";
+    case kLogLatencyFrames:
+        return "LATENCY_FRAMES";
     default:
         return "?";
     }
@@ -227,6 +233,8 @@ struct FlLogEvent {
 static_assert(sizeof(FlLogEvent) == 96, "the native log's event: 256 of them are static storage in a game's process");
 static_assert(sizeof(fl::inventory::RowName::text) <= sizeof(FlLogEvent::text),
               "a row's module!symbol name must fit an event's text, or two rows could log the same truncated name");
+static_assert(fl::adv::LatencyBatchLongestText() < sizeof(FlLogEvent::text),
+              "a line of the driver read's frame counts must fit an event's text: LogNote cuts without saying so");
 
 constexpr uint32_t    kLogCapacity = 256;
 FlLogEvent            g_log[kLogCapacity]{};
@@ -804,6 +812,8 @@ bool                g_latStalled = false;
 int64_t             g_latArmedQpc = 0;
 int64_t             g_latReadingSinceQpc = 0;
 uint32_t            g_latLoggedState = FL_LAT_NONE;
+// The frame counts of the reads, for the native log only (fl_adv_fields.h; owner decisions D148, D151).
+fl::adv::LatencyBatchBook g_latBook;
 
 // One read, on a presenting thread that found the gate armed. Not inlined: RecordPresent stays as small as it was.
 __declspec(noinline) void ReadLatencyOnce() noexcept {
@@ -890,9 +900,26 @@ const char* LatencyStateName(uint32_t state) noexcept {
     }
 }
 
+// The batch of frame counts in hand, as LATENCY_FRAMES lines; nothing when no read is in it. The watchdog's: at the
+// batch's end, when the Agent asks for a flush, at a new request and at a stop -- whatever a game that exits by
+// itself had not had written by then is lost, under a minute of it.
+void WriteLatencyBatch() noexcept {
+    if (g_latBook.batch.reads == 0u) {
+        return;
+    }
+    for (uint32_t line = 0; line < fl::adv::kLatBatchLines; ++line) {
+        const fl::adv::LatencyLogLine entry = fl::adv::LatencyBatchLine(g_latBook.batch, line);
+        LogNote(kLogLatencyFrames, entry.text, entry.a, entry.b);
+    }
+    g_latBook.batch = fl::adv::LatencyBatch{};
+}
+
 // THE WATCHDOG'S HALF, once a tick while a session asks. `now` is this tick's QPC.
 void TickLatency(bool newRequest, int64_t now) noexcept {
     if (newRequest) {
+        // What the session before left of a batch is its own, written before this one's counts begin.
+        WriteLatencyBatch();
+        g_latBook = fl::adv::LatencyBatchBook{};
         // A session's counts are its own; where the read stands is the process's and stays.
         g_latOut.reads = 0u;
         g_latOut.worstUs = 0u;
@@ -936,6 +963,16 @@ void TickLatency(bool newRequest, int64_t now) noexcept {
         if (g_latRead.ok != 0u) {
             g_latOut.tally = g_latRead.tally;
             fl::adv::NoteBits(g_adv.validMask, FL_ADV_VALID_LATENCY);
+            // The same read's frames, counted for the log: a batch is of one state of the sleep status.
+            const bool sleepValid = g_latRead.sleepValid != 0u;
+            if (fl::adv::LatencyBatchTurns(g_latBook, fl::adv::LatencyStateOf(sleepValid, g_latRead.sleep))) {
+                WriteLatencyBatch();
+                ++g_latBook.closures;
+            }
+            fl::adv::LatencyBatchAdd(g_latBook, g_latRead.tally, sleepValid, g_latRead.sleep);
+            if (fl::adv::LatencyBatchDue(g_latBook.okReads)) {
+                WriteLatencyBatch();
+            }
         }
         if (g_latRead.sleepValid != 0u) {
             g_latOut.sleepSeenOn |= g_latRead.sleep.on & FL_LAT_SLEEP_BITS;
@@ -3560,6 +3597,7 @@ DWORD WatchdogLoop() noexcept {
         std::atomic_ref<uint32_t> flushReq{g_control->logFlushRequested};
         if (const uint32_t req = flushReq.load(std::memory_order_acquire); req != g_logFlushSeen) {
             g_logFlushSeen = req;
+            WriteLatencyBatch();    // what is counted of the driver read so far is part of what the Agent asks for
             FlushLog();
         }
 
@@ -3698,6 +3736,7 @@ DWORD WINAPI WatchdogThread(LPVOID) noexcept {
         }
     }
     const bool complete = g_stopLogged.load(std::memory_order_acquire) != 0u;
+    WriteLatencyBatch();    // the watchdog's own book: no presenting thread ever touches it
     LogNote(kLogStopFlushed, complete ? "every stop line is above" : "the stop was still writing", complete ? 1u : 0u);
     FlushLog(true);
     return r;

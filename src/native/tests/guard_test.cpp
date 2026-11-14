@@ -7857,6 +7857,98 @@ bool TargetHasModule(HANDLE process, const wchar_t* leaf) {
 
 }    // namespace
 
+TEST_CASE("the frames a read summed are counted in the native log, each by its GPU span and the driver's active time: "
+          "a batch after ten reads, and what is left when the Agent asks",
+          "[guard][inject][shm][advanced][latency][log]") {
+    // WHY (0.1.0-beta.49, owner decisions D148, D151). In one real game the mean active time was longer than the mean
+    // span between the two GPU marks, and the two means cannot say whether that is the driver's doing or the way they
+    // are taken. The counts that can are written to the log only -- nothing of them is published -- in batches that
+    // each belong to one state of the sleep status.
+    LatencyTarget t;
+    REQUIRE(StartLatencyTarget(t, LatencyArgs(L"--hold-presenting-d3d12 40"), true));
+    const MappedRing&   r = t.r;
+    fl::stubnv::Shared* stub = t.stub.words;
+    if (stub == nullptr || r.st == nullptr || r.ctl == nullptr) {
+        return;    // not reached after the REQUIRE; said in the form a static analyser follows (cpp:S2259)
+    }
+    REQUIRE(WaitForRecords(r));
+    SetStubWord(stub->mode, fl::stubnv::kModeGpuShapes);    // before the first read: every read is of these frames
+    SetAdvancedRequest(r, 7u);
+
+    // Ten reads sum the frames 5000..5151: sixty-two, then ten a read. By frameID % 5 (fl_stub_nvapi_shared.h) that is
+    // 31, 31, 30, 30, 30 of the five shapes.
+    const uint32_t zero = 31u + 30u;    // shapes 1 and 4
+    const uint32_t longer = 30u;        // shape 2
+    const uint32_t within = 31u;        // shape 0
+    char           tails[6][64]{};
+    snprintf(tails[0], sizeof(tails[0]), " a=10 b=0x%x", (1u | 8u) | ((2u | 4u | 16u) << 8) | ((1u << 2) << 16));
+    snprintf(tails[1], sizeof(tails[1]), " a=152 b=0x0");
+    snprintf(tails[2], sizeof(tails[2]), " a=0 b=0x%x", zero);
+    snprintf(tails[3], sizeof(tails[3]), " a=30 b=0x%x", 30u);    // shape 4; shape 3
+    snprintf(tails[4], sizeof(tails[4]), " a=%u b=0x%llx", longer,
+             (static_cast<unsigned long long>(longer * fl::stubnv::kGpuUs) << 32) |
+                 (longer * fl::stubnv::kGpuActiveLongUs));
+    snprintf(tails[5], sizeof(tails[5]), " a=%u b=0x%llx", within,
+             (static_cast<unsigned long long>(within * fl::stubnv::kGpuUs) << 32) |
+                 (within * fl::stubnv::kGpuActiveUs));
+    const char* names[6] = {"reads / sleep switches",   "frames summed / refused", "GPU span absent / of no length",
+                            "active time with no span", "active longer than span", "active within span"};
+
+    std::wstring log;
+    std::string  text;
+    bool         complete = false;
+    for (int i = 0; i < 500 && !complete; ++i) {
+        ++r.ctl->guardTicks;
+        Sleep(50);
+        if (i % 10 != 9 || (log.empty() && !FindOverlayLog(t.child.pi.dwProcessId, t.child.pi.hProcess, log))) {
+            continue;
+        }
+        text = ReadWholeFile(log);
+        complete = CountOf(text, "LATENCY_FRAMES") >= 6u;
+    }
+    INFO("log " << Narrow(log) << ":\n" << text);
+    REQUIRE(complete);
+    for (int line = 0; line < 6; ++line) {
+        INFO("line " << line << ": " << names[line] << " ..." << tails[line]);
+        CHECK(LogHasLine(text, "LATENCY_FRAMES", names[line], tails[line]));
+    }
+    CHECK(CountOf(text, "LATENCY_FRAMES") == 6u);    // one batch: the next is twenty reads away
+    CHECK(r.ctl->logFlushRequested == 0u);           // nobody asked for it
+
+    // What is published is what it was: these counts are the log's.
+    fl::FlAdvancedState a{};
+    REQUIRE(ReadAdvanced(r, 7u, a, 0u, fl::FL_ADV_VALID_LATENCY));
+    CHECK(LatStateOf(a) == fl::FL_LAT_READING);
+    for (uint32_t word : a.reservedDlss) {
+        CHECK(word == 0u);
+    }
+
+    // ---- THE REST, WHEN THE AGENT ASKS. A few reads more, then a flush request: the batch in hand is written with
+    // the log, six lines whose frames are ten a read.
+    TickFor(r, 3200);
+    ++r.ctl->logFlushRequested;
+    complete = false;
+    for (int i = 0; i < 100 && !complete; ++i) {
+        ++r.ctl->guardTicks;
+        Sleep(50);
+        if (i % 10 == 9) {
+            text = ReadWholeFile(log);
+            complete = CountOf(text, "LATENCY_FRAMES") >= 12u;
+        }
+    }
+    INFO("log after the flush request:\n" << text);
+    REQUIRE(complete);
+    CHECK(CountOf(text, "LATENCY_FRAMES") == 12u);
+    bool rest = false;
+    for (uint32_t reads = 1u; reads < 20u && !rest; ++reads) {    // the thirtieth read would close it itself
+        char frames[32]{};
+        snprintf(frames, sizeof(frames), " a=%u b=0x0", reads * fl::stubnv::kFrameIdStep);
+        rest = LogHasLine(text, "LATENCY_FRAMES", names[1], frames);
+    }
+    CHECK(rest);
+    CHECK(r.st->faultCount == 0u);
+}
+
 TEST_CASE("the driver's latency report is read only while a session asks, once a second, and stops with the request "
           "and with the hooks",
           "[guard][inject][shm][advanced][latency]") {
