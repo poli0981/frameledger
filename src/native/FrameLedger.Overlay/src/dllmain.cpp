@@ -899,6 +899,7 @@ void TickLatency(bool newRequest, int64_t now) noexcept {
         g_latOut.sleepSeenOn = 0u;
         g_latOut.sleepSeenOff = 0u;
         g_latOut.multiplier = 0u;
+        g_latOut.multipliersSeen = 0u;
         g_latOut.tally = fl::adv::LatencyTally{};
     }
     if (g_latStalled) {
@@ -919,6 +920,13 @@ void TickLatency(bool newRequest, int64_t now) noexcept {
     }
     g_latReadingSinceQpc = 0;
 
+    // A read that ended after the last tick of the request before this one was never taken -- nobody ticks while
+    // nobody asks. It is that session's: its frames are not this one's first point, and its multiplier is not one
+    // this session saw. (Armed is not expected here -- the request's end disarms -- and is left to its reader.)
+    if (newRequest && gate != kLatGateArmed) {
+        g_latRead.fresh = 0u;
+    }
+
     // Idle, armed or off: nobody is reading. What the last read left is taken here.
     if (gate != kLatGateArmed && g_latRead.fresh != 0u) {
         g_latRead.fresh = 0u;
@@ -933,6 +941,7 @@ void TickLatency(bool newRequest, int64_t now) noexcept {
             g_latOut.sleepSeenOn |= g_latRead.sleep.on & FL_LAT_SLEEP_BITS;
             g_latOut.sleepSeenOff |= ~g_latRead.sleep.on & FL_LAT_SLEEP_BITS;
             g_latOut.multiplier = g_latRead.sleep.multiplier;
+            g_latOut.multipliersSeen |= fl::adv::LatencyMultiplierBit(g_latRead.sleep.multiplier);
         }
         if (g_latOut.state != g_latLoggedState) {
             g_latLoggedState = g_latOut.state;

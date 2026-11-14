@@ -200,6 +200,21 @@ same morning**, two sessions (frame generation ×2 and off, 260 s and 581 s): fo
 the slowest call 34 and 65 µs, no latch. Two Direct3D 11 games and one Direct3D 12 game with no `nvapi64.dll` were
 left alone, each with its one line. Two games read, one driver.
 
+**Two more members of the same report, and the multipliers seen (0.1.0-beta.48; owner decisions D142, D144).** In
+Phantom Blade Zero the span between the driver's two GPU marks was longer than the frame's whole: it includes the
+card's waiting. NVIDIA's header has the figure that does not — `gpuActiveRenderTimeUs`, "excluding the idles in
+between" — and beside it `gpuFrameTimeUs`, one frame's GPU end to the next's. Both are read from the report the
+getter already filled: **no call is added, and no interface id** (`tools/nvapi-readonly-check.ps1` is unchanged;
+the two names are on `tools/overlay-allowed-fields.txt`). The buffer is the Overlay's own, so there is no question
+of a member lying past what a game allocated; an older driver leaves both zero, and zero is read as *not given* —
+each time has its own count, and neither decides which frames the seven spans are made of. The sleep status'
+frame-generation multiplier is now also kept as the set of values a session saw (a session that generated ×2 and
+ended in a menu read 1). **One defect fixed with it**: a read that ended after a session's last tick was taken by
+the next session as its first point; a new request now drops it. **Measured** (the header's own function, the
+Overlay's flags, a report of 62 summed frames, 2 million reports × 3, twice): 393–396 ns before, 429–434 ns after
+— **+36 ns a read**, once a second, and after the call's time has been taken, so it cannot reach the 2 ms latch.
+The present path is unchanged: one relaxed load.
+
 **The gate.** One word, four states — idle, armed, reading, off (`dllmain.cpp`, above `ReadLatencyOnce`). Only the
 watchdog arms; a presenting thread takes *armed* to *reading* by compare-exchange and owns the 15.4 KB report
 buffer (static storage, never a game thread's stack) and the read's result until it stores *idle* or *off*; the

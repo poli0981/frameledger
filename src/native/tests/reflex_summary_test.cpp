@@ -191,6 +191,58 @@ TEST_CASE("the sleep status is the driver's five switches and its multiplier, an
     CHECK(fl::adv::ObserveSleepStatus(status).on == (2u | 8u));
 }
 
+TEST_CASE("the driver's two own times are summed over the frames that gave one, each with its own count", "[latency]") {
+    fl::adv::LatencyCursor cursor;
+    fl::adv::LatencyTally  tally;
+
+    // Twelve frames, 5000..5011: ten are summed, the two newest wait.
+    auto report = Report(5000u, 12u);
+    for (std::uint32_t i = 52u; i < 64u; ++i) {
+        report->frameReport[i].gpuActiveRenderTimeUs = 3500u;
+        report->frameReport[i].gpuFrameTimeUs = 4200u;
+    }
+    report->frameReport[52].gpuActiveRenderTimeUs = 0u;            // 5000: the driver gave no active time
+    report->frameReport[53].gpuFrameTimeUs = 1'000'001u;           // 5001: a frame time no frame can have
+    report->frameReport[54].gpuActiveRenderTimeUs = 1'000'000u;    // 5002: a second, to the microsecond, is kept
+    fl::adv::ObserveLatencyReport(*report, cursor, tally);
+    CHECK(tally.frames == 10u);    // neither of the two refuses a frame
+    CHECK(tally.refused == 0u);
+    CHECK(tally.sumUs[fl::adv::kLatTotal] == 10u * 7500u);
+    CHECK(tally.lacking == 0u);
+    CHECK(tally.activeFrames == 9u);
+    CHECK(tally.activeSumUs == 8u * 3500u + 1'000'000u);
+    CHECK(tally.frameTimeFrames == 9u);
+    CHECK(tally.frameTimeSumUs == 9u * 4200u);
+
+    // A frame that is refused gives neither, and a driver that fills in neither leaves both counts at zero.
+    cursor = fl::adv::LatencyCursor{};
+    auto refused = Report(6000u, 3u);
+    refused->frameReport[61].gpuActiveRenderTimeUs = 3500u;
+    refused->frameReport[61].gpuFrameTimeUs = 4200u;
+    refused->frameReport[61].presentEndTime = refused->frameReport[61].presentStartTime - 50u;
+    fl::adv::ObserveLatencyReport(*refused, cursor, tally);
+    CHECK(tally.frames == 0u);
+    CHECK(tally.refused == 1u);
+    CHECK(tally.activeFrames == 0u);
+    CHECK(tally.frameTimeFrames == 0u);
+
+    cursor = fl::adv::LatencyCursor{};
+    auto older = Report(7000u);
+    fl::adv::ObserveLatencyReport(*older, cursor, tally);
+    CHECK(tally.frames == 62u);
+    CHECK(tally.activeFrames == 0u);
+    CHECK(tally.activeSumUs == 0u);
+    CHECK(tally.frameTimeFrames == 0u);
+}
+
+TEST_CASE("a multiplier the status gave has a bit of its own, and thirty-one and more share the last", "[latency]") {
+    CHECK(fl::adv::LatencyMultiplierBit(0u) == 1u);
+    CHECK(fl::adv::LatencyMultiplierBit(1u) == 2u);
+    CHECK(fl::adv::LatencyMultiplierBit(4u) == 16u);
+    CHECK(fl::adv::LatencyMultiplierBit(31u) == 0x80000000u);
+    CHECK(fl::adv::LatencyMultiplierBit(255u) == 0x80000000u);
+}
+
 TEST_CASE("a publication carries one read, packed as fl_shm.h says, and carries it once", "[latency]") {
     fl::adv::Accumulators a;
     fl::FlAdvancedState   region{};
@@ -199,6 +251,7 @@ TEST_CASE("a publication carries one read, packed as fl_shm.h says, and carries 
     out.sleepSeenOn = 1u | 8u;
     out.sleepSeenOff = 2u | 4u | 16u;
     out.multiplier = 2u;
+    out.multipliersSeen = (1u << 1) | (1u << 2);
     out.reads = 70'000u;    // stops at 65535
     out.worstUs = 66u;
     out.tally.frames = 10u;
@@ -207,6 +260,10 @@ TEST_CASE("a publication carries one read, packed as fl_shm.h says, and carries 
         out.tally.sumUs[i] = 1000u * (i + 1u);
     }
     out.tally.lacking = 1u << 3;
+    out.tally.activeSumUs = 31'500u;
+    out.tally.activeFrames = 9u;
+    out.tally.frameTimeSumUs = 42'000u;
+    out.tally.frameTimeFrames = 10u;
 
     fl::adv::Publish(a, &region, 7u, 1234u, &out);
     CHECK((region.latState & FL_LAT_STATE_MASK) == fl::FL_LAT_READING);
@@ -224,6 +281,11 @@ TEST_CASE("a publication carries one read, packed as fl_shm.h says, and carries 
     CHECK(region.latOsQueueSumUs == 5000u);
     CHECK(region.latGpuSumUs == 6000u);
     CHECK(region.latTotalSumUs == 7000u);
+    CHECK(region.latGpuActiveSumUs == 31'500u);
+    CHECK(region.latGpuFrameSumUs == 42'000u);
+    CHECK((region.latGpuCounts & 0xFFFFu) == 9u);
+    CHECK((region.latGpuCounts >> 16) == 10u);
+    CHECK(region.latMultipliersSeen == ((1u << 1) | (1u << 2)));
     CHECK(region.request == 7u);
 
     // The next publication, with no read in between: the state stands, the frames and the sums are gone.
@@ -232,12 +294,19 @@ TEST_CASE("a publication carries one read, packed as fl_shm.h says, and carries 
     CHECK(region.latFrames == 0u);
     CHECK(region.latTotalSumUs == 0u);
     CHECK(region.latDriverSumUs == 0u);
+    CHECK(region.latGpuActiveSumUs == 0u);
+    CHECK(region.latGpuFrameSumUs == 0u);
+    CHECK(region.latGpuCounts == 0u);
+    CHECK(region.latMultipliersSeen == ((1u << 1) | (1u << 2)));    // the session's, like the switches
     CHECK((region.latReads >> 16) == 66u);
 
-    // A caller with no latency summary leaves the ten words alone.
+    // A caller with no latency summary leaves the latency words alone.
     fl::FlAdvancedState untouched{};
     fl::adv::Publish(a, &untouched, 7u, 1236u);
     CHECK(untouched.latState == 0u);
     CHECK(untouched.latReads == 0u);
     CHECK(untouched.latTotalSumUs == 0u);
+    CHECK(untouched.latGpuActiveSumUs == 0u);
+    CHECK(untouched.latGpuCounts == 0u);
+    CHECK(untouched.latMultipliersSeen == 0u);
 }

@@ -117,8 +117,8 @@ NvAPI_Status __cdecl StubGetLatency(IUnknown* device, NV_LATENCY_RESULT_PARAMS* 
         r.osRenderQueueEndTime = t + 3900u;
         r.gpuRenderStartTime = t + 3900u;
         r.gpuRenderEndTime = t + 7600u;
-        r.gpuActiveRenderTimeUs = 3500u;
-        r.gpuFrameTimeUs = 4200u;
+        r.gpuActiveRenderTimeUs = fl::stubnv::kGpuActiveUs;
+        r.gpuFrameTimeUs = fl::stubnv::kGpuFrameUs;
         if (mode == fl::stubnv::kModeNoDriverSpan) {
             r.driverStartTime = 0u;
         }
@@ -144,7 +144,8 @@ NvAPI_Status __cdecl StubGetSleepStatus(IUnknown* device, NV_GET_SLEEP_STATUS_PA
     out->bLowLatencyMode = 1;
     out->sleepIntervalUs = 4166u;
     out->bUseGameSleep = 1;
-    out->fgMultiplier = 2;
+    const std::uint32_t multiplier = Get(g_shared->fgMultiplier);
+    out->fgMultiplier = static_cast<NvU8>(multiplier == 0u ? fl::stubnv::kFgMultiplier : multiplier);
     return NVAPI_OK;
 }
 

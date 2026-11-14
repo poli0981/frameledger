@@ -1000,8 +1000,26 @@ public unsafe struct FlAdvancedState
     /// <summary>Must be zero.</summary>
     public fixed byte DlssPad[3];
 
+    /// <summary>
+    /// The driver's own active render time (<c>gpuActiveRenderTimeUs</c>) summed over the frames of the newest read
+    /// that gave one, microseconds (0.1.0-beta.48, D142; four words of this line's reserve, nothing of DLSS's).
+    /// </summary>
+    public uint LatGpuActiveSumUs;
+
+    /// <summary>The driver's own frame time at the graphics card (<c>gpuFrameTimeUs</c>), summed the same way.</summary>
+    public uint LatGpuFrameSumUs;
+
+    /// <summary>Bits 0..15: the frames in <see cref="LatGpuActiveSumUs"/>; bits 16..31: those in <see cref="LatGpuFrameSumUs"/>.</summary>
+    public uint LatGpuCounts;
+
+    /// <summary>
+    /// Bit n: the driver's sleep status gave frame-generation multiplier n since the request; bit 31 stands for 31
+    /// and more (D144).
+    /// </summary>
+    public uint LatMultipliersSeen;
+
     /// <summary>Must be zero.</summary>
-    public fixed uint ReservedDlss[7];
+    public fixed uint ReservedDlss[3];
 
     /// <summary>Upscale dispatches whose extras were read (wraps).</summary>
     public uint FfxDispatches;
