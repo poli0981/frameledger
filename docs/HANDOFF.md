@@ -998,8 +998,11 @@ left unexercised; item 40 (d).
    (f), (g) **The owner, the same evening: "App reflex off, không khựng"** — *Low Latency Mode* is off in the
    NVIDIA App, and no hitch. Read with (f) as it was asked, for Cyberpunk 2077: the low-latency mode its 88
    reads show at a multiplier of 1 is then the game's own Reflex and not the App's override — Reflex on without
-   frame generation, as NVIDIA's guide allows. Whether the owner meant the App's global setting or that game's
-   was not asked. **The owner's**: the wording of the two GPU labels — *idle time excluded /
+   frame generation, as NVIDIA's guide allows. **Then shown, in two screenshots**: the NVIDIA App's *Program
+   Settings* for Cyberpunk 2077 have *Low Latency Mode* **Off**, set for that program (the rows that follow the
+   global setting read "Global - …"; this one does not); and the game's own *Video* page has **NVIDIA Reflex Low
+   Latency: On**, V-Sync off, borderless at 2560×1440, 378 FPS on the game's counter. So the driver's
+   `bLowLatencyMode` on, at a multiplier of 1, is the game's menu, seen from both sides. **The owner's**: the wording of the two GPU labels — *idle time excluded /
    included* does not describe a game whose active time is the longer.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
