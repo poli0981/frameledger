@@ -192,6 +192,11 @@ the probe, which enforces CFG, has made the calls from the header that ships, so
 valid targets. **Not excluded**: a game that enforces CFG on a driver the probe has not been run against — a target
 that were not valid is a fast-fail no guard catches.
 
+**In a real game** (the owner, 2026-11-14, Phantom Blade Zero on 0.1.0-beta.47, three sessions, frame generation
+×3 and off): the module was found four to five seconds after the attach — `nvapi64.dll` in System32, the getters in
+`nvapi64_impl.dll`, as on the probe — a read was made about every second for 344 s, 52 s and 1 119 s, **the slowest
+call took 24, 20 and 45 µs**, and no latch fired: no error, no slow call, no fault, no stall. One game, one driver.
+
 **The gate.** One word, four states — idle, armed, reading, off (`dllmain.cpp`, above `ReadLatencyOnce`). Only the
 watchdog arms; a presenting thread takes *armed* to *reading* by compare-exchange and owns the 15.4 KB report
 buffer (static storage, never a game thread's stack) and the read's result until it stores *idle* or *off*; the

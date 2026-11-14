@@ -163,10 +163,14 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
 
 ### NEXT
 
-1. **The owner runs item 45** — Cyberpunk 2077 first, frame generation off and then on; every outcome's meaning is
-   written there. Not first on a game under the user-mode exception's trial (D38).
-2. **What follows is the owner's to say once a real game has been read**: more titles; whether the session
-   summary's latency fields are filled from it; whether D141 stands on a game's numbers.
+1. ~~**The owner runs item 45**~~ **Run on 2026-11-14 in Phantom Blade Zero, three sessions: the read works in a
+   real game** (item 45's last paragraphs) — the driver was found, read every second, and no call took more than
+   45 µs. **Still to run of it**: Cyberpunk 2077 (the title D136 named), a game that is not Direct3D 12, off means
+   off; and the owner's word on whether the game felt different.
+2. **A real game has been read, so these are the owner's to say now**: what to do with the *GPU render* line,
+   which in this game is longer than the total — rename it, or read the driver's active time instead (two more
+   members of the report: a ruling like the list's others); more titles; whether the session summary's latency
+   fields are filled from it; whether D141 stands (the slowest call seen in a game is 45 µs, forty times under it).
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
 4. **Train D** after train C, the same way: a spike first — `sl.pcl.markers` waits for it, and §30 found its hook
    would miss a game that fetched its functions before the attach.
@@ -190,8 +194,11 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
   known, and nothing of its settings was looked at further or touched. `fl_guard` ended after 0.72 s **and was
   counted as failed, not passed**: the rule of #438 (a native test names the line it ends on) did what it was
   written for. Run again, the gate was green.
-- **No real game has run the read.** The order in which nothing else changed for a game is not a reason to skip
-  item 45's (h).
+- ~~**No real game has run the read.**~~ One has, three times (Phantom Blade Zero, 2026-11-14). **The accuracy
+  statement, `LIMITATIONS.md` and the guide still say no real game had been read**: true when written, to be
+  brought up to date with the next release, as beta.46's pages were.
+- **In Phantom Blade Zero the driver's *GPU render* span is longer than its total** (item 45): shown as reported,
+  not explained.
 - **No test runs the whole path through the real Agent**: the injected tests stop at the shared memory and the
   sampler's start from it; no end-to-end case loads the stand-in module under an Agent session.
 - **Two install batches of beta.46 took 0.61 s and 1.26 s and nothing explains them** (Hogwarts Legacy, Cyberpunk
@@ -209,8 +216,9 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** item 45; one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41
-left unexercised; item 40 (d).
+**Owner-only:** what is left of item 45 (Cyberpunk 2077; a game that is not Direct3D 12; off means off; how it
+felt); one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41 left unexercised;
+item 40 (d).
 
 ## Owner-only — no PR can close these
 
@@ -762,6 +770,30 @@ left unexercised; item 40 (d).
    `0xc0000409`): a Control Flow Guard refusal of the call — say so at once with the entry; that game enforces
    what the probe could only check for this driver. Spans that make no sense — a part larger than the total, a
    line that is always zero: say which; they are the driver's numbers and are shown as it reported them.
+   **Three sessions were run on 2026-11-14 and read the same morning — in Phantom Blade Zero, not Cyberpunk 2077**
+   (sessions 208–210, Direct3D 12, Streamline 2.14.1). **The read works in a real game.** (a) held: the terms were
+   accepted once, Disclaimer 2.16 and Privacy Policy 2.20. In all three the overlay log has `LATENCY … reading the
+   driver's latency report` four to five seconds after the attach, with `C:\WINDOWS\SYSTEM32\nvapi64.dll` and
+   `…\nvapi64_impl.dll` on the two lines after it, and **no later `LATENCY` line**: no error, no slow call, no
+   fault, no stall. Each session's line reads *read*, and the slowest call into the driver was **24, 20 and 45 µs**.
+   Frame generation on: session 208, ×3.0 at 85 → 256 — and the driver's own `fgMultiplier` read 3. Off: sessions
+   209 and 210, multiplier 1. Seven series in each, 227 / 24 / 823 points: 90 %, 62 % and 98 % of the Agent's own
+   once-a-second samples (the short session spent its first seconds before the module was found). With frame
+   generation ×3: total 23.4 ms, simulation 4.4, render submit 10.3, present 0.7, driver 10.9, OS queue 13.0, GPU
+   render 11.5 (means). The driver's switches: `bLowLatencyMode`, `bUseGameSleep` and `bFullscreenIFlip` *on at
+   times, off at others*; `bFsVrr` and `bCplVsyncOn` *off* — so in a game the low-latency switch does read on,
+   which it never did for the probe. No fault counted, nothing dropped, a normal exit each time, nothing about the
+   game in Windows' application log; rates as on beta.46 for the same game.
+   **One outcome the list above names: a part larger than the total.** *GPU render* reads 16.4 ms where the *total*
+   reads 5.4 ms (session 209), and about equals it in session 210 (16.0 against 15.9 ms). The span is the driver's
+   `gpuRenderStartTime` to `gpuRenderEndTime`, and in this game that start lies **before** the frame's own
+   simulation start: it reads like the time between two frames' GPU ends, idle time included — a reading, not a
+   fact; the driver has a field of its own for the active time (`gpuActiveRenderTimeUs`), which FrameLedger does
+   not read. It is shown as the driver reported it. The spans also overlap — render submit, driver and OS queue
+   together are longer than the total — so they are not parts that add up, and the page does not say they are.
+   **Not run**: Cyberpunk 2077, which (b) and (c) name; (d) Reflex off in the game's menu; (f) a game that is not
+   Direct3D 12 or has no NVIDIA library; (g) off means off. **Not said**: whether the game felt any different with
+   the option on. Not passed as written; what the three sessions were run for is answered.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
