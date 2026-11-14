@@ -35,57 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Changed
-
-- **The log of the part inside a game says how a group of hooks went in or came out** (owner decision D137). Since
-  0.1.0-beta.46 hooks are put into a game in groups, the game's threads stopped once for a group. In the owner's
-  first sessions two groups took much longer than the others (0.6 s and 1.3 s against 0.1-0.3 s), and the log
-  could not tell one long stop from a group that had to be finished one hook at a time. The `PATCH_BATCH` line now
-  reads `install` or `restore` for a group that went in one go, and `install singly` or `restore singly`, with a
-  count, for one that did not. Nothing else about hooking changed, and what a game is measured by is the same.
-
-### Fixed
-
-- **For developers: a native test that is cut short no longer counts as passed.** The quality gate's native tests
-  were judged by their exit code alone, and a test program that was stopped early with a clean exit code read as
-  *Passed* - seen once, when security software removed the test program while the gate ran. Every native test now
-  has to print the line it ends on, a test added without one stops the build's configure step, and four tests
-  exist only to prove the rule goes red when it should. Nothing a user installs changed.
-
-### Added
-
-- **Not in a release yet: the part inside a game can read NVIDIA's own latency report** (owner decisions D132, D136,
-  D138-D141). While a session records Advanced metrics, and only then, it asks the graphics driver about once a
-  second for its report of a frame's stages - simulation, render submit, present, driver, the operating system's
-  queue, the graphics card - and for its low-latency state. It is a call FrameLedger makes itself, on the thread
-  that presents the game's frames, through NVIDIA's `nvapi64.dll` only where the game had already loaded it;
-  Direct3D 12 only. A copy of that library sitting in the game's own folder is refused. A call that faults or takes
-  two milliseconds is the last one until the game is closed. **The Advanced page shows it** under *Latency*: seven
-  lines, one a stage, and a table of the driver's low-latency state; the line under a session says what became of
-  the read - read, the driver reported no frame, not read and why, or stopped and why. They are the driver's
-  numbers, not a measurement by FrameLedger, and no real game had been read when this was written. **Privacy
-  Policy 2.20 and Disclaimer 2.16** say what is stored and what the part inside a game now does; the terms window
-  will show once.
-
-- **For developers: room in the shared memory for NVIDIA Reflex latency** (owner decisions D136, D138). Ten reserved
-  words of the block that carries Advanced metrics from a game are now named for the driver's latency report -
-  where the read stands, and a sum for each stage of a frame. Nothing writes them yet and nothing reads them; the
-  shared memory's layout version did not change.
-
-- **For developers, nothing a user installs: a probe for NVIDIA Reflex latency** (owner decision D132). An
-  unshipped tool, `fl-probe-reflex`, and a stand-in `nvapi64.dll` among the test fixtures measure what it would take
-  to read the driver's latency report from inside a game - on FrameLedger's own test program and against the
-  installed driver, never in a game. What it found is `docs/spike-notes/31-reflex-route-d-harness.md`. A further
-  leg (owner decision D139) measured the same reads while the probe itself used Reflex's sleep, as a game does:
-  the reads do not wait behind it. The owner has said to go on to a real game (D136); that work is not in any
-  release yet. Nothing in the App, the Agent or the part that runs inside a game changed.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.47` | 2026-11-14 | [`docs/changelog/0.1.0-beta.47.md`](docs/changelog/0.1.0-beta.47.md) |
 | `0.1.0-beta.46` | 2026-11-13 | [`docs/changelog/0.1.0-beta.46.md`](docs/changelog/0.1.0-beta.46.md) |
 | `0.1.0-beta.45` | 2026-11-12 | [`docs/changelog/0.1.0-beta.45.md`](docs/changelog/0.1.0-beta.45.md) |
 | `0.1.0-beta.44` | 2026-11-12 | [`docs/changelog/0.1.0-beta.44.md`](docs/changelog/0.1.0-beta.44.md) |

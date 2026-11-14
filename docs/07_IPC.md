@@ -165,7 +165,7 @@ What the region is, as a contract between the two sides:
   counts `slShutdown` calls, with `FL_ADV_VALID_SL_SHUTDOWN` (bit 6 of the mask) set once one was seen. All three
   are a session's and a new request clears them. `FL_HOOK_SL_ALLOCATE_RESOURCES` (bit 20),
   `FL_HOOK_SL_FREE_RESOURCES` (21) and `FL_HOOK_SL_SHUTDOWN` (22) are published with their patches.
-- **Reflex latency words (train C; declared 2026-11-13, written by nothing yet; owner decisions D136, D138).** The
+- **Reflex latency words (train C; written by the Overlay since 0.1.0-beta.47; owner decisions D136, D138).** The
   ten reserved words that ended the first line (@24..63) are `latState`, `latReads`, `latFrames` and seven sums:
   simulation, render submit, present, driver, OS render queue, GPU render, and the total from simulation start to
   GPU render end. **The layout is still 5**: no offset and no size moved, and the handshake's build id refuses a

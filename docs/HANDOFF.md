@@ -85,6 +85,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.43`, what the owner's nine sessions on beta.43 showed, session by session (item 41), the traps of that train | [`handoff/history/0.1.0-beta.43.md`](handoff/history/0.1.0-beta.43.md) |
 | `§beta.44`, what the owner's eight sessions on beta.44 showed, session by session (item 42), this release's facts, the traps of that train | [`handoff/history/0.1.0-beta.44.md`](handoff/history/0.1.0-beta.44.md) |
 | `§beta.45`, what the owner's seven sessions on beta.45 showed, session by session (item 43), that release's facts and SonarCloud's gate on its commit, the traps of that train | [`handoff/history/0.1.0-beta.45.md`](handoff/history/0.1.0-beta.45.md) |
+| `§beta.46`, what the owner's five sessions on beta.46 showed (item 44), the design of the train that followed as the plan's review left it (`§The train after 0.1.0-beta.46`), that release's facts, the traps of that train | [`handoff/history/0.1.0-beta.46.md`](handoff/history/0.1.0-beta.46.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19, 38, 39) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -92,249 +93,109 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-13, 0.1.0-beta.46: patches go in and come out under one stop of the game's threads; Reflex route D goes to a harness spike
+## **START HERE** — 2026-11-14, 0.1.0-beta.47: the part inside a game asks NVIDIA's driver for its latency report; the batch log says how a batch ended
 
-*Status is `docs/changelog/0.1.0-beta.46.md`; this is what no other file carries.* The owner ran seven sessions on
-beta.45 the day after it was released and said: check the logs and go on. They were read from a copy of the ledger
-and the logs (#433), and the same day the owner took four decisions on what they showed (D132–D135) and approved
-the plan. Two pull requests and this one: #433 (what the sessions showed; the decisions; rule 4's note in
-`CLAUDE.md`), #434 (the batches, D134). **What the seven sessions on beta.45 showed, session by session, is
-[`handoff/history/0.1.0-beta.45.md`](handoff/history/0.1.0-beta.45.md)**; what the batches are, what the queue
-makes dangerous and what was measured is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking, *Batches*.
+*Status is `docs/changelog/0.1.0-beta.47.md`; this is what no other file carries.* The owner ran five sessions on
+beta.46 the evening it was released and said: check and go on. They were read (#439), the owner took six decisions
+(D136–D141) and approved the plan of the train the same evening, and the five pull requests of it were merged
+overnight: #440 (the decisions; the probe's leg with a sleep mode), #441 (D137), #442 (the latency words of region
+5), #443 (the Overlay makes the read; the gates; the fixtures), #444 (the Agent, the App, the legal texts,
+owner-only item 45). The release was held for item 44 (d), which the owner ran on 2026-11-14 (#445, and below).
+**What the five sessions showed, the design of the train as the plan's review left it, and the traps of beta.46
+are [`handoff/history/0.1.0-beta.46.md`](handoff/history/0.1.0-beta.46.md)**; what the read is and what bounds it
+is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a driver; what was measured is
+[`spike-notes/31-reflex-route-d-harness.md`](spike-notes/31-reflex-route-d-harness.md).
 
-### What this release decided, beyond D132–D135
+### What this release decided, beyond D136–D141
 
-- **The first design was wrong, and reading MinHook's source before writing a line is what found it.** It marked
-  every hook for disabling and then un-marked the ones it must not restore. `MH_ApplyQueued` applies every hook
-  whose mark differs from its state; un-marking a hook that is already out marks it for *enabling*, and the stop's
-  own apply would have put a patch back in after the stop — logged as "declined", with the status `UNHOOKED`. The
-  rules that replaced it are in `fl_patch_registry.h`: no mark left standing, only a patch that is still ours
-  marked for a restore, nothing marked "all", and mark–apply–commit inside a gate.
-- **The gate is the Overlay's one lock, and it is on no hook body's path.** A slim lock, exclusive, held for one
-  apply, never across a symbol lookup (the loader's lock). The one way from a hook to it is the stop, which always
-  waited for MinHook's own lock and a stop of the threads. Its owner re-enters it without waiting: a slim lock taken
-  twice by one thread never returns.
-- **The verdict on an install is the engine's, not the bytes'.** Reading the target back after the apply would take
-  a foreign overlay that patched over us in that instant for a failure, and mark a restore nobody had compared.
-- **An apply stops at its first failure and says only that one failed.** The hooks after it are enabled — in the
-  stop, restored — one at a time, so one bad patch still costs one patch, and a stop still takes everything out.
-- **One stop of the threads costs what it cost for one patch**: 77–91 ms on the fixture for four, nine or eighteen.
-  What it costs in a game with a few hundred threads is not known; the `PATCH_BATCH` line's `a=` is there to say.
-- **Init's three DXGI patches, the loader detour and OpenGL are as they were** — three already went in together,
-  the other two are one each. Ray tracing's two are a batch of their own, apart from the upscaler rows', so that a
-  batch's size in a test does not depend on which tick a D3D12 device appeared in.
-- **`fl_guard`'s timing assertion is on the restore only** (under a second for eighteen patches): the time from an
-  Advanced request to its families includes the wait for the watchdog's tick, and batching changes the tick's
-  phase, so that number went *up* in the test while the install itself went from 0.6 s to 0.08 s. The install is
-  asserted by count — every lazily installed patch under a `PATCH_BATCH` line — not by time.
-- ~~**The spike of route D is still to be written**~~ **The spike of route D was run the same day** (`spike-notes`
-  §31; `tools/fl-probe-reflex`, ctest `fl_reflex_probe_stub`): a decision table written before the runs, a stand-in
-  `nvapi64.dll`, then the installed driver in the probe's own process. None of §30's stop conditions fired. Two
-  things it decided that a plan must keep: **the call belongs on the presenting thread, once a second** — a call
-  the driver holds stops the thread that made it, so not the watchdog, and at a microsecond or so it needs no thread
-  of its own — and **the newest frames of a report are not final** (one run read a span of half an hour in the
-  newest frame). Rule 4's note (D132) is in `CLAUDE.md`; nothing shipped calls a driver.
+- **It is the first thing the Overlay does in a game that is not reading a hooked call's arguments**, and it is
+  listed as that — its own table in `17_HOOK_ENGINE`, its own reach in the catalog (`GameDriver`, not a stretched
+  `Game`), its own paragraph in the Disclaimer. A second call of this kind needs a ruling of the same kind (D132).
+- **Resolve on the watchdog, once for the process; call on the presenting thread, after the record is published,
+  behind one gate of four states** — idle, armed, reading, off. The plan's first draft had a busy flag beside
+  accumulators: two presenting threads could have read back to back, and the watchdog could have published half a
+  read. The whole design as reviewed is in the history file, §The train after 0.1.0-beta.46.
+- **`nvapi64.dll` is a shim.** The check that the two addresses lie inside the module it asked refused the real
+  driver: the getters are in `nvapi64_impl.dll`, in the driver's store. An address is accepted when it is executable
+  code of a loaded image, and a reference is kept on that image too. Only the run against the installed driver
+  could find it — the stand-in answers with addresses of its own.
+- **The code that is called is a Control Flow Guard image**; the plan's review had reasoned from the shim, which is
+  not. The probe enforces CFG and makes the calls from the header that ships, so this driver's getters are valid
+  targets. A CFG-enforcing game on another driver is not covered, and a refusal there is a fast-fail.
+- **The layout stayed 5**: ten reserved words of region 5 took the read. `FL_HOOK_REFLEX`, `FL_MEASURED_LATENCY`
+  and `reflexLatencyUs` stay unset — there is no hook, and the numbers are series beside the frames.
+- **D141 was asked twice.** A run on a busy PC showed the 2 ms latch can fire on a pause that was Windows'; the
+  owner kept one call. Do not re-ask without a real game's numbers.
+- **What the game asked of Reflex, and Reflex through Streamline, are `RefusedRoute`** — a patch at a run-time
+  address, and a call the vendor forbids from another thread (D133). `sl.pcl.markers` waits for train D's spike.
+
+### What item 44's last part showed (2026-11-14)
+
+- **A first try did not exercise it** (sessions 203–205, #445): *Disable all hooking* was on before the games were
+  started, so two sessions were `RefusedKillSwitch` with nothing injected, and the hooked one ran to its exit.
+- **The second try did, twice, in Phantom Blade Zero** (sessions 206 and 207): the game started with the switch
+  off, was recorded for a minute and a half, and the switch was turned on while it ran. Each log has `STOP` at the
+  next safety scan, **an `UNHOOK_RESTORED` line for every one of the twenty-nine patches, all at one time**, one
+  `PATCH_BATCH restore` — **83 309 µs and 85 578 µs for twenty-nine** — and `STOP_FLUSHED … a=1`. Nothing was
+  declined. Both sessions ended `KillSwitchEngaged`, tier 1, no fault, no record dropped, writer status
+  *unhooked*; the game ran on for three and four minutes and closed with nothing in Windows' application log.
+  Restoring twenty-nine one by one would have cost about 2.4 s at this game's 84 ms a stop.
+- **Not said by the logs**: whether the owner felt a hitch at the stop. Not exercised: (e) a game with no
+  Streamline and (g) off means off — both are parts of item 45 now.
 
 ### Traps this train left
 
-- **GPG's agent had restarted and the pinentry timed out three times in a row**; nothing could be committed until
-  the owner unlocked the key (`echo test | gpg --clearsign` in the owner's own terminal). Say so and go on with
-  what needs no commit — planning did not.
-- **A here-document still eats backslashes** (a `\n` inside a C++ string in an edit script): write the script to a
-  file. It cost one failed edit again.
-- **A Catch2 `WARN` longer than the console's width wraps**, and a filter on its first words loses the number at
-  its end: keep a measured line short.
-- **To measure the old build beside the new one**: `git stash push -- <the changed sources>`, build, run the one
-  test case by name (its `INFO` log prints when a new assertion fails, which it does on the old build), `git stash
-  pop`, build again.
-- **SonarCloud's gate was red on #434 before it merged, on three things it was right about**: a `LARGE_INTEGER`
-  initialised with `{}` and read through `QuadPart` (cpp:S6232 - write `{.QuadPart = 0}`, as the rest of the file
-  does since #336), a `strlen` in a test, and a test model indexed with what a lookup returned unchecked. Its job is
-  advisory and auto-merge does not wait for it: the pull request was held until the fix was analysed.
-- **`docs/14_TESTING` and the changelog are where a non-per-present cost goes**; "measured overhead" in a pull
-  request body means what the change can move — here the install and the stop, not a present.
-
-### What the owner's five sessions on beta.46 showed (item 44, read 2026-11-13)
-
-The owner updated at 20:29 (+07) the day of the release, ran five Streamline games with Advanced metrics on — one
-session each, four to nine minutes, sessions 198–202 — and said: check and go on. Read from a copy of the ledger
-and the logs, and from Windows' application log. None of the five is under the user-mode exception.
-
-| Session | Game | Install batches in the log's order: `a=` in microseconds · patches | The interposer's patches on beta.45, first line to last |
-|---|---|---|---|
-| 198 | Hogwarts Legacy | **1 260 835 · 13** (Streamline) — 261 920 · 3 — 227 061 · 2 | 2.80 s, 0.19–0.31 s a patch |
-| 199 | Phantom Blade Zero | 81 417 · 3 — 92 512 · 6 — 88 455 · 13 (Streamline) — 99 253 · 2 | 0.74 s and 0.85 s |
-| 200 | Black Myth: Wukong | 187 931 · 12 (Streamline) — 157 010 · 3 — 109 025 · 2 | 1.65 s |
-| 201 | Cyberpunk 2077 | 93 168 · 16 (Streamline's thirteen and the FSR loader's three) — **608 700 · 3** — 177 970 · 3 — 120 878 · 2 | 1.18 s |
-| 202 | Clair Obscur: Expedition 33 | 168 527 · 3 — 165 405 · 16 (Streamline's thirteen and FSR frame generation's three) — 218 172 · 2 | no session on beta.45 |
-
-- **The batches went in whole.** In every log the `HOOK_INSTALLED` lines above a `PATCH_BATCH install` carry one
-  time to the thousandth of a second; there is no `PATCH_FAILED` and no `UNHOOK_DECLINED`; and the hooks are the
-  ones beta.45 installed for the same game, compared name for name (four games; Clair Obscur had no log on beta.45).
-- **Sixteen of the eighteen batches cost 81–262 ms, whatever they held** — two patches or sixteen. That is what one
-  patch cost in the same game on beta.45, as expected.
-- **Two did not, and neither is explained.** Hogwarts Legacy's thirteen took **1.26 s** — under half the 2.8 s they
-  took one by one, and about five times what one stop cost in that game the same afternoon. Three of Cyberpunk
-  2077's took **0.61 s**, which is what three patches cost there one by one. **The log cannot tell one long stop
-  from an apply that failed part-way and was finished one patch at a time**: a batch writes a line only for a patch
-  that fails for good (item 44's text said a fallback leaves a `PATCH_FAILED`; that was wrong). What speaks for one
-  long stop: the queued apply fails only where a page's protection cannot be changed, and thirteen single stops in
-  Hogwarts Legacy would have cost 2.5 s or more. *A reading, not a measurement*: a stop waits until every thread of
-  the game has taken its suspension, and how long that takes follows what the game is doing at that instant — both
-  happened while the game was loading — and not how many patches the stop covers.
-- **What that means for a ceiling on a batch** (item 44's own words for a second or more, written before the run):
-  the eighteen batches say the cost does not follow the count — sixteen patches in 93 ms, three in 609 ms — so
-  splitting a batch would add stops, not shorten one. What is missing is the line that says how a batch ended.
-- **Nothing else moved.** All five hooked, `normal`, no fault counted, no record dropped. Rates and factor beside
-  each game's earlier sessions: Cyberpunk 2077 149 → 298 (×2.0) beside 164 → 327 and 137 → 275; Hogwarts Legacy
-  61 → 245 (×4.0) beside 59 → 236; Black Myth: Wukong 78 → 315 (×4.0) beside 85 → 341; Phantom Blade Zero 87 → 261
-  (×3.0) beside 81 → 244 at ×3.0 on beta.43; Clair Obscur 112 → 339 (×3.0) beside 106 → 323 on beta.44.
-- **The way out is as it was.** Hogwarts Legacy faults in `_nvngx.dll` at `0x6aa85` and Black Myth: Wukong in
-  Steam's `crashhandler64.dll` at `0x39b49` — the module and the offset of every build read so far. The other
-  three games leave nothing in Windows' application log.
-- **The Advanced rows are as on beta.45**, and Clair Obscur gave its first reading of the six calls (interposer
-  2.7.30): `slIsFeatureSupported` and `slIsFeatureLoaded` read, among them a feature no session had named before,
-  `kFeatureLatewarp` (Streamline's answer: `eErrorFeatureMissing`). `slAllocateResources` and `slShutdown` were
-  called in none of the five (D135 stands). That game's `hook_crash_count` of 3 is old: it dates from 2026-10-20
-  and is the same in the copy read for item 43.
-- **Not exercised: the stop.** Every session ended with its game exiting; no log has a `STOP` or a `PATCH_BATCH
-  restore` line. **`RestoreAll` has still run in no real game** — item 44 (d). Nor (e), a game with no Streamline,
-  nor (g), off means off: `telemetry.advanced` was on throughout. (c), how a game's start feels, is the owner's to
-  say. (a) held: the terms window did not show.
-
-### The train after 0.1.0-beta.46: Reflex route D in a game, and D137 (plan approved 2026-11-13)
-
-*Nothing of this is in a release. The release pull request is not opened before the owner has run item 44 (d).*
-**Where it stands (2026-11-14):** all five are merged — #440 (PR-0), #441 (D137), #442 (the words), #443 (the
-Overlay), #444 (the Agent, the App, the legal texts, owner-only item 45); `main` is `cd4f69a`. What is left is the
-release, which waits for the owner: **item 44 (d) was tried on 2026-11-14 and not exercised** (the switch was on
-before the games started — item 44's last paragraph). **Not verified by any test: the whole path through the real Agent** —
-the injected tests stop at the shared memory, the sampler's tests start from it; no end-to-end case loads the
-stand-in module under an Agent session. The Japanese strings are new and unreviewed, as every `ja` string is.
-The owner approved the plan the evening item 44 was read. Its order: **PR-0** the decisions and the probe's leg
-with a sleep (done: `spike-notes` §31 — no stop condition) → **PR-1** D137 → **PR-2** the words in region 5, written
-by nobody → **PR-3** the Overlay, the gates, the fixtures → **PR-4** the Agent, the App, strings, documents, legal
-texts and owner-only item 45 → **the release, held**. What the plan's review against the source decided — a draft
-of mine was wrong in six places — and that no other file carries yet:
-
-- **Resolve on the watchdog, once for the process; call on the presenting thread.** The watchdog asks Windows for
-  an `nvapi64.dll` that is *already loaded* (never loads it), only while a session asks for Advanced metrics and a
-  Direct3D 12 device is held; it keeps one reference and never releases it; it refuses a module in the executable's
-  own folder (D140); it fetches `nvapi_QueryInterface` and the two ids under a guard and checks with `VirtualQuery`
-  that both addresses lie inside ~~that module~~ an image the process has loaded. "No getter" and "refused" are
-  final for the process; "no module" is asked again each second. **Found when the header was run against the
-  installed driver: `nvapi64.dll` is a shim and the two getters are in `nvapi64_impl.dll`** (`spike-notes` §31,
-  *What moving the sequence into the Overlay found*) — so the check accepts another loaded image, a reference is
-  kept on that image as well, and the code that is called *is* a Control Flow Guard image (the plan's review had
-  reasoned from the shim, which is not).
-- **One atomic gate with four states** — idle, armed, reading, off — not a busy flag beside accumulators (two
-  presenting threads could read back to back, and the watchdog could drain half a read). The watchdog drains only
-  when it sees *idle* and arms at most once a second by its own clock (the loader detour wakes it more often); a
-  present does one relaxed load, takes *armed* to *reading*, reads into a static buffer (the report is 15.4 KB: never
-  on a game thread's stack), and stores *idle* or *off*. A request that goes off takes *armed* back.
-- **After the record is published, and only for a swap chain whose device is the one held** (`g_d3d12Device` is the
-  first device seen, not "this chain's": a flag in the chain's slot, set in `ResolveApi`).
-- **The latches, each until the game exits**: a fault in a getter (its own guard with `FlFilter`; counted once
-  through `NoteFault`, so the session shows it and it cannot reach the three that self-disable); one call of 2 ms or
-  more (D141); the watchdog finding *reading* on two ticks running — logged and flushed at once, published as
-  stalled, and **nothing can stop a call that does not return**. An error status or an empty report is recorded and
-  reading goes on.
-- **What D141 costs, measured once on a busy PC** (`spike-notes` §31, *A run on a busy PC*): the 2 ms latch will
-  sometimes fire on a pause that was Windows' and not the driver's — a few sessions in a hundred at worst, by a
-  reading of one run. The owner chose one call over two knowing it errs towards the game; item 45's outcomes must
-  say how the two are told apart (the microseconds published with *slow*). **Asked again with this run in hand,
-  the owner kept it: one call (2026-11-13). Do not re-ask.**
-- **The summary**: only frames newer than the last one summed; the two newest of a report skipped (§31: not final);
-  a zero end point is "span not reported" (published as all ones), not a refused frame; a frame is refused for a
-  span that runs backwards, one over a second, or no total; frame ids that go backwards restart the sequence.
-- **Layout 5 stays**: the ten reserved words of region 5's first line take it (`slShutdowns` is the precedent; the
-  handshake compares the build id anyway, and a trial must be removable without a layout 7). The sleep interval is
-  not stored. No new request word (D138). `FL_HOOK_REFLEX`, `FL_MEASURED_LATENCY` and `reflexLatencyUs` stay unset:
-  there is no hook, and the numbers are a series beside the frames; `sessions.reflex_active` stays NULL.
-- **Managed side**: a new reach, `GameDriver`, not a relaxed test of `Game` (whose meaning is "the arguments of a
-  call the Overlay hooks"); `nvapi.reflex.frame_report` as seven series, `nvapi.reflex.sleep_status` as a table of
-  switches *seen on / seen off*; `nvapi.reflex.mode`, `sl.reflex.state` and `sl.pcl.markers` become *refused* with
-  the reason; `InGameAdvancedSampler.Take` must read the latency state when the mask is zero and keep the new bit
-  out of `SawAnything`.
-- **The gates**: `overlay-fields-check` learns the two NVAPI structs (`frameID` joins the shared members; `version`
-  is written outside the header); `nvapi-readonly-check` gets a pass over the Overlay — no `NvAPI_*(` token, every
-  id that equals one of `nvapi_interface.h`'s on a list of exactly two, `Sleep` a writer verb; `hookinventory-check`
-  refuses an `nvapi` import. The injected tests prove nothing about Control Flow Guard (the harness does not enforce
-  it): the probe includes the header that ships, so `fl_reflex_probe_stub` tests the shipped sequence under it.
-- **The legal texts change in PR-4** (Disclaimer 2.16, Privacy Policy 2.20, the accuracy statement): the part
-  inside the game now *makes a call of its own*, once a second, on the game's presenting thread.
+- **A bash here-document ate backslashes again** and wrote a NUL byte into a `.cpp`. Edit scripts are files.
+- **A file made by the Write tool is LF**; `dotnet format --verify-no-changes` fails a new `.cs` for it. Convert.
+- **`NvAPI_Status(__cdecl*)(…)` is a call by name to `nvapi-readonly-check`**: the status type has an alias in
+  `fl_reflex.h`. And a member of the Overlay's own named like a vendor's (`fgMultiplier`) fails
+  `overlay-fields-check` outside the header.
+- **A copy of the harness in `%TEMP%` leaves an overlay log the run's sweep does not own** (it matches this
+  build's harness by path): the test that makes the copy sweeps it.
+- **Stacked pull requests, with a dirty tree**: once the lower one is squash-merged GitHub retargets the next to
+  `main`; `gh pr update-branch` works while the upper branch only adds, and conflicts once it edited lines the
+  lower one added — then `git rebase -S --onto origin/main <lower tip> <branch>` and a forced push with lease.
+- **Advisory checks found real things after the local gate was green**: SonarCloud a `wcslen`, Qodana's native
+  report a `switch` that did not name two enumerators, its managed report two redundant qualifiers and a
+  redundant `!`. Hold a merge until both have reported.
+- **The probe's numbers depend on what else the PC does**: a run beside a build read 3.4 µs where three alone read
+  2.6, and saw reads of 2 ms. Say which kind a number is.
 
 ### NEXT
 
-1. ~~**The owner runs item 44**~~ **Read 2026-11-13** (§What the owner's five sessions on beta.46 showed): the
-   install half held in five games. **Still to run, the owner's: (d) a stop while a game runs** — *Disable all
-   hooking* with a game being recorded — which is the half of beta.46 no real game has exercised; (e) a game with
-   no Streamline; (g) off means off. Not first on a game under the user-mode exception's trial (D38).
-   ~~**Proposed, not done: `PATCH_BATCH` says how the batch ended**~~ **Decided the same evening (D137):
-   `PATCH_BATCH` says how the batch ended** — under one apply, or finished one patch at a time, and how many — so
-   that a long `a=` can be read. It goes with the next release, not in one of its own. **Written 2026-11-13**:
-   `install` / `restore` for one apply, `install singly` / `restore singly` with the count in the high half of `b`
-   (`17_HOOK_ENGINE` §Unhooking, *Batches*). It explains nothing about the two long batches already seen; it makes
-   the next one readable.
-2. ~~**The spike of Reflex route D on `hook-harness`**~~ **Done 2026-11-13** (`spike-notes` §31): on the harness
-   and against the installed driver the two getters are harmless, cost about a microsecond and return a readable
-   report, and the Direct3D 12 device the Overlay holds is what the driver takes. **The owner's next word is go or no
-   for one real title** — a go is a plan of its own before any code (where the numbers go, the Disclaimer's and the
-   Privacy Policy's wording, `nvapi-readonly-check` over the Overlay). Routes C and E are closed (D133).
-   **The owner said go on 2026-11-13 (D136): a plan first, for Cyberpunk 2077.** No code before the plan is
-   approved, and no release that carries it before item 44 (d) — the stop while a game runs — has been run.
-   **The plan was approved the same evening, with D138–D141** (§The train after 0.1.0-beta.46).
+1. **The owner runs item 45** — Cyberpunk 2077 first, frame generation off and then on; every outcome's meaning is
+   written there. Not first on a game under the user-mode exception's trial (D38).
+2. **What follows is the owner's to say once a real game has been read**: more titles; whether the session
+   summary's latency fields are filled from it; whether D141 stands on a game's numbers.
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
-4. **Train D** after train C, the same way: a spike first — and §30 found its hook would miss a game that fetched
-   its functions before the attach.
+4. **Train D** after train C, the same way: a spike first — `sl.pcl.markers` waits for it, and §30 found its hook
+   would miss a game that fetched its functions before the attach.
 
 ### Left open by this session
 
-- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.~~ **Recorded
-  2026-11-13: 0.1.0-beta.46 was released 2026-11-13T11:10:28Z** (18:10 in the owner's time zone) from the signed
-  tag on `47f010a` (#435), by run 43412434074 — green at the first attempt, one run for the one tag push. Eight
-  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the four shipped natives carry
-  `FL_BUILD_ID v0.1.0-beta.46`. The delta from beta.45 is 634,023 bytes beside a full package of 110,767,120 —
-  "Delta processed 0452 files. 0021 patched, 0431 unchanged". The wiki was published by run 43414965433. The
-  rehearsal on the release branch (run 43409330961, at `7b4ecd7`, the released tree) had made a delta of 668,012
-  bytes with the same file counts. **SonarCloud answered on `47f010a`: the quality gate passed and no issue is open
-  on `main`. Qodana's two reports are green on that commit.** On the way SonarCloud was red on #434 (six issues
-  in the new code, fixed before it merged — §Traps), and no required check failed.
-- **A local gate once counted `fl_guard` as passed after 0.66 s** (2026-11-13 17:30, the spike's branch). The
-  security software on the development PC was switched on for three minutes while the gate ran; the freshly linked
-  `fl_guard_test.exe` was removed from the build tree, **ctest reported the run that was cut short as `Passed`**
-  (the suite takes 181 s), and the gate went red only because the next test, `fl_prescan`, runs the same executable
-  and could not find it. Run again with that software off, the gate was green. Nothing was changed for it: a test
-  whose process ends early with a zero exit code is a pass to ctest, and the suite has no line it must print to
-  count. ~~Worth a guard of its own (a `PASS_REGULAR_EXPRESSION` on Catch2's last line, or a minimum number of test
-  cases); proposed, not done.~~ **Done the same evening, on the owner's word**: every native test names the line it
-  ends on and ctest requires it; a test registered without one fails the configure; four canaries prove the rule
-  red and green (`14_TESTING` §Native unit tests; `src/native/CMakeLists.txt`). Two things it turned up: four tests
-  passed on a line they print in the middle of their run, and `fl_nvapi_probe` passed whatever it printed after its
-  branch line — a pass expression makes ctest ignore the exit code.
-- ~~**No real game was run on this build.**~~ Five were, on 2026-11-13 (above): the order in which patches reach a
-  game changed for every game, and the five took it. **The restore under one apply has run in no real game.**
-- **Two batches took 1.26 s and 0.61 s and nothing explains them** (Hogwarts Legacy, Cyberpunk 2077); the log has
-  no line that tells a long stop from a batch finished one patch at a time.
-- **Off means off has never been exercised on a real game** (item 43 (f), now item 44 (g)); nor (c) and (h) of
-  item 43, which only the owner sees.
+- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.
+- **No real game has run the read.** The order in which nothing else changed for a game is not a reason to skip
+  item 45's (h).
+- **No test runs the whole path through the real Agent**: the injected tests stop at the shared memory and the
+  sampler's start from it; no end-to-end case loads the stand-in module under an Agent session.
+- **Two install batches of beta.46 took 0.61 s and 1.26 s and nothing explains them** (Hogwarts Legacy, Cyberpunk
+  2077). Since this release the log says whether a batch went singly; the next long one can be read.
+- **The Japanese strings are new and unreviewed**, as every `ja` string is.
+- **Off means off has never been exercised on a real game** (item 43 (f), item 44 (g), now item 45 (g)); nor (c)
+  and (h) of item 43, which only the owner sees.
 - **Valor Mortis's crash at 51 s** (twice, beta.40 and beta.44) **and Black Myth: Wukong's fault in Steam's crash
   handler at every exit** are not explained. One session of each with hooking off is the comparison that is missing.
 - **What item 41 left unexercised**: a configure through the FidelityFX 2.3 loader (Cyberpunk 2077 with FSR frame
   generation), a game with neither library.
 - **A fault while a game is closing is not seen by a hooked session** (D127: written down, not changed).
-- **For the inline patches the comparison has never been re-made under the write window** (`17_HOOK_ENGINE`
-  §Compare-and-restore says so now): MinHook owns that window.
 - **`docs/LIST_GAME_TESTED.md` is as of 2026-11-06**: refreshing it is a new copy of the ledger and the owner's review.
 - **Item 40 (d)** was not exercised and the owner has not said item 40 passed. **Items 36 (d) and 37 are still open.**
-- **What an empty process snapshot does to the watcher's tick in a real session** was not looked into (seen once in
-  a test on 2026-11-12).
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** item 44 (d), (e), (g) and what (c) felt like — **(d) is what the next release waits for**; item 45 once that release exists; the go or no on `spike-notes` §31 (one real title); one session each of Valor Mortis and
-Black Myth: Wukong with hooking off; what item 41 left unexercised; item 40 (d).
+**Owner-only:** item 45; one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41
+left unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
 
@@ -818,8 +679,8 @@ Black Myth: Wukong with hooking off; what item 41 left unexercised; item 40 (d).
    (compare the `HOOK_INSTALLED` lines), or a session that reads *not hooked* where it read *read*: the batch lost
    a patch — the log's `PATCH_FAILED` line names it and why. A crash in play or at exit that is new: say so at
    once; *Disable all hooking* runs the game with nothing patched after the start.
-   **Five sessions were run on 2026-11-13 and read the same day** (§What the owner's five sessions on beta.46
-   showed): (a) held — the terms window did not show; (b) five Streamline games — every batch's lines carry one
+   **Five sessions were run on 2026-11-13 and read the same day** ([`handoff/history/0.1.0-beta.46.md`](handoff/history/0.1.0-beta.46.md)
+   §What the owner's five sessions on beta.46 showed): (a) held — the terms window did not show; (b) five Streamline games — every batch's lines carry one
    time; `a=` is 81 417–261 920 for sixteen of the eighteen batches, **1 260 835 for Hogwarts Legacy's thirteen
    and 608 700 for three of Cyberpunk 2077's**, neither explained — and the sentence above about a fallback is
    wrong: a batch finished one patch at a time leaves no line unless a patch fails for good, so the log cannot say
@@ -837,9 +698,16 @@ Black Myth: Wukong with hooking off; what item 41 left unexercised; item 40 (d).
    application log has no fault since 06:30. **How (d) is run**: start the game with the switch **off** and wait
    until FrameLedger shows it recording; **then**, with the game still running, switch *Disable all hooking* on;
    play on for half a minute; switch it off; close the game.
-45. **The release after beta.46 — NVIDIA's latency report, read inside a game** (D132, D136, D138–D141; **the
-   release does not exist yet**: it is cut after item 44 (d) has been run). **Cyberpunk 2077 first** (D136), **and
-   not first on a game under the user-mode exception's trial** (D38): a crash there ends the exception for good.
+   **2026-11-14, the second try (sessions 206 and 207, Phantom Blade Zero): (d) held, twice.** The game started with
+   the switch off and was being recorded; the switch was turned on while it ran. Each log has `STOP` at the next
+   safety scan, an `UNHOOK_RESTORED` line for every one of the twenty-nine patches at one time, one `PATCH_BATCH
+   restore` — `a=83309` and `a=85578`, `b=0x1d` — and `STOP_FLUSHED … a=1`; no `UNHOOK_DECLINED`. Both sessions
+   ended `KillSwitchEngaged`, tier 1, no fault, nothing dropped; the game ran on for three and four minutes and
+   closed with nothing in Windows' application log. Whether a hitch was felt at the stop is the owner's to say.
+   **Taken as passed for what 0.1.0-beta.47 was held on** — (a), (b), (d), (f). **(e) and (g) were never run**: they
+   are (f) and (g) of item 45.
+45. **beta.47 — NVIDIA's latency report, read inside a game** (D132, D136, D138–D141). **Cyberpunk 2077 first**
+   (D136), **and not first on a game under the user-mode exception's trial** (D38): a crash there ends the exception for good.
    This is the first release in which the part inside a game *makes a call of its own* — into the graphics driver,
    about once a second, on the game's presenting thread — so read (a) before (b). (a) **The update**: Help ▸ Check
    for updates, *Restart to update* with no game running; **the terms window shows once, with Privacy Policy 2.20
@@ -1030,7 +898,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D135 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory | `slAllocateResources` keeps its patch although no game called it in the first six sessions; looked at again when there are more |
 | D136 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14, [`spike-notes/31-reflex-route-d-harness.md`](spike-notes/31-reflex-route-d-harness.md) §The question for the owner | Reflex route D goes on to one real title, Cyberpunk 2077 — a plan of its own first, no code before it is approved, and no release carrying it before item 44 (d) has been run |
 | D137 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Unhooking, *Batches* | the `PATCH_BATCH` line says how a batch ended — one apply, or finished one patch at a time — after two batches in real games took 0.61 s and 1.26 s and the log could not say which; with the next release, not one of its own |
-| D138 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14, `HANDOFF.md` §The train after 0.1.0-beta.46 | the Reflex read has no switch of its own: it is part of Advanced metrics — so it reaches every Direct3D 12 game that loaded the driver's `nvapi64.dll`, for everyone who switched Advanced metrics on; "one title" is the order of the owner's first runs (item 45), not a limit in code |
+| D138 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14, [`handoff/history/0.1.0-beta.46.md`](handoff/history/0.1.0-beta.46.md) §The train after 0.1.0-beta.46 | the Reflex read has no switch of its own: it is part of Advanced metrics — so it reaches every Direct3D 12 game that loaded the driver's `nvapi64.dll`, for everyone who switched Advanced metrics on; "one title" is the order of the owner's first runs (item 45), not a limit in code |
 | D139 | [`spike-notes/31-reflex-route-d-harness.md`](spike-notes/31-reflex-route-d-harness.md) §The leg with a sleep | before any Overlay code the probe runs a leg with `NvAPI_D3D_SetSleepMode` and `NvAPI_D3D_Sleep` — writes, in the probe's own process, on its own device, in no shipped binary |
 | D140 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14 | an `nvapi64.dll` loaded from the game's own folder — a replacement, not the driver's — is refused, and the session says why |
 | D141 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14 | one call into the driver of 2 ms or more switches the Reflex read off until the game exits |

@@ -872,8 +872,8 @@ planning, the design reviewed against the code before it was approved.
 - **Privacy Policy 2.18** at beta.44 (approved with that release's plan): 2.17 named two further calls and what
   they give; Streamline's answers about a feature are in neither list, so they are named, with what of the answer
   is never read — the lists it points to.
-- **Privacy Policy 2.20 and Disclaimer 2.16** with train C (wording approved with the plan of 2026-11-13; in no
-  release yet): the first thing read inside a game that is **not an argument of a call the game made**. The Privacy
+- **Privacy Policy 2.20 and Disclaimer 2.16** at beta.47, train C (wording approved with the plan of
+  2026-11-13): the first thing read inside a game that is **not an argument of a call the game made**. The Privacy
   Policy names what is stored — how long each stage of a frame took, as the driver reports it, and the driver's
   low-latency state; never a time of day, never an input's moment. The Disclaimer drops "API arguments and nothing
   else" for what is true, and §2 gains the paragraph on the one call the component makes itself: where, how often,
@@ -1082,7 +1082,7 @@ before FrameLedger is inside it, so no hook could read it — D129), `Spike` (Tr
 | `sl.constants.camera` | Camera position, axes and matrices | SessionFact | Streamline | PlayerState | Text |
 
 **Inside the game: what the graphics driver reports, asked for by the part inside the game itself** *(train C,
-owner decisions D132, D136, D138 — `17_HOOK_ENGINE` §Calls the Overlay makes into a driver; in no release yet)*
+owner decisions D132, D136, D138 — `17_HOOK_ENGINE` §Calls the Overlay makes into a driver; since 0.1.0-beta.47)*
 
 Not an argument of a hooked call: the Overlay calls the driver's two read-only latency getters about once a second,
 only while a session records Advanced metrics, only for a Direct3D 12 game that had already loaded the driver's

@@ -21,7 +21,7 @@ A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly
 3. **Never implement evasion.** No manual mapping, no PE header erasure, no thread hiding, no signature obfuscation, no unlinking from the PEB module list. Injection uses documented `LoadLibraryW`. The DLL keeps its real name, real exports, and version info. A performance tool must be *visible* to anti-cheat, not hidden from it. Any PR that makes FrameLedger harder to detect is rejected on principle.
 4. **Never read or write game memory outside our own hooks.** We read arguments passed to APIs we hooked and COM/handle objects we legitimately own. No pattern scanning for game internals, no reading player/entity state, no writing to game memory. Ever.
 
-   > **Amended 2026-11-13 (owner decision D132): a driver's read-only getter, with the device of the swap chain we hook.** Asked with this rule quoted, the owner ruled that calling NVIDIA's two latency getters (`NvAPI_D3D_GetLatency`, `NvAPI_D3D_GetSleepStatus`) with the device behind a swap chain the Overlay hooks is inside this rule: it reads the driver's report, not game memory, and writes nothing. **Nothing shipped does it yet**: a spike on `hook-harness` and a stub comes first (`spike-notes` §31), and a release that carries it needs the owner's go on that result. Getters only, never a setter, a marker or a sleep, and never a call that loads `nvapi64.dll` into a game.
+   > **Amended 2026-11-13 (owner decision D132): a driver's read-only getter, with the device of the swap chain we hook.** Asked with this rule quoted, the owner ruled that calling NVIDIA's two latency getters (`NvAPI_D3D_GetLatency`, `NvAPI_D3D_GetSleepStatus`) with the device behind a swap chain the Overlay hooks is inside this rule: it reads the driver's report, not game memory, and writes nothing. ~~Nothing shipped does it yet~~ **Shipped since 0.1.0-beta.47 (owner decisions D136, D138–D141)**, after the spike on `hook-harness`, a stub and the installed driver (`spike-notes` §31): only while a session records Advanced metrics (no switch of its own), about once a second on the presenting thread, through an `nvapi64.dll` the game had loaded — one in the game's own folder is refused, and a fault or a call of 2 ms or more ends it until the game exits (`17_HOOK_ENGINE` §Calls the Overlay makes into a driver). **It is the only call of its kind; another needs a ruling of the same kind.** Getters only, never a setter, a marker or a sleep, and never a call that loads `nvapi64.dll` into a game.
 5. **The hook must never crash the game.** Every hook body: SEH-guarded, allocation-free, lock-free, no logging, no exceptions crossing the boundary. On repeated faults, self-disable (`17_HOOK_ENGINE` §Fault policy).
 6. **FPS display rule (product requirement):** wherever FPS is shown and Frame Generation is active, show *Native FPS*, *Displayed FPS*, and the FG factor together (`62 → 118 FPS (×1.9 FG)`). Never a single inflated number. See `docs/03_METRICS.md`.
 
@@ -135,6 +135,10 @@ src/
                                #   loaded, the game switching it, its resources allocated and freed and Streamline
                                #   shut down, from six more calls hooked the same way (D130); slInit is not hooked
                                #   and its entry says why (AdvancedReach.BeforeAttach, D129).
+                               #   Since 0.1.0-beta.47 (train C, D136-D141) also what NVIDIA's driver reports about
+                               #   a frame's stages - NOT an argument of a hooked call: the Overlay calls two
+                               #   read-only getters of the driver itself (reach GameDriver); seven adv.* series
+                               #   and one table, and AdvancedDriverRead says what became of the read.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,
@@ -191,7 +195,9 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                # agent-cost (D110, 2026-11-11: a developer tool, not a gate - what the shipped
                                #   Agent costs per second of session, Advanced metrics off and on),
                                # nvapi-readonly-check (D108, 2026-11-11: every NVAPI call of the bridge is on
-                               #   nvapi-allowed-calls.txt, and none there writes or identifies),
+                               #   nvapi-allowed-calls.txt, and none there writes or identifies; since beta.47 also
+                               #   the Overlay - no NvAPI call by name, and the only interface ids it may name are
+                               #   the two on overlay-nvapi-allowed.txt),
                                # overlay-fields-check (D116, 2026-11-12: every member of a vendor's struct the
                                #   Overlay reads for Advanced metrics is in fl_adv_fields.h and on
                                #   overlay-allowed-fields.txt; a camera's position, axes and matrices nowhere)
@@ -206,7 +212,8 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                #   fl-probe-*      -> guard, hook profile, interposer, NVAPI, process
                                #                      stats, signer, Vulkan layer; fl-baseline-probe;
                                #                      and fl-probe-reflex (2026-11-13, D132: the spike of Reflex route D,
-                               #                      spike-notes §31 - unshipped, with a stand-in nvapi64.dll among the stubs);
+                               #                      spike-notes §31 - unshipped, with a stand-in nvapi64.dll among the stubs;
+                               #                      built from the Overlay's own fl_reflex.h since beta.47);
                                #   vendor-stubs/   -> fixture DLLs with the vendors' export names
 rules/detection-rules.json     # engine/platform/capability + anticheat blocklist
 guide/                         # the user guide (beta.12, D44): ~~eight~~ short English pages for players, embedded in the

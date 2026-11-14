@@ -165,10 +165,11 @@ batch and of the stop's one restore (the Overlay's `PATCH_BATCH` lines), and the
 `UNHOOKED`; it asserts that every lazily installed patch is under a batch line, that the stop is one, and that the
 restore stays under a second — the bound the one-patch-at-a-time stop did not meet on the development PC. In a real
 game the same lines are in `logs\overlay-<pid>-….log` — read there on 2026-11-13 for five games: eighteen install
-batches, 81–262 ms for sixteen of them and 0.61 s and 1.26 s for two (`17_HOOK_ENGINE` §Unhooking, *Batches*); no
-restore line yet, because no session was stopped while its game ran.
+batches, 81–262 ms for sixteen of them and 0.61 s and 1.26 s for two (`17_HOOK_ENGINE` §Unhooking, *Batches*); and
+on 2026-11-14 two restores of twenty-nine patches each, 83 ms and 86 ms, when the owner stopped the part inside a
+running game.
 
-**The call into the driver (train C, 2026-11-13; in no release yet) is tested in three places, each for what the
+**The call into the driver (train C, 0.1.0-beta.47) is tested in three places, each for what the
 others cannot say.** `fl_reflex_summary` (Catch2) drives `fl_adv_fields.h`'s reader on reports written by hand: the
 two newest frames held back, a frame summed once, a span the driver did not report, a span no frame can have, frame
 ids that start again, and the ten words of a publication. `fl_guard`'s seven `[latency]` cases inject the Overlay
