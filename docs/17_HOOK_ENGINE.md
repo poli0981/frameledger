@@ -195,7 +195,10 @@ that were not valid is a fast-fail no guard catches.
 **In a real game** (the owner, 2026-11-14, Phantom Blade Zero on 0.1.0-beta.47, three sessions, frame generation
 ×3 and off): the module was found four to five seconds after the attach — `nvapi64.dll` in System32, the getters in
 `nvapi64_impl.dll`, as on the probe — a read was made about every second for 344 s, 52 s and 1 119 s, **the slowest
-call took 24, 20 and 45 µs**, and no latch fired: no error, no slow call, no fault, no stall. One game, one driver.
+call took 24, 20 and 45 µs**, and no latch fired: no error, no slow call, no fault, no stall. **Cyberpunk 2077 the
+same morning**, two sessions (frame generation ×2 and off, 260 s and 581 s): found 4.8 s and 2.6 s after the attach,
+the slowest call 34 and 65 µs, no latch. Two Direct3D 11 games and one Direct3D 12 game with no `nvapi64.dll` were
+left alone, each with its one line. Two games read, one driver.
 
 **The gate.** One word, four states — idle, armed, reading, off (`dllmain.cpp`, above `ReadLatencyOnce`). Only the
 watchdog arms; a presenting thread takes *armed* to *reading* by compare-exchange and owns the 15.4 KB report

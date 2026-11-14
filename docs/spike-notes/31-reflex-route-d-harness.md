@@ -200,5 +200,22 @@ and now has for one title on this driver:
   like the interval between two frames' GPU ends. The header's `gpuActiveRenderTimeUs` is the active time and is
   not read by FrameLedger. The probe could not show this: its frames have no GPU work to speak of.
 
-Not said by these sessions: Cyberpunk 2077 (REDengine's own NVAPI use), a game that enforces Control Flow Guard,
-another driver, and whether the player feels the read.
+Not said by these sessions: ~~Cyberpunk 2077 (REDengine's own NVAPI use)~~, a game that enforces Control Flow
+Guard, another driver, and whether the player feels the read.
+
+**Cyberpunk 2077, the same morning (sessions 211 and 212).** Frame generation ×2 for 105 s of the first, off in
+the second at 238 FPS. Read in both; the slowest call 34 and 65 µs; a report in 97 % and 98 % of the samples.
+
+- **The spans are sane there**: total 11.7 ms at 238 FPS, GPU render 2.7 ms, never longer than the total (0 of
+  429 samples). With frames generated the total is 13.5 ms; in the menus 4.1 ms. So `gpuRenderStartTime` before
+  `simStartTime` is Phantom Blade Zero's, where *GPU render* sits at 16.4 ms whether the game presents 149 or 67
+  times a second.
+- **`fgMultiplier` read 1 in the session that generated ×2**: the word carries the last value, and the session
+  ended in a menu. The table needs the values seen, not the last one.
+- **Samples are 1.32 s apart** (the Agent's `t_ms`), reads one second apart: a read is not always the one sampled.
+- **Left alone as designed**: two Direct3D 11 games (state 1, one line) and a Direct3D 12 game that never loaded
+  `nvapi64.dll` (state 2, said once, asked again each second without a line).
+
+**The owner's ruling on the span (2026-11-14): read the driver's active time** — `gpuActiveRenderTimeUs`, which
+the header defines as the same interval "excluding the idles in between", and with it `gpuFrameTimeUs`. Both are
+members of the report already fetched.
