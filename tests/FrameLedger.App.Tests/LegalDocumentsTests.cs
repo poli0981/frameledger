@@ -3,6 +3,7 @@
 
 using FluentAssertions;
 using FrameLedger.App.Services;
+using FrameLedger.Application.Input;
 using FrameLedger.Shared;
 
 namespace FrameLedger.App.Tests;
@@ -66,10 +67,10 @@ public sealed class LegalDocumentsTests
     [Fact]
     public void TheInputReadingsTermsAreThePrivacyPolicyThisBuildShips()
     {
-        FrameLedger.Application.Input.InputTerms.PrivacyDocument.Should().Be(LegalDocuments.Privacy);
+        InputTerms.PrivacyDocument.Should().Be(LegalDocuments.Privacy);
         LegalDocument privacy = LegalDocuments.Load(BuildLine.Main).Single(static d => string.Equals(d.Key, LegalDocuments.Privacy, StringComparison.Ordinal));
 
-        FrameLedger.Application.Input.InputTerms.Accepted(privacy.Version).Should().BeTrue(
+        InputTerms.Accepted(privacy.Version).Should().BeTrue(
             "accepting the document this build shows must be enough for the reading it describes; shipped is " + privacy.Version);
         privacy.Text.Should().Contain("Controllers and input", "the document the reading waits for is the one that describes it");
     }
