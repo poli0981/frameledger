@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using FluentAssertions;
+using FrameLedger.Application.Input;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Settings;
@@ -97,5 +98,82 @@ public sealed class RegisteredSettingsTests
         // An operator's bounded capture (--seconds 8 lowers the minimum to 8 s) keeps its bound under any setting.
         RecorderOptions bounded = await policy.ResolveAsync(baseline with { MinimumSessionLength = TimeSpan.FromSeconds(8) }, Ct);
         bounded.MinimumSessionLength.Should().Be(TimeSpan.FromSeconds(8));
+    }
+
+    /// <summary>
+    /// D156: controllers and input are read when the option is on - it is, unless switched off - AND the Privacy
+    /// Policy that describes the reading has been accepted on this PC. The Agent starts at logon, before the App has
+    /// shown a new document; until it has, a session reads nothing and says why.
+    /// </summary>
+    [Theory]
+    [InlineData(null, null, false, true)] // nothing accepted yet
+    [InlineData(null, "2.21", false, true)] // the version before the one that describes it
+    [InlineData(null, "2.22", true, false)]
+    [InlineData(null, "2.30", true, false)]
+    [InlineData(null, "3.0", true, false)]
+    [InlineData("1", "2.22", true, false)]
+    [InlineData("0", "2.22", false, false)] // switched off: not read, and not "held"
+    [InlineData("0", null, false, false)]
+    [InlineData("yes", "2.22", true, false)] // a row that is not 0 or 1 reads as the default, which is on
+    public async Task TheInputReadingNeedsTheOptionOnAndTheTermsThatDescribeItAccepted(string? row, string? accepted, bool reads, bool held)
+    {
+        var store = new MemoryStore();
+        if (row is not null)
+        {
+            store.Rows["capture.input_devices"] = row;
+        }
+
+        var legal = new MemoryAcceptance();
+        if (accepted is not null)
+        {
+            await legal.RecordAsync(new LegalAcceptance(InputTerms.PrivacyDocument, accepted, DateTimeOffset.UnixEpoch), Ct);
+        }
+
+        RecorderOptions options = await new SettingsRecorderPolicy(new RegisteredSettings(store), legal).ResolveAsync(new RecorderOptions(), Ct);
+
+        options.InputDevices.Should().Be(reads);
+        options.InputHeldForTerms.Should().Be(held);
+    }
+
+    [Fact]
+    public async Task WithNoAcceptanceStoreNothingCanBeShownAcceptedAndNothingIsRead()
+    {
+        RecorderOptions options = await new SettingsRecorderPolicy(new RegisteredSettings(new MemoryStore())).ResolveAsync(new RecorderOptions(), Ct);
+
+        options.InputDevices.Should().BeFalse("an operator's console has no Legal Gate behind it");
+        options.InputHeldForTerms.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("2.22", true)]
+    [InlineData("2.23", true)]
+    [InlineData("2.100", true)] // compared as numbers: 100 is after 22
+    [InlineData("3.0", true)]
+    [InlineData(" 2.22 ", true)]
+    [InlineData("2.21", false)]
+    [InlineData("2.9", false)] // 9 is before 22
+    [InlineData("1.99", false)]
+    [InlineData("2", false)]
+    [InlineData("2.22.1", false)]
+    [InlineData("two", false)]
+    [InlineData("-2.22", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void TheTermsAreAcceptedFromTheVersionThatFirstDescribedTheReading(string? version, bool accepted) =>
+        InputTerms.Accepted(version).Should().Be(accepted);
+
+    private sealed class MemoryAcceptance : ILegalAcceptanceStore
+    {
+        private readonly Dictionary<string, LegalAcceptance> _rows = new(StringComparer.Ordinal);
+
+        public ValueTask<LegalAcceptance?> FindAsync(string document, CancellationToken ct = default) => ValueTask.FromResult(_rows.GetValueOrDefault(document));
+
+        public ValueTask<IReadOnlyList<LegalAcceptance>> ListAsync(CancellationToken ct = default) => ValueTask.FromResult<IReadOnlyList<LegalAcceptance>>([.. _rows.Values]);
+
+        public ValueTask RecordAsync(LegalAcceptance acceptance, CancellationToken ct = default)
+        {
+            _rows[acceptance.Document] = acceptance;
+            return ValueTask.CompletedTask;
+        }
     }
 }

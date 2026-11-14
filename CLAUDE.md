@@ -6,7 +6,7 @@ Read this file first, then the reading order at the bottom. **`docs/19_SAFETY_AN
 
 ## Architecture in one paragraph
 
-A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly enabled. It hooks the presentation path (DXGI for D3D11/D3D12, plus OpenGL) and the upscaler/RT APIs, writes fixed-size frame records into a lock-free shared-memory ring, and never blocks. A C# Agent drains that ring at ~10 Hz, enriches with GPU telemetry from vendor APIs, and writes sessions to SQLite. A WPF UI reads SQLite. Vulkan uses an implicit **layer** instead of hooking. If injection is refused or fails there is **no measurement**: the session records duration, hardware telemetry and the reason, and every measured field reads `N/A` (Tier 2, owner decision 2026-08-28).
+A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly enabled. It hooks the presentation path (DXGI for D3D11/D3D12, plus OpenGL) and the upscaler/RT APIs, writes fixed-size frame records into a lock-free shared-memory ring, and never blocks. A C# Agent drains that ring at ~10 Hz, enriches with GPU telemetry from vendor APIs, and writes sessions to SQLite. A WPF UI reads SQLite. Vulkan uses an implicit **layer** instead of hooking. If injection is refused or fails there is **no measurement**: the session records duration, hardware telemetry and the reason, and every measured field reads `N/A` (Tier 2, owner decision 2026-08-28) — **and, since owner decision D161 (2026-11-14), what the Agent reads from outside the game**: the game process's memory (beta.12, D43) and which controllers, or the keyboard and mouse, the session was played with (`docs/21_INPUT_DEVICES.md`). Nothing measured inside the game is among them.
 
 ## Non-negotiable rules
 
@@ -147,6 +147,28 @@ src/
                                #   (LATENCY_FRAMES, a batch per state of the sleep status; nothing published or
                                #   stored); its watchdog's periodic tick is on a grid (fl_watchdog_tick.h), and
                                #   Recording/PendingInGameReadings keeps the reading that waits for a sample.
+                               #   Controllers and input (0.1.0-beta.50, owner decisions D155-D163, docs/21_INPUT_DEVICES):
+                               #   Input/ - InputReader (a slice ten times a second over the port IInputBackend),
+                               #   InputTickAccumulator (one session's slices into a reading a tick), InputTerms (the
+                               #   reading waits for Privacy Policy 2.22, D156), the ports IInputDevices /
+                               #   IInputActivitySource; Recording/InputSessionBuilder (totals, the controllers as JSON,
+                               #   the input.* series; schema 0024). Domain/Input holds the arithmetic and the two
+                               #   parsers (an XInput state, a DualSense report). Infrastructure/Input is the Windows
+                               #   side: Win32InputBackend (raw input for joysticks and gamepads, three XInput getters,
+                               #   GetLastInputInfo - it opens no device and sends nothing to one) and InputDeviceHub
+                               #   (one thread for the Agent, only while a session has a view). Read from OUTSIDE the
+                               #   game, both tiers; `capture.input_devices`, on by default.
+                               #   Controllers and input (0.1.0-beta.50, owner decisions D155-D163, docs/21_INPUT_DEVICES):
+                               #   Input/ - InputReader (a slice ten times a second over the port IInputBackend),
+                               #   InputTickAccumulator (one session's slices into a reading a tick), InputTerms (the
+                               #   reading waits for Privacy Policy 2.22, D156), the ports IInputDevices /
+                               #   IInputActivitySource; Recording/InputSessionBuilder (totals, the controllers as JSON,
+                               #   the input.* series; schema 0024). Domain/Input holds the arithmetic and the two
+                               #   parsers (an XInput state, a DualSense report). Infrastructure/Input is the Windows
+                               #   side: Win32InputBackend (raw input for joysticks and gamepads, three XInput getters,
+                               #   GetLastInputInfo - it opens no device and sends nothing to one) and InputDeviceHub
+                               #   (one thread for the Agent, only while a session has a view). Read from OUTSIDE the
+                               #   game, both tiers; `capture.input_devices`, on by default.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,

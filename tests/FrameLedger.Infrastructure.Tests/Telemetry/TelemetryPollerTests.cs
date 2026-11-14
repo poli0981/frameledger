@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using FluentAssertions;
+using FrameLedger.Application.Input;
 using FrameLedger.Application.Telemetry;
 using FrameLedger.Infrastructure.Telemetry;
 
@@ -151,6 +152,93 @@ public sealed class TelemetryPollerTests
 
         poller.Dispose();
         game.Disposed.Should().BeTrue("the poller owns the game source with the layers");
+    }
+
+    private sealed class FakeInput : IInputDevices
+    {
+        public List<FakeView> Views { get; } = [];
+
+        public IInputActivitySource Open()
+        {
+            var view = new FakeView();
+            Views.Add(view);
+            return view;
+        }
+    }
+
+    private sealed class FakeView : IInputActivitySource
+    {
+        public List<GameProcess> Followed { get; } = [];
+
+        public InputReading? Next { get; set; }
+
+        public bool Disposed { get; private set; }
+
+        public void Follow(GameProcess target) => Followed.Add(target);
+
+        public bool TryRead([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out InputReading? reading)
+        {
+            reading = Next;
+            Next = null;
+            return reading is not null;
+        }
+
+        public void Dispose() => Disposed = true;
+    }
+
+    /// <summary>
+    /// D155: what the session was played with rides the same tick. The poller opens ONE view of the Agent's reader,
+    /// tells it whose windows are the game's - a process named before the view existed included - attaches what the
+    /// view saw to the sample, queues a tick only the view answered, and closes the view when it is disposed.
+    /// </summary>
+    [Fact]
+    public void WhatTheSessionWasPlayedWithRidesTheSameTickThroughOneViewOfTheReader()
+    {
+        using var layer = new FakeLayer(TelemetryLayer.Lhm);
+        var input = new FakeInput();
+        var poller = new TelemetryPoller(layer, new TelemetryPollerOptions(), new ManualTimeProvider(), input: input);
+        GameProcess before = GameProcess.Unpinned([new GameProcessId(4242, DateTimeOffset.UnixEpoch)]);
+        GameProcess after = GameProcess.Unpinned([new GameProcessId(4243, DateTimeOffset.UnixEpoch)]);
+        input.Views.Should().BeEmpty("constructing a poller opens nothing");
+
+        poller.Follow(before);
+        layer.Publish(null);
+        poller.PollOnce();
+        FakeView view = input.Views.Should().ContainSingle().Subject;
+        view.Followed.Should().Equal(before);
+        poller.Queued.Should().Be(0, "nothing answered, the view included");
+
+        var played = new InputReading { SpanMs = 1000, ObservedMs = 1000, ForegroundMs = 900, ControllerMs = 900 };
+        view.Next = played;
+        poller.Follow(after);
+        poller.PollOnce();
+        poller.PollOnce();
+
+        var drained = new List<TelemetrySample>();
+        poller.Drain(drained).Should().Be(1, "a tick only the input view answered is still a sample; the next one, with nothing, is not");
+        drained[0].Input.Should().BeSameAs(played);
+        drained[0].Sample.Layer.Should().Be(TelemetryLayer.None);
+        view.Followed.Should().Equal(before, after);
+        input.Views.Should().ContainSingle("one view for the session, however many ticks");
+
+        poller.Dispose();
+        view.Disposed.Should().BeTrue("the reader runs from its first view to its last: the poller gives its view back");
+        poller.PollOnce();
+        input.Views.Should().ContainSingle("a disposed poller opens no view");
+    }
+
+    [Fact]
+    public void WithNoInputReaderComposedNoSampleCarriesAnInputReading()
+    {
+        using var layer = new FakeLayer(TelemetryLayer.Lhm);
+        layer.Publish(layer.Sample(_t0, load: 50));
+        using var poller = new TelemetryPoller(layer, new TelemetryPollerOptions(), new ManualTimeProvider());
+
+        poller.PollOnce();
+
+        var drained = new List<TelemetrySample>();
+        poller.Drain(drained).Should().Be(1);
+        drained[0].Input.Should().BeNull("the option is off, or the terms that describe the reading are not accepted: nothing is read");
     }
 
     [Fact]

@@ -4,12 +4,13 @@ What FrameLedger reads about game controllers and about the keyboard and mouse, 
 The numbers a session makes of it are in [`03_METRICS.md`](03_METRICS.md) §Input; the columns are in
 [`06_DATA_MODEL.md`](06_DATA_MODEL.md).
 
-> **Status, 2026-11-14 — the reader exists and the Agent does not start it yet.** The model and the arithmetic
+> **Status, 2026-11-14 — the Agent records it; the App does not show it yet.** A session recorded with the option
+> on, after the terms were accepted, stores what it was played with: the model and the arithmetic
 > (`FrameLedger.Domain.Input`, `FrameLedger.Application.Input`, `Application.Recording.InputSessionBuilder`), the
-> storage (schema 0024, the `.partial` file's chunk 11, the finalizer for both tiers — `06_DATA_MODEL`) and the reader
-> itself (`Application.Input.InputReader`, `Infrastructure.Input`) are written and under test. Nothing composes the
-> reader into the Agent: the switch, the terms and the screens come in the pull requests after this one, and this
-> note is rewritten by each. **No report from a real controller has passed through any of this code**
+> storage (schema 0024, the `.partial` file's chunk 11 — `06_DATA_MODEL`), the reader (`Application.Input.InputReader`,
+> `Infrastructure.Input`) and its composition into the Agent (`capture.input_devices`, `Application.Input.InputTerms`)
+> are written and under test. The screens, the store's word and the input libraries come in the pull requests after
+> this one, and this note is rewritten by each. **No report from a real controller has passed through any of this code**
 > (owner decision D157): the developer has no controller, and what happens on a real one is owner-only item 48.
 
 ## The owner's request and decisions (2026-11-14)
@@ -30,6 +31,17 @@ DualSense first.
 | **D161** | **A session that is not hooked is: duration, hardware telemetry, the reason — and what the Agent reads from outside the game** (the game's memory since beta.12, controllers now). Every field measured inside the game still reads N/A. CLAUDE.md's sentence is amended with the pull request that makes it true. |
 | **D162** | Also built: the number of switches between a controller and the keyboard and mouse, and the share of time with no input; marks on the frame-time chart where a controller connected, dropped or ran low; a battery's first and last level and its rate; the kind of connection; a note where Steam Input presented the controller as an Xbox pad; a trend metric, a row in Compare, and "usually played with" on the game's page. |
 | **D163** | "Supports controllers" is **three pieces of evidence, never a verdict**: what Steam's own file on the disk says (no network: rule 8), which input libraries the game loaded, and how the game was actually played. From outside a game one can know that a controller was in use while the game was in front — not what the game did with it. |
+
+## The switch, and the terms
+
+`capture.input_devices` — Settings ▸ Recording ▸ *Controllers and input* — is **on unless switched off** (D156), and
+is read at each session's start like every setting the Agent reads. On is not enough: the Agent is usually started
+at logon, and after an update that is before the App has shown the Privacy Policy that describes this reading. So
+`SettingsRecorderPolicy` gives a session the reader only when `legal_acceptance` holds the Privacy Policy at
+`InputTerms.MinimumPrivacyVersion` (2.22) or later. Until then the session reads nothing of controllers or of the
+keyboard and mouse, stores none of schema 0024's columns, and says so: the slot `input=terms_pending` in
+`sessions.capture_notes` (`CaptureNotes.InputHeldForTerms`), and a line in its `.partial` file's notes. An operator's console with no acceptance store reads
+nothing either. Off, or held back, a session is byte for byte what it was before the reading existed.
 
 ## What is read, and from where
 

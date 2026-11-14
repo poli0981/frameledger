@@ -52,12 +52,23 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
     /// <summary>beta.14: a crash reporter the game started that did not count — the game kept running (<c>crash_reporter_seen=</c>).</summary>
     public string? CrashReporterSeen { get; init; }
 
-    public static CaptureNotes Parse(string? notes)
+    /// <summary>
+    /// 0.1.0-beta.50 (owner decision D156): the session read nothing of controllers or of the keyboard and mouse
+    /// because the Privacy Policy that describes the reading was not accepted on the PC yet (<see cref="InputHeldSlot"/>).
+    /// False on every other session - one that read, one recorded with the option off, one from before the reading existed.
+    /// </summary>
+    public bool InputHeldForTerms { get; init; }
+
+    /// <summary>The slot of a session whose input reading waited for the terms (D156).</summary>
+    public const string InputHeldSlot = "input=terms_pending";
+
+    public static CaptureNotes Parse(string? notes) => string.IsNullOrWhiteSpace(notes)
+        ? default
+        : Slots(notes) with { InputHeldForTerms = notes.Split(';').Any(static part => string.Equals(part.Trim(), InputHeldSlot, StringComparison.Ordinal)) };
+
+    /// <summary>The slots that carry a value, each by its prefix.</summary>
+    private static CaptureNotes Slots(string notes)
     {
-        if (string.IsNullOrWhiteSpace(notes))
-        {
-            return default;
-        }
 
         string? end = null, reason = null, family = null, signal = null, acException = null, scanAtExit = null, reporter = null, reporterSeen = null;
         int? exitCode = null, launchError = null;

@@ -16,8 +16,10 @@ your decision and your risk.
   refuses — or stops measuring at the next check — and turns hooking off for that game. **There is no switch that
   overrides this**, apart from the one narrow exception below.
 - **It never hides.** It keeps its real name and does nothing to avoid being seen by security software.
-- **It never reads or changes the game's memory**, its saves or your input. It only observes the graphics calls the
-  game makes.
+- **It never reads or changes the game's memory** or its saves, and never what you type or which buttons you press.
+  Inside the game it only observes the graphics calls the game makes. From outside it — unless you switch
+  *Controllers and input* off in Settings — it notes whether a controller, or the keyboard or mouse, is in use, and
+  sends nothing to a controller.
 
 ## What it cannot promise
 

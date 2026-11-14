@@ -63,6 +63,26 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.22 of the Privacy Policy and 2.18 of the Disclaimer changed (0.1.0-beta.50)
+
+**Both documents said FrameLedger never reads input, and it now reads that a controller, or the keyboard or mouse,
+is in use** (owner decisions D155–D163; the sentences were shown to the owner with the plan of 2026-11-14 and
+approved with it). Until this version the Privacy Policy's §4 said it "does not read game saves, chat, input
+content", the Disclaimer's §1 that it never reads "save files, input, chat", the README that it "never touches saves
+or input", and the guide that it never reads "your input". The **Privacy Policy** (2.22) adds to §1 what a session
+stores of controllers and input and what it never does — which button, stick, trigger or key, text, the mouse's
+position, a serial number, a Bluetooth address; to §3A that these numbers, unlike Advanced metrics', **are** in an
+export and in a bug report (D160); to §4 what is observed — the controllers' reports, looked at and not kept,
+XInput's state and battery, the time of the last keyboard or mouse input, the window in front — and that nothing is
+opened or sent; and narrows the sentence after it to what is still true. It also says, in §1 and §4, that nothing
+of this is read until that version has been accepted on the PC (D156): the option is on unless switched off, and an
+Agent that started before the App showed the document records without it. The **Disclaimer** (2.18) gains a
+paragraph in §1 for what is read from outside the game about controllers, the keyboard and the mouse, and its "what
+it never does" names what is kept instead of the word "input", and adds that nothing is sent to a controller
+(D159). The **accuracy statement** — and so the README and the Disclaimer — gains a paragraph that ends: none of
+this had been read from a real controller when it was written. The trademarks notice names Sony's and Nintendo's
+products, which the App now shows as a controller's model.
+
 ### What version 2.21 of the Privacy Policy and 2.17 of the Disclaimer changed (0.1.0-beta.48)
 
 **Two real games had been read, and the texts still said none** (owner decisions D142–D145; the wording's main

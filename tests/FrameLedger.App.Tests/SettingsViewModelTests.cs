@@ -449,6 +449,32 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public async Task ControllersAndInputIsOnByDefaultAndItsToggleIsPersisted()
+    {
+        // Owner decisions D155 and D156 (2026-11-14): capture.input_devices, default 1. The Agent reads it at the next
+        // session's start - and uses it only once the terms that describe the reading are accepted, which is not the
+        // page's to decide.
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Harness h = await OpenAsync(s);
+        h.Vm.InputDevices.Should().BeTrue("on unless switched off");
+        (await h.Settings.GetBooleanAsync(SettingsRegistry.CaptureInputDevices, Ct)).Should().BeTrue();
+
+        h.Vm.InputDevices = false;
+        Task off = h.Vm.Pending;
+        await off;
+
+        (await h.Settings.GetBooleanAsync(SettingsRegistry.CaptureInputDevices, Ct)).Should().BeFalse();
+        Harness reopened = await OpenAsync(s);
+        reopened.Vm.InputDevices.Should().BeFalse("the page shows what the row holds");
+
+        reopened.Vm.InputDevices = true;
+        Task on = reopened.Vm.Pending;
+        await on;
+
+        (await reopened.Settings.GetBooleanAsync(SettingsRegistry.CaptureInputDevices, Ct)).Should().BeTrue();
+    }
+
+    [Fact]
     public async Task AdvancedMetricsIsOffByDefaultAndItsToggleIsPersisted()
     {
         // Owner decision D101 (2026-11-11): telemetry.advanced, default 0. The Agent reads it at the next session's

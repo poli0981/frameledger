@@ -12,7 +12,8 @@ Microsoft Corporation. NVIDIA, GeForce, RTX, DLSS,
 Reflex, NVAPI and Streamline are trademarks of NVIDIA Corporation. AMD, Radeon, FSR and FidelityFX are trademarks of
 Advanced Micro Devices, Inc. Intel, Arc and XeSS are trademarks of Intel Corporation. Vulkan is a registered trademark
 of the Khronos Group Inc.; OpenGL is a registered trademark of Hewlett Packard Enterprise, used under licence by the
-Khronos Group. Steam and Valve are trademarks of Valve Corporation; Epic Games, the Epic Games Store and Unreal Engine of
+Khronos Group. PlayStation, DualSense and DualShock are trademarks of Sony Interactive Entertainment Inc.; Nintendo Switch is a
+trademark of Nintendo. Steam and Valve are trademarks of Valve Corporation; Epic Games, the Epic Games Store and Unreal Engine of
 Epic Games, Inc.; Unity of Unity Technologies. GOG, GOG Galaxy and itch.io are trademarks of their respective owners. The
 names of anti-cheat and anti-tamper products, and the names and store identifiers of games, belong to their respective
 owners. All other product names are trademarks of their respective owners.

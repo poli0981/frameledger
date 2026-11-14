@@ -102,7 +102,7 @@ public sealed class SessionExporter
         w.WriteLine("# exe: " + game.Fingerprint.ExePath);
         w.WriteLine("# started_at: " + row.StartedAt.ToString("O", _inv));
         w.WriteLine("# ended_at: " + row.EndedAt.ToString("O", _inv));
-        w.WriteLine("# capture_tier: " + ((int)row.Tier).ToString(_inv) + (row.Tier == CaptureTier.Hooked ? " (hooked, measured)" : " (not hooked: duration and sensors only; no per-frame rows)"));
+        w.WriteLine("# capture_tier: " + ((int)row.Tier).ToString(_inv) + (row.Tier == CaptureTier.Hooked ? " (hooked, measured)" : " (not hooked: duration, sensors and what is read from outside the game; no per-frame rows)"));
         if (row.AcExceptionFamily is { Length: > 0 } excepted)
         {
             // D33: a session hooked under the game's user-mode anti-cheat exception says so wherever it goes (the JSON carries

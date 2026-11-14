@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.17 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.18 · **Effective:** {{RELEASE_DATE}}
 
 ## 0. This is pre-release software
 
@@ -47,9 +47,11 @@ Install it somewhere only you can write to, and verify the published SHA-256 che
 
 **What it reads about the game from outside it, in every session:** the game process's own memory use — its dedicated and shared video memory and its working sets, the figures Windows' Task Manager shows — from Windows' performance counters and process-memory information. For a game it does not inject into, FrameLedger opens the game's process for this with the least access Windows offers, once a second, and closes it again; it reads nothing inside the process.
 
+**What it reads about controllers, the keyboard and the mouse, from outside the game, unless you switch it off:** which game controllers are connected, whether one is in use, its battery level, and the time of the last keyboard or mouse input — to say how much of a session was played with a controller and how much with the keyboard or mouse. It asks Windows, never the game; it opens no controller and sends nothing to one; and it keeps no key, button or text (the Privacy Policy says exactly what is kept). It reads none of this until you have accepted the Privacy Policy that describes it.
+
 > **What of that list is observed today is stated once, in §4 below** (the block `legal/ACCURACY.md` carries, dated). The list here describes what the software is designed to observe, and the boundary — API arguments, and the one report asked of the graphics driver that the line above names; nothing of the game's own memory — holds for all of it.
 
-**What it never does:** read or write the game's memory outside those API arguments; read save files, input, chat, or network traffic; modify game behavior; hide itself from any security software; or install a kernel driver of its own.
+**What it never does:** read or write the game's memory outside those API arguments; read save files, chat, or network traffic; read what you type or which buttons you press — it keeps only whether a controller, or the keyboard or mouse, was in use, read from Windows and never from the game; send anything to a controller; modify game behavior; hide itself from any security software; or install a kernel driver of its own.
 
 ## 2. Anti-cheat systems — the main risk to you
 
@@ -219,6 +221,16 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   temperature in every session, and, on NVIDIA cards only, how much of the time its power limit or its temperature held
 >   it back, read once a second; and frames per watt — the game's own frames per second for each watt the graphics card
 >   drew, never counting generated frames, `N/A` where the game's own frame rate is not known.
+> - **Controllers and input (since beta.50; on unless you switch it off in Settings, and only once you have accepted
+>   the Privacy Policy that describes it):** how much of the time a game was in front it was played with a
+>   controller, with the keyboard or mouse, with both or with neither; each controller's connections and drops; its
+>   battery. All of it is read from Windows, from outside the game: it says a controller was in use while the game
+>   was in front, not what the game did with it. Keyboard and mouse are one figure — only the time of the last input
+>   is read — and input a program injects (Steam Input mapping a controller to keys, a macro tool) counts as keyboard
+>   and mouse. An Xbox-compatible controller and a DualSense are read for use; another maker's controller is listed
+>   and never counted as in use. A DualSense on Bluetooth reports its battery only where Steam or the game has
+>   switched it to its long report, and an Xbox controller on Bluetooth may report none. **None of this had been
+>   read from a real controller when it was written (2026-11-14)**: it was checked against data written by hand.
 > - **Processor and memory:** how busy the processor was (time busy, all cores together — not the
 >   frequency-scaled figure Task Manager draws) and how much system memory was in use, read from
 >   Windows once a second and charted. Processor temperature is read only when the Agent runs as

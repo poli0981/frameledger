@@ -5,6 +5,7 @@ using FrameLedger.Application.Advanced;
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
+using FrameLedger.Application.Input;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
 using FrameLedger.Infrastructure.Display;
@@ -45,6 +46,7 @@ internal sealed class AgentRecording
     private readonly UserModeExceptionLapsePolicy _exceptionLapse;
     private readonly ICrashReporterSightings _reporters;
     private readonly IAdvancedHardware _advanced;
+    private readonly IInputDevices _input;
 
     public AgentRecording(
         IGameConsentStore store,
@@ -70,9 +72,11 @@ internal sealed class AgentRecording
         IOverlayToleranceChannel tolerance,
         UserModeExceptionLapsePolicy exceptionLapse,
         ICrashReporterSightings reporters,
-        IAdvancedHardware advanced)
+        IAdvancedHardware advanced,
+        IInputDevices input)
     {
         _advanced = advanced;
+        _input = input;
         _reporters = reporters;
         _profiles = profiles;
         _exceptions = exceptions;
@@ -123,7 +127,7 @@ internal sealed class AgentRecording
             _partials,
             _finalizer,
             _crashes,
-            options => Poller(options.TelemetryInterval, options.AdvancedMetrics ? _advanced : null),
+            options => Poller(options.TelemetryInterval, options.AdvancedMetrics ? _advanced : null, options.InputDevices ? _input : null),
             TimeProvider.System,
             new RecorderOptions { MinimumSessionLength = minimum, PartialFlushInterval = flush },
             _observer,
@@ -137,7 +141,8 @@ internal sealed class AgentRecording
     /// <summary>L1 + L2 + L3 under the composite, one poller per session; the poller owns and disposes the layers. The interval is the session's (<c>telemetry.interval_ms</c>, D16).</summary>
     /// <param name="interval">Between two polls.</param>
     /// <param name="advanced">The Agent's shared advanced reader when the session records Advanced metrics (D101); null — the option off — composes none.</param>
-    public static TelemetryPoller Poller(TimeSpan interval, IAdvancedHardware? advanced = null)
+    /// <param name="input">The Agent's one input reader when the session reads controllers and input (D155, D156); null - the option off, or its terms not accepted - opens none.</param>
+    public static TelemetryPoller Poller(TimeSpan interval, IAdvancedHardware? advanced = null, IInputDevices? input = null)
     {
         // Ownership walks up one step at a time and each local is nulled at its hand-off, so a throw
         // anywhere below disposes exactly what nobody owns yet.
@@ -168,7 +173,7 @@ internal sealed class AgentRecording
             // The game process's own memory (beta.12, D43): read from outside it through FrameLedger.ProcessStats.dll, for
             // whichever process the capture loop tells the poller to follow. Absent DLL = N/A, never a fault.
             game = new GameMemoryReader(new NativeProcessStats());
-            var poller = new TelemetryPoller(composite, new TelemetryPollerOptions { Interval = interval }, TimeProvider.System, ownsSource: true, system, game, advanced);
+            var poller = new TelemetryPoller(composite, new TelemetryPollerOptions { Interval = interval }, TimeProvider.System, ownsSource: true, system, game, advanced, input);
             composite = null;
             system = null;
             game = null;

@@ -206,6 +206,22 @@ public static class SettingsRegistry
         AgentReads = true,
     };
 
+    /// <summary>
+    /// "Controllers and input" (owner decisions D155 and D156, 2026-11-14): whether the Agent reads, from outside the
+    /// game, which controllers are connected and in use, their batteries and the time of the last keyboard or mouse
+    /// input, and a session stores what it was played with (<c>21_INPUT_DEVICES</c>). <b>On by default</b> - and read
+    /// only once the Privacy Policy that describes it has been accepted on the PC (<c>Input.InputTerms</c>), which is
+    /// the recorder policy's to check, not this key's. Off means nothing is read or stored; a session recorded while
+    /// it was off is never filled in afterwards. Read at each session's start. Exactly "0" is off.
+    /// </summary>
+    public static readonly SettingDefinition CaptureInputDevices = new()
+    {
+        Key = "capture.input_devices",
+        Kind = SettingKind.Boolean,
+        Default = "1",
+        AgentReads = true,
+    };
+
     /// <summary>FR-3.5: telemetry at 1 Hz, configurable 0.5–2 s. Milliseconds.</summary>
     public static readonly SettingDefinition TelemetryIntervalMs = new()
     {
@@ -284,7 +300,7 @@ public static class SettingsRegistry
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
         UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals, UiHideScrollBars, UiLibraryView, UiPlayMode,
-        UiGameArt, UiGameArtTint, CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, TelemetryAdvanced, RetentionRawSessionsPerGame,
+        UiGameArt, UiGameArtTint, CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, CaptureInputDevices, TelemetryIntervalMs, TelemetryAdvanced, RetentionRawSessionsPerGame,
         RetentionRemoveUninstalledGames, UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];
 
