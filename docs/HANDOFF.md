@@ -155,7 +155,8 @@ and its release facts are [`handoff/history/0.1.0-beta.48.md`](handoff/history/0
    Cyberpunk 2077 is the driver's, the holes are gone from steady play, off means off, and the stop fired once.
 2. **The owner's to say**: the wording of the two GPU labels (the mean stays — the counts say the driver's
    active time really is the longer there); whether D141's stop should spare a game's first seconds (Kingdom
-   Come: Deliverance II lost its session's report to one call of 5.3 ms while it started); (f) and (g).
+   Come: Deliverance II lost its session's report to one call of 5.3 ms while it started). (f) and (g) are
+   said: the App's *Low Latency Mode* is off, and no hitch.
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
 4. **Train D** after it, the same way: a spike first — `sl.pcl.markers` waits for it, and §30 found its hook
    would miss a game that fetched its functions before the attach. **Read 2026-11-14 against Streamline's own
@@ -994,7 +995,11 @@ left unexercised; item 40 (d).
    both off and still reports its frames. The logs cannot say whether a game's menu or the NVIDIA App switched
    the mode on. NVIDIA's own guide makes frame generation need Reflex and not the reverse
    (`spike-notes` §30, *Added 2026-11-14*). Hogwarts Legacy gave a multiplier of 6 for seventeen reads.
-   **Not said yet**: (f) and (g). **The owner's**: the wording of the two GPU labels — *idle time excluded /
+   (f), (g) **The owner, the same evening: "App reflex off, không khựng"** — *Low Latency Mode* is off in the
+   NVIDIA App, and no hitch. Read with (f) as it was asked, for Cyberpunk 2077: the low-latency mode its 88
+   reads show at a multiplier of 1 is then the game's own Reflex and not the App's override — Reflex on without
+   frame generation, as NVIDIA's guide allows. Whether the owner meant the App's global setting or that game's
+   was not asked. **The owner's**: the wording of the two GPU labels — *idle time excluded /
    included* does not describe a game whose active time is the longer.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
