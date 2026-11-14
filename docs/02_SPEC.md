@@ -102,6 +102,26 @@ Tray icon states (idle / capturing T1 / capturing T2 / paused); menu; toasts for
 ### FR-15 In-game overlay *(v1.1, opt-in, off by default)*
 Draw live FPS/frametime/upscaler info inside the game. Only for games already hooked; a separate toggle; never on by default. Deferred until the data path is stable (`15_ROADMAP` P5).
 
+### FR-16 Controllers and input *(owner decisions D155–D163, 2026-11-14)*
+What a session was played with, read by the Agent from outside the game — so for hooked and unhooked sessions alike (`21_INPUT_DEVICES`, `03_METRICS` §Input).
+- FR-16.1 The share of the time the game was in front that it was played with a controller, with the keyboard or mouse (one class), with both, with neither; the number of switches between a controller and the keyboard and mouse.
+- FR-16.2 Each controller: its maker and model by its USB ids, how it is connected, its connections and disconnections during the session, the time it was in use.
+- FR-16.3 Each controller's battery: the time at each level, the level that lasted longest, the first and the last, a rate where one can be worked out.
+- FR-16.4 Each maker's share of the time controllers were in use, and the number of switches between makers. A pad that is one controller seen twice (Steam Input) counts once.
+- FR-16.5 Whether a game supports controllers, as evidence and never a verdict: what the store's own file on the disk says, which input libraries the game loaded, how it was played (D163).
+- FR-16.6 An option, **on unless switched off**, that reads nothing until the Privacy Policy describing it has been accepted on the PC (D156). Off means nothing is read or stored.
+- FR-16.7 Never read or stored: which button, stick, trigger or key; text; the mouse's position; a serial number, a Bluetooth address, a device path. Nothing is ever sent to a controller (D159). Held by `tools/input-readonly-check.ps1`.
+
+### FR-16 Controllers and input *(owner decisions D155–D163, 2026-11-14)*
+What a session was played with, read by the Agent from outside the game — so for hooked and unhooked sessions alike (`21_INPUT_DEVICES`, `03_METRICS` §Input).
+- FR-16.1 The share of the time the game was in front that it was played with a controller, with the keyboard or mouse (one class), with both, with neither; the number of switches between a controller and the keyboard and mouse.
+- FR-16.2 Each controller: its maker and model by its USB ids, how it is connected, its connections and disconnections during the session, the time it was in use.
+- FR-16.3 Each controller's battery: the time at each level, the level that lasted longest, the first and the last, a rate where one can be worked out.
+- FR-16.4 Each maker's share of the time controllers were in use, and the number of switches between makers. A pad that is one controller seen twice (Steam Input) counts once.
+- FR-16.5 Whether a game supports controllers, as evidence and never a verdict: what the store's own file on the disk says, which input libraries the game loaded, how it was played (D163).
+- FR-16.6 An option, **on unless switched off**, that reads nothing until the Privacy Policy describing it has been accepted on the PC (D156). Off means nothing is read or stored.
+- FR-16.7 Never read or stored: which button, stick, trigger or key; text; the mouse's position; a serial number, a Bluetooth address, a device path. Nothing is ever sent to a controller (D159). Held by `tools/input-readonly-check.ps1`.
+
 ## Non-functional requirements
 
 - **NFR-1 Game-side overhead:** ≤ 1 µs per present, ≤ 8 MB resident, measured game FPS impact ≤ 0.5% vs uninstrumented.

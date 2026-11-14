@@ -36,7 +36,8 @@ page lists them in plain words; each item links to the document that has the det
 
 When a game is not measured — any of the reasons above — its session still records **how long it ran, the
 machine's sensors (GPU temperature, load, power; CPU load; memory), how much memory the game itself used (read from
-Windows, outside the game) and why nothing was measured.** Every
+Windows, outside the game), what it was played with ([Controllers and input](#controllers-and-input)) and why nothing
+was measured.** Every
 frame-rate, upscaler, frame-generation and ray-tracing value reads **N/A**, never 0. How the game's window was
 shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 
@@ -148,6 +149,35 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 - A game that has not created anything on the graphics card yet (its first second, a launcher screen) reads
   N/A for video memory. AMD and Intel graphics cards have not been tested.
   ([Metrics](docs/03_METRICS.md))
+
+## Controllers and input
+
+Since 0.1.0-beta.50 a session records what it was played with. All of it is read from Windows, from outside the
+game — so it is there for a game FrameLedger does not measure as well.
+
+- **It says a controller was in use while the game was in front — not what the game did with it.** A controller
+  held while a game ignores it reads as a controller in use.
+- **Keyboard and mouse are one figure.** FrameLedger reads only the time of the last keyboard or mouse input; it
+  cannot tell the two apart, and never reads a key.
+- **Input a program makes counts as keyboard and mouse**: Steam Input mapping a controller to keys, a macro tool, a
+  remapper. A controller mapped that way reads as *both*.
+- **Only the time the game is in front counts.** A game whose window belongs to another process than the one
+  FrameLedger follows reads as never in front, and has no shares.
+- **Xbox-compatible controllers and the DualSense are read for use.** Any other controller — a DualShock 4, a
+  Switch Pro controller — is listed with its connections and disconnections and is never counted as in use.
+- **A controller that Windows presents as an Xbox pad is "Xbox"**, whoever made it. Its model is named only when it
+  cannot be mistaken for another one that is connected.
+- **Battery.** An Xbox controller on a cable reads "wired"; on Bluetooth it may report nothing. A DualSense on
+  Bluetooth reports its battery only where Steam or the game has switched it to its long report — FrameLedger never
+  asks a controller for anything. An Xbox controller's level is four words, a DualSense's is in steps of ten per
+  cent.
+- **Steam Input shows a controller twice** — the one you hold and an Xbox pad Steam presents for it. FrameLedger
+  folds the two into one when they move together; with another remapper it may list two.
+- **Nothing is read until you have accepted the Privacy Policy that describes it.** After an update, sessions
+  recorded before FrameLedger has been opened once have no such figures, and say so in their notes.
+- **None of this had been read from a real controller when 0.1.0-beta.50 was written.** It was checked against data
+  written by hand; what real controllers do is in the developer's notes once the owner has tried them.
+  ([Input devices](docs/21_INPUT_DEVICES.md))
 
 ## Display mode (full-screen, borderless, windowed)
 

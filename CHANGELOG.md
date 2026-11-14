@@ -37,6 +37,20 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Added
 
+- **A session records what it was played with — a controller, the keyboard and mouse, both, or neither** (D155–D163,
+  the owner's decisions of 2026-11-14; *Settings ▸ Controllers and input*, on unless you switch it off). While a game
+  is recorded, FrameLedger's agent notes — from Windows, never from the game — which game controllers are connected
+  and in use, their battery level, and whether the keyboard or mouse is in use, and the session stores how the time
+  the game was in front divides between them, how often each controller connected and dropped, and its battery. It
+  works for a game FrameLedger does not measure too. **No button, stick, key or text is kept; nothing is sent to a
+  controller; and nothing is read until you have accepted the Privacy Policy that describes it** — after this
+  update, sessions recorded before FrameLedger has been opened once have no such figures. The screens that show the
+  figures come with the same release. Xbox-compatible controllers and the DualSense are read for use; another
+  controller is listed and never counted as in use. **None of this had been read from a real controller when it was
+  written** — it was checked against data written by hand (`LIMITATIONS.md` §Controllers and input).
+- **The terms are shown once: Privacy Policy 2.22 and Disclaimer 2.18.** Both said FrameLedger never reads input.
+  They now say what is read — that a controller, or the keyboard or mouse, is in use — what is kept, and what never
+  is (`docs/legal-drift-history.md`).
 - **For developers: the arithmetic of controller statistics, with nothing reading a device yet** (D155–D163, the
   owner's decisions of 2026-11-14; `docs/21_INPUT_DEVICES.md`, `docs/03_METRICS.md` §Input). `FrameLedger.Domain.Input`
   says whether an XInput state or a DualSense report is a pad in use and what its battery is, adds a battery's readings

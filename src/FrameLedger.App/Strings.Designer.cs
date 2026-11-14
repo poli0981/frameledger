@@ -1294,6 +1294,8 @@ public static class Strings
         nameof(Settings_HideScrollBars_Label),
         nameof(Settings_HookedGames_Label),
         nameof(Settings_HookedGames_Revoke),
+        nameof(Settings_Input_Body),
+        nameof(Settings_Input_Label),
         nameof(Settings_Interval_Body),
         nameof(Settings_Interval_Label),
         nameof(Settings_Invalid_Format),
@@ -4091,6 +4093,10 @@ public static class Strings
     public static string Settings_HookedGames_Label => ResourceManager.GetString(nameof(Settings_HookedGames_Label), Culture) ?? nameof(Settings_HookedGames_Label);
 
     public static string Settings_HookedGames_Revoke => ResourceManager.GetString(nameof(Settings_HookedGames_Revoke), Culture) ?? nameof(Settings_HookedGames_Revoke);
+
+    public static string Settings_Input_Body => ResourceManager.GetString(nameof(Settings_Input_Body), Culture) ?? nameof(Settings_Input_Body);
+
+    public static string Settings_Input_Label => ResourceManager.GetString(nameof(Settings_Input_Label), Culture) ?? nameof(Settings_Input_Label);
 
     public static string Settings_Interval_Body => ResourceManager.GetString(nameof(Settings_Interval_Body), Culture) ?? nameof(Settings_Interval_Body);
 

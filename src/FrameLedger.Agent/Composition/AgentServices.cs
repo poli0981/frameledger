@@ -7,6 +7,7 @@ using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Detection;
+using FrameLedger.Application.Input;
 using FrameLedger.Application.Ipc;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
@@ -19,6 +20,7 @@ using FrameLedger.Infrastructure.Blobs;
 using FrameLedger.Infrastructure.Capture;
 using FrameLedger.Infrastructure.Detection;
 using FrameLedger.Infrastructure.Import;
+using FrameLedger.Infrastructure.Input;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Recording;
@@ -72,6 +74,8 @@ internal static class AgentServices
         services.AddSingleton<ISettingsStore, SqliteSettingsStore>();
         // The registry over the store (P3 PR-3, D16): the recorder resolves its three keys at each session start.
         services.AddSingleton<RegisteredSettings>();
+        // Read by the recorder's policy only: the input reading waits for the Privacy Policy that describes it (D156).
+        services.AddSingleton<ILegalAcceptanceStore, SqliteLegalAcceptanceStore>();
         services.AddSingleton<IRecorderPolicy, SettingsRecorderPolicy>();
         services.AddSingleton<SettingsKillSwitch>();
         services.AddSingleton<IKillSwitch>(static sp => sp.GetRequiredService<SettingsKillSwitch>());
@@ -130,6 +134,18 @@ internal static class AgentServices
             interval: TimeSpan.FromSeconds(1),
             linger: TimeSpan.FromSeconds(10),
             static line => Serilog.Log.Information("{Line}", line)));
+        // Controllers and input (owner decisions D155-D159): ONE reader for the whole Agent, on a thread of its own, that
+        // exists only while a session has a view of it - a session recorded with the option on, after the terms that
+        // describe the reading were accepted (D156). Constructing it opens nothing: with no session there is no thread,
+        // no window and no registration. It is paused with the recording. The container disposes it with the host.
+        services.AddSingleton<IInputDevices>(static sp =>
+        {
+            CapturePause pause = sp.GetRequiredService<CapturePause>();
+            return new InputDeviceHub(
+                static () => new Win32InputBackend(),
+                paused: () => pause.IsPaused,
+                note: static line => Serilog.Log.Information("{Line}", line));
+        });
         services.AddSingleton<AgentRecording>();
     }
 

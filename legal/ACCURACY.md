@@ -106,6 +106,16 @@
 >   temperature in every session, and, on NVIDIA cards only, how much of the time its power limit or its temperature held
 >   it back, read once a second; and frames per watt — the game's own frames per second for each watt the graphics card
 >   drew, never counting generated frames, `N/A` where the game's own frame rate is not known.
+> - **Controllers and input (since beta.50; on unless you switch it off in Settings, and only once you have accepted
+>   the Privacy Policy that describes it):** how much of the time a game was in front it was played with a
+>   controller, with the keyboard or mouse, with both or with neither; each controller's connections and drops; its
+>   battery. All of it is read from Windows, from outside the game: it says a controller was in use while the game
+>   was in front, not what the game did with it. Keyboard and mouse are one figure — only the time of the last input
+>   is read — and input a program injects (Steam Input mapping a controller to keys, a macro tool) counts as keyboard
+>   and mouse. An Xbox-compatible controller and a DualSense are read for use; another maker's controller is listed
+>   and never counted as in use. A DualSense on Bluetooth reports its battery only where Steam or the game has
+>   switched it to its long report, and an Xbox controller on Bluetooth may report none. **None of this had been
+>   read from a real controller when it was written (2026-11-14)**: it was checked against data written by hand.
 > - **Processor and memory:** how busy the processor was (time busy, all cores together — not the
 >   frequency-scaled figure Task Manager draws) and how much system memory was in use, read from
 >   Windows once a second and charted. Processor temperature is read only when the Agent runs as

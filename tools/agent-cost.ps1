@@ -5,7 +5,8 @@
 <#
 .SYNOPSIS
     What the shipped Agent costs while it records a session: processor time per second of session, measured on the
-    real FrameLedger.Agent.exe, with Advanced metrics off and on.
+    real FrameLedger.Agent.exe - with nothing optional read, with controllers and input read, and with Advanced
+    metrics on.
 
 .DESCRIPTION
     docs/20_OPEN_QUESTIONS.md §M16 (owner decision D110, 2026-11-11): a number read off a probe is not the number of
@@ -22,21 +23,34 @@
     run says little. Each mode is run at two lengths and the cost per second is the slope between them:
     (processor time of the long run - of the short run) / (long - short).
 
+    Three modes since 0.1.0-beta.50 (owner decisions D155 and D156): `baseline` has controllers-and-input and
+    Advanced metrics both off; `input` switches controllers-and-input on AND writes the acceptance of the Privacy
+    Policy that describes it into the scratch ledger - without it the Agent reads nothing, by design; `advanced`
+    switches Advanced metrics on instead. The input mode measures the reader with whatever controllers this PC has
+    connected, which on the developer's PC is none: what a controller that sends some hundreds of reports a second
+    costs is not measured here (docs/20_OPEN_QUESTIONS.md section M17).
+
     Developer tool, not a gate: it needs a release build (./build.ps1 native, then a Release build of the solution),
-    Python 3 on the path to write one row of the scratch ledger's `settings` table, and a few minutes.
+    Python 3 on the path to write rows of the scratch ledger's `settings` and `legal_acceptance` tables, and a few
+    minutes.
 
 .PARAMETER Seconds
     The two session lengths, short then long.
 
 .PARAMETER Repeats
     How many times each (mode, length) is run; the median is reported.
+
+.PARAMETER Keep
+    Leave the scratch folder - its ledger and the Agent's logs - where it is and print its path, to look at what the
+    sessions stored. It is under the temporary folder, never the profile's.
 #>
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Split-Path $PSScriptRoot -Parent),
     [int[]]$Seconds = @(30, 90),
     [int]$Repeats = 2,
-    [string]$Configuration = 'Release'
+    [string]$Configuration = 'Release',
+    [switch]$Keep
 )
 
 Set-StrictMode -Version Latest
@@ -61,12 +75,30 @@ New-Item -ItemType Directory -Force $data | Out-Null
 $target = Join-Path $scratch "hook-harness-$run.exe"
 Copy-Item $harness $target
 
-function Set-Advanced([bool]$On) {
+# What each mode writes into the scratch ledger before its captures.
+$modes = [ordered]@{
+    baseline = @{ Advanced = '0'; Input = '0'; Terms = $false }
+    input    = @{ Advanced = '0'; Input = '1'; Terms = $true }
+    advanced = @{ Advanced = '1'; Input = '0'; Terms = $false }
+}
+
+function Set-Mode([string]$Name) {
     $db = Join-Path $data 'ledger.db'
-    $value = if ($On) { '1' } else { '0' }
-    $code = "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', ('telemetry.advanced', sys.argv[2])); c.commit(); c.close()"
-    & python -c $code $db $value
-    if ($LASTEXITCODE -ne 0) { throw 'could not write telemetry.advanced into the scratch ledger (is Python 3 on the path?)' }
+    $m = $modes[$Name]
+    $terms = if ($m.Terms) { '1' } else { '0' }
+    $code = @'
+import sqlite3, sys
+c = sqlite3.connect(sys.argv[1])
+for key, value in (('telemetry.advanced', sys.argv[2]), ('capture.input_devices', sys.argv[3])):
+    c.execute('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', (key, value))
+c.execute("DELETE FROM legal_acceptance WHERE doc = 'privacy'")
+if sys.argv[4] == '1':
+    c.execute("INSERT INTO legal_acceptance(doc, version, accepted_at) VALUES('privacy', '2.22', 0)")
+c.commit()
+c.close()
+'@
+    & python -c $code $db $m.Advanced $m.Input $terms
+    if ($LASTEXITCODE -ne 0) { throw "could not write the mode '$Name' into the scratch ledger (is Python 3 on the path?)" }
 }
 
 function Measure-Capture([int]$Length) {
@@ -108,27 +140,28 @@ try {
     # The first run creates and migrates the scratch ledger; it is not measured.
     $null = Measure-Capture 5
     $rows = @()
-    foreach ($mode in $false, $true) {
-        Set-Advanced $mode
+    foreach ($mode in $modes.Keys) {
+        Set-Mode $mode
         foreach ($length in $Seconds) {
             foreach ($i in 1..$Repeats) {
                 $m = Measure-Capture $length
-                $rows += [pscustomobject]@{ Advanced = $mode; Seconds = $length; CpuMs = [Math]::Round($m.CpuMs); PeakMiB = $m.PeakMiB; Layers = $m.Layers }
-                Write-Host ("  advanced={0,-5} {1,3} s  cpu {2,6:N0} ms  peak {3,6:N1} MiB  {4}" -f $mode, $length, $m.CpuMs, $m.PeakMiB, $m.Layers)
+                $rows += [pscustomobject]@{ Mode = $mode; Seconds = $length; CpuMs = [Math]::Round($m.CpuMs); PeakMiB = $m.PeakMiB; Layers = $m.Layers }
+                Write-Host ("  {0,-8} {1,3} s  cpu {2,6:N0} ms  peak {3,6:N1} MiB  {4}" -f $mode, $length, $m.CpuMs, $m.PeakMiB, $m.Layers)
             }
         }
     }
 
     Write-Host ''
-    foreach ($mode in $false, $true) {
-        $short = Median @($rows | Where-Object { $_.Advanced -eq $mode -and $_.Seconds -eq $Seconds[0] } | ForEach-Object CpuMs)
-        $long = Median @($rows | Where-Object { $_.Advanced -eq $mode -and $_.Seconds -eq $Seconds[1] } | ForEach-Object CpuMs)
+    foreach ($mode in $modes.Keys) {
+        $short = Median @($rows | Where-Object { $_.Mode -eq $mode -and $_.Seconds -eq $Seconds[0] } | ForEach-Object CpuMs)
+        $long = Median @($rows | Where-Object { $_.Mode -eq $mode -and $_.Seconds -eq $Seconds[1] } | ForEach-Object CpuMs)
         $perSecond = ($long - $short) / ($Seconds[1] - $Seconds[0])
-        $peak = ($rows | Where-Object { $_.Advanced -eq $mode } | Measure-Object PeakMiB -Maximum).Maximum
-        Write-Host ("advanced={0,-5}: {1:N1} ms of processor time per second of session = {2:N2} % of one core (median {3:N0} ms over {4} s, {5:N0} ms over {6} s); peak working set {7:N1} MiB" -f `
+        $peak = ($rows | Where-Object { $_.Mode -eq $mode } | Measure-Object PeakMiB -Maximum).Maximum
+        Write-Host ("{0,-8}: {1:N1} ms of processor time per second of session = {2:N2} % of one core (median {3:N0} ms over {4} s, {5:N0} ms over {6} s); peak working set {7:N1} MiB" -f `
                 $mode, $perSecond, ($perSecond / 10), $short, $Seconds[0], $long, $Seconds[1], $peak)
     }
 }
 finally {
-    Remove-Item -Recurse -Force $scratch -ErrorAction SilentlyContinue
+    if ($Keep) { Write-Host "scratch kept: $scratch" }
+    else { Remove-Item -Recurse -Force $scratch -ErrorAction SilentlyContinue }
 }

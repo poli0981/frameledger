@@ -1197,6 +1197,12 @@
   <data name="Settings_Advanced_Label" xml:space="preserve">
     <value>Advanced metrics</value>
   </data>
+  <data name="Settings_Input_Body" xml:space="preserve">
+    <value>Record what a session was played with: which game controllers were connected and in use, their battery level, and whether the keyboard or mouse was in use - as times, read from Windows and never from the game. No button, stick, key or text is kept, nothing is sent to a controller, and nothing is read until you have accepted the Privacy Policy that describes it. Off: nothing of this is read or stored. It applies from the next session, and a session recorded while it was off is not filled in later.</value>
+  </data>
+  <data name="Settings_Input_Label" xml:space="preserve">
+    <value>Controllers and input</value>
+  </data>
   <data name="Settings_Appearance_Header" xml:space="preserve">
     <value>Appearance</value>
   </data>
@@ -1861,7 +1867,7 @@
     <value>T2</value>
   </data>
   <data name="Tier_NotHooked_Tooltip" xml:space="preserve">
-    <value>Tier 2: not hooked — duration, sensors and the game's memory only; every frame-derived value is N/A</value>
+    <value>Tier 2: not hooked — duration, sensors, the game's memory and what it was played with only; every frame-derived value is N/A</value>
   </data>
   <data name="Upscaler_None" xml:space="preserve">
     <value>No upscaler</value>

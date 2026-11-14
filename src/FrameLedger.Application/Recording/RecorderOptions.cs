@@ -24,4 +24,17 @@ public sealed record RecorderOptions
     /// nothing more than a session always did.
     /// </summary>
     public bool AdvancedMetrics { get; init; }
+
+    /// <summary>
+    /// Whether this session reads controllers and keyboard-and-mouse activity (owner decisions D155 and D156): the
+    /// option <c>capture.input_devices</c> is on AND the Privacy Policy that describes the reading has been accepted on
+    /// this PC. False - the default, and every recorder with no input reader - reads and stores nothing of it.
+    /// </summary>
+    public bool InputDevices { get; init; }
+
+    /// <summary>
+    /// The option is on and the reading is held back because the terms that describe it are not accepted yet (D156).
+    /// The session says so in its notes, so that "nothing was read" has a reason beside it.
+    /// </summary>
+    public bool InputHeldForTerms { get; init; }
 }

@@ -155,6 +155,7 @@ public sealed class ViewerModeTests
             [SettingsRegistry.HookingUserModeExceptions.Key] = ("IsChecked", "UserModeExceptions, Mode=TwoWay"),
             [SettingsRegistry.CaptureRunElevated.Key] = ("IsChecked", "RunElevated, Mode=TwoWay"),
             [SettingsRegistry.CaptureMinSessionSeconds.Key] = ("Value", "MinSessionSeconds, Mode=TwoWay"),
+            [SettingsRegistry.CaptureInputDevices.Key] = ("IsChecked", "InputDevices, Mode=TwoWay"),
             [SettingsRegistry.TelemetryIntervalMs.Key] = ("Value", "TelemetryIntervalMs, Mode=TwoWay"),
             [SettingsRegistry.TelemetryAdvanced.Key] = ("IsChecked", "AdvancedMetrics, Mode=TwoWay"),
             [SettingsRegistry.RetentionRawSessionsPerGame.Key] = ("Value", "RetentionRawSessions, Mode=TwoWay"),

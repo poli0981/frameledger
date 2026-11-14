@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using FrameLedger.Application.Advanced;
+using FrameLedger.Application.Input;
 using FrameLedger.Application.Telemetry;
 
 namespace FrameLedger.Infrastructure.Telemetry;
@@ -49,6 +50,12 @@ public sealed class TelemetryPoller : ITelemetryPoller
     private IDisposable? _advancedHold;
     private AdvancedSnapshot? _lastAdvanced;
 
+    // Controllers and input (owner decisions D155 and D156): the Agent's one reader, of which this poller opens a
+    // view for its session and reads it on every tick. Null when the option is off or its terms are not accepted.
+    private readonly IInputDevices? _input;
+    private IInputActivitySource? _inputView;
+
+    private volatile GameProcess? _followed;
     private Thread? _thread;
     private int _queued;
     private long _dropped;
@@ -65,9 +72,11 @@ public sealed class TelemetryPoller : ITelemetryPoller
     /// <param name="system">The machine beside the GPU, read on the same tick (2026-09-21); owned and disposed with <paramref name="source"/> when <paramref name="ownsSource"/> is set. Null composes none, and every sample's <see cref="TelemetrySample.System"/> is empty.</param>
     /// <param name="game">The game process's own memory (beta.12, D43), read on the same tick for the process <see cref="Follow"/> named; owned and disposed with the others when <paramref name="ownsSource"/> is set. Null composes none, and every sample's <see cref="TelemetrySample.Game"/> is empty.</param>
     /// <param name="advanced">The Agent's shared reader of advanced metrics (owner decision D101), held while this poller runs and never owned by it: each of its ticks is attached to one sample. Null - the option is off - composes none, and every sample's <see cref="TelemetrySample.Advanced"/> is null.</param>
+    /// <param name="input">The Agent's one input reader (owner decisions D155 and D156), never owned by this poller: a view of it is open while the poller runs, and what it saw since the last tick is attached to each sample. Null - the option is off, or its terms are not accepted - opens none, and every sample's <see cref="TelemetrySample.Input"/> is null.</param>
     public TelemetryPoller(IGpuTelemetrySource source, TelemetryPollerOptions options, TimeProvider clock, bool ownsSource = false,
-        ISystemTelemetrySource? system = null, IGameMemorySource? game = null, IAdvancedHardware? advanced = null)
+        ISystemTelemetrySource? system = null, IGameMemorySource? game = null, IAdvancedHardware? advanced = null, IInputDevices? input = null)
     {
+        _input = input;
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _system = system;
         _game = game;
@@ -107,6 +116,9 @@ public sealed class TelemetryPoller : ITelemetryPoller
         // Held from here to Dispose: the shared reader runs while a session samples, and closes some seconds after
         // the last session and the page have let go (D107).
         _advancedHold = _advanced?.Acquire();
+
+        // The input reader runs from its first view to its last (D155): this session's view is open from here to Dispose.
+        _ = InputView();
         _thread = new Thread(Loop)
         {
             IsBackground = true,
@@ -130,14 +142,16 @@ public sealed class TelemetryPoller : ITelemetryPoller
         ProcessReading game = default;
         bool measured = _game is not null && _game.TryRead(out game);
         IReadOnlyList<AdvancedReading>? advanced = NewAdvancedReadings();
-        if (!gpu && !machine && !measured && advanced is null)
+        InputReading? played = null;
+        bool read = InputView() is { } view && view.TryRead(out played);
+        if (!gpu && !machine && !measured && advanced is null && !read)
         {
             return;
         }
 
         // A tick only the machine or the game answered still carries them: the placeholder names no layer and no field.
         sample ??= new GpuSample { TakenAt = _clock.GetUtcNow(), Layer = TelemetryLayer.None };
-        _queue.Enqueue(new TelemetrySample(_clock.GetTimestamp(), sample, system, game, advanced));
+        _queue.Enqueue(new TelemetrySample(_clock.GetTimestamp(), sample, system, game, advanced, played));
         if (Interlocked.Increment(ref _queued) > _options.QueueCapacity && _queue.TryDequeue(out _))
         {
             Interlocked.Decrement(ref _queued);
@@ -163,6 +177,25 @@ public sealed class TelemetryPoller : ITelemetryPoller
         return snapshot.Readings.Count > 0 ? snapshot.Readings : null;
     }
 
+    /// <summary>
+    /// This session's view of the input reader, opened where it is first needed - <see cref="Start"/> in the Agent, the
+    /// first tick where a test drives the poller without its thread - and told at once whose windows are the game's.
+    /// Null when no reader was composed: the option is off, or its terms are not accepted.
+    /// </summary>
+    private IInputActivitySource? InputView()
+    {
+        if (_inputView is null && _input is not null && !_disposed)
+        {
+            _inputView = _input.Open();
+            if (_followed is { } target)
+            {
+                _inputView.Follow(target);
+            }
+        }
+
+        return _inputView;
+    }
+
     public bool FollowAdapter(ulong luid) => _source is IGpuAdapterSelector selector && selector.SelectAdapter(luid);
 
     /// <summary>The game process whose memory the next ticks read (beta.12, D43); ignored without a game source.</summary>
@@ -170,6 +203,10 @@ public sealed class TelemetryPoller : ITelemetryPoller
     {
         ArgumentNullException.ThrowIfNull(target);
         _game?.Follow(target);
+
+        // Whose windows count as this session's game (D155). Kept, so a view opened after this is told as well.
+        _followed = target;
+        _inputView?.Follow(target);
     }
 
     public int Drain(ICollection<TelemetrySample> into)
@@ -198,6 +235,7 @@ public sealed class TelemetryPoller : ITelemetryPoller
         _thread?.Join(TimeSpan.FromSeconds(2));
         _stop.Dispose();
         _advancedHold?.Dispose();
+        _inputView?.Dispose();
         if (_ownsSource)
         {
             _source.Dispose();

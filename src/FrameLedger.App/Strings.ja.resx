@@ -1589,6 +1589,14 @@
     <value>詳細メトリクス</value>
     <comment>review</comment>
   </data>
+  <data name="Settings_Input_Body" xml:space="preserve">
+    <value>セッションが何でプレイされたかを記録します - 接続されていたゲーム コントローラーと使用中だったコントローラー、そのバッテリー残量、キーボードまたはマウスが使われていたかどうか - を時間として、ゲームからではなく Windows から読み取ります。ボタン、スティック、キー、文字は保存されず、コントローラーには何も送信されず、これを説明するプライバシー ポリシーに同意するまでは何も読み取りません。オフ: これらは読み取りも保存もされません。次のセッションから適用され、オフの間に記録されたセッションが後から補われることはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Input_Label" xml:space="preserve">
+    <value>コントローラーと入力</value>
+    <comment>review</comment>
+  </data>
   <data name="Settings_Appearance_Header" xml:space="preserve">
     <value>外観</value>
     <comment>review</comment>
@@ -2474,7 +2482,7 @@
     <comment>review</comment>
   </data>
   <data name="Tier_NotHooked_Tooltip" xml:space="preserve">
-    <value>ティア 2: フックなし — 時間、センサー、ゲームのメモリのみ。フレームから算出する値はすべて N/A</value>
+    <value>ティア 2: フックなし — 時間、センサー、ゲームのメモリ、何でプレイされたかのみ。フレームから算出する値はすべて N/A</value>
     <comment>review</comment>
   </data>
   <data name="Upscaler_None" xml:space="preserve">

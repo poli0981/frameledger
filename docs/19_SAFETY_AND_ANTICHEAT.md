@@ -1265,6 +1265,26 @@ outlives a rules change, a game update and *Change executable*; §What a finding
   > the user. Cautious mode returns with the overlay, when there is something
   > for it to switch off.
 
+## What the Agent reads about input, from outside every game (owner decisions D155–D159)
+
+Since 0.1.0-beta.50 the Agent can say what a session was played with (`21_INPUT_DEVICES`). It is on this page
+because of what it must never become:
+
+- **It is read from Windows, by the Agent. Nothing is added to a game**: no hook, no injected code, nothing in
+  `17_HOOK_ENGINE` §Hook inventory. Rule 4 is untouched, and a game the guard refuses is read like any other —
+  nothing about it touches the game's process.
+- **No hook of any kind.** `SetWindowsHookEx` stays forbidden everywhere (`tools/chokepoint-check.ps1`); keyboard
+  and mouse are known by one call that returns a time (`GetLastInputInfo`), and raw input is registered for
+  joysticks and gamepads only — never for a keyboard or a mouse. A tool that hooks or registers for the keyboard is
+  what security software, and some anti-cheat, look for; this is not one.
+- **No device is opened and nothing is sent to one.** A handle of FrameLedger's on a controller could make a game's
+  own exclusive open fail; an output or feature report could change how a controller reports to the game. Neither
+  is done.
+- **A committed list holds it**: `tools/input-readonly-check.ps1` (`12_BUILD` step 14g).
+
+Whether any anti-cheat objects to a background program that receives controllers' reports is not known; none is
+documented to. It reads nothing of, and does nothing to, the game.
+
 ## Honest limits to document to users
 
 The Disclaimer states these explicitly, and the UI consent dialog echoes them:

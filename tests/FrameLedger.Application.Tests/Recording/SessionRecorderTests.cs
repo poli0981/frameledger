@@ -328,7 +328,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
     private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
         bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false, IDisplayProbe? display = null, ulong adapterLuid = 0,
-        AntiCheatVerdict? rescan = null, ICrashReporterSightings? reporters = null, IAdvancedHardware? advanced = null, bool advancedOn = false,
+        AntiCheatVerdict? rescan = null, ICrashReporterSightings? reporters = null, IAdvancedHardware? advanced = null, bool advancedOn = false, bool inputHeld = false,
         InGameScript? inGame = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
@@ -359,7 +359,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
             _ => fakePoller, clock,
-            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10), MinimumSessionLength = SteppingClock.Step, AdvancedMetrics = advancedOn }, profiles: profiles,
+            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10), MinimumSessionLength = SteppingClock.Step, AdvancedMetrics = advancedOn, InputHeldForTerms = inputHeld }, profiles: profiles,
             exceptionLapse: new UserModeExceptionLapsePolicy(store, sessions), reporters: reporters, advanced: advanced);
         return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock, Store = store, Poller = fakePoller };
     }
@@ -809,6 +809,28 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         {
             public void Dispose() => Interlocked.Increment(ref hub._released);
         }
+    }
+
+    /// <summary>
+    /// D156: with the option on and the Privacy Policy that describes the reading not accepted yet, the session reads
+    /// nothing of controllers or of the keyboard and mouse - and says so, so that "nothing was read" has its reason
+    /// beside it. A session that was not held back says nothing.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ASessionWhoseInputReadingWaitsForTheTermsSaysSoInItsNotes(bool held)
+    {
+        Harness h = await MakeAsync(inputHeld: held);
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        h.Partials.Created[r.Row.SessionGuid].Notes.Count(static n => string.Equals(n.Text, SessionRecorder.InputHeldNote, StringComparison.Ordinal))
+            .Should().Be(held ? 1 : 0);
+        SessionRow row = h.Sessions.Stored.Single().Row;
+        row.InputObservedMs.Should().BeNull("nothing was read either way: the harness composes no input reader");
+        CaptureNotes.Parse(row.CaptureNotes).InputHeldForTerms.Should().Be(held, "the stored notes say it, where the App reads it");
+        CaptureNotes.Parse(row.CaptureNotes).End.Should().NotBeNullOrEmpty("the slot is added to the notes, not put in their place");
     }
 
     [Fact]

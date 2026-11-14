@@ -80,8 +80,10 @@ public sealed class SettingsRegistryTests
         // capture.background left in beta.12: it was listed here and no Agent code ever read it; the key is reserved.
         // retention.remove_uninstalled_games joined in beta.19 (D55): the detection sweep reads it at every pass.
         // telemetry.advanced joined on 2026-11-11 (D101): Advanced metrics, off by default, read at each session's start.
+        // capture.input_devices joined on 2026-11-14 (D155, D156): controllers and input, on by default, read at each
+        // session's start - and used only once the terms that describe it are accepted, which is the policy's to check.
         agent.Should().BeEquivalentTo(["hooking.kill_switch", "hooking.usermode_ac_exceptions", "capture.run_elevated",
-            "capture.min_session_s", "telemetry.interval_ms", "telemetry.advanced", "retention.raw_sessions_per_game", "retention.remove_uninstalled_games"]);
+            "capture.min_session_s", "capture.input_devices", "telemetry.interval_ms", "telemetry.advanced", "retention.raw_sessions_per_game", "retention.remove_uninstalled_games"]);
         agent.Should().OnlyContain(static k => k.StartsWith("hooking.", StringComparison.Ordinal) || k.StartsWith("capture.", StringComparison.Ordinal)
             || k.StartsWith("telemetry.", StringComparison.Ordinal) || k.StartsWith("retention.", StringComparison.Ordinal));
     }

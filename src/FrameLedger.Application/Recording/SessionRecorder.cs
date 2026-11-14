@@ -118,6 +118,9 @@ public sealed class SessionRecorder : ISessionRecorder
         }
     }
 
+    /// <summary>The note of a session whose input reading waits for the terms (owner decision D156).</summary>
+    public const string InputHeldNote = "input: not read - the Privacy Policy that describes it is not accepted on this PC yet";
+
     private async Task<RecordedSession> RecordStartedAsync(RecordRequest request, GameRow game, Guid guid, DateTimeOffset startedAt,
         long qpcEpoch, long snapshotId, RecorderOptions options, CancellationToken ct)
     {
@@ -151,6 +154,13 @@ public sealed class SessionRecorder : ISessionRecorder
             using var writer = new PartialSessionWriter(_partials.Create(header), _clock, options.PartialFlushInterval);
             var run = new Run(writer, poller, _clock, _observer, guid, advanced, request.NormalisedExePath);
             writer.Note("started " + request.Mode);
+            if (options.InputHeldForTerms)
+            {
+                // D156: the option is on and nothing of controllers or of the keyboard and mouse is read, because the
+                // Privacy Policy that describes the reading has not been accepted on this PC yet.
+                writer.Note(InputHeldNote);
+            }
+
             CaptureOutcome outcome = await RunLoopAsync(request, run, ct).ConfigureAwait(false);
             DateTimeOffset endedAt = _clock.GetUtcNow();
             await run.CompleteAdvancedAsync().ConfigureAwait(false);
@@ -213,7 +223,7 @@ public sealed class SessionRecorder : ISessionRecorder
         bool crashEvent = hadPid && _crashes.FoundCrash(query);
         ExitStatus exit = ExitStatusMapper.Map(outcome.Reason, outcome.ExitCode, crashEvent, reporterCounted);
 
-        SessionRow skeleton = Skeleton(header, outcome, endedAt, exit, new CrashWitness(crashEvent, reporter?.Image, reporterCounted), hooked) with { DriverProfileJson = driverProfile };
+        SessionRow skeleton = WithInputHeld(Skeleton(header, outcome, endedAt, exit, new CrashWitness(crashEvent, reporter?.Image, reporterCounted), hooked), options.InputHeldForTerms) with { DriverProfileJson = driverProfile };
         var input = new FinalizeInput
         {
             Skeleton = skeleton,
@@ -262,6 +272,10 @@ public sealed class SessionRecorder : ISessionRecorder
             ExceptionLapse = lapsed,
         };
     }
+
+    /// <summary>D156: a session whose input reading waited for the terms says so in its stored notes, so the App can say why it has no input figures.</summary>
+    private static SessionRow WithInputHeld(SessionRow row, bool held) =>
+        held ? row with { CaptureNotes = row.CaptureNotes + "; " + CaptureNotes.InputHeldSlot } : row;
 
     private static SessionRow Skeleton(PartialHeader h, CaptureOutcome o, DateTimeOffset endedAt, ExitStatus exit, CrashWitness crash, bool hooked)
     {

@@ -1192,6 +1192,12 @@
   <data name="Settings_Advanced_Label" xml:space="preserve">
     <value>Thông số nâng cao</value>
   </data>
+  <data name="Settings_Input_Body" xml:space="preserve">
+    <value>Ghi lại phiên được chơi bằng gì: tay cầm nào đang kết nối và đang được dùng, mức pin của chúng, và bàn phím hay chuột có được dùng hay không - dưới dạng thời gian, đọc từ Windows chứ không bao giờ từ game. Không lưu nút, cần, phím hay văn bản nào, không gửi gì tới tay cầm, và không đọc gì cho tới khi bạn chấp nhận Chính sách quyền riêng tư mô tả việc này. Tắt: không đọc hay lưu gì trong số này. Áp dụng từ phiên kế tiếp; phiên ghi lúc đang tắt sẽ không được bổ sung về sau.</value>
+  </data>
+  <data name="Settings_Input_Label" xml:space="preserve">
+    <value>Tay cầm và thao tác nhập</value>
+  </data>
   <data name="Settings_Appearance_Header" xml:space="preserve">
     <value>Giao diện</value>
   </data>
@@ -1856,7 +1862,7 @@
     <value>T2</value>
   </data>
   <data name="Tier_NotHooked_Tooltip" xml:space="preserve">
-    <value>Mức 2: không hook — chỉ có thời lượng, cảm biến và bộ nhớ của game; mọi giá trị suy ra từ khung hình đều là N/A</value>
+    <value>Mức 2: không hook — chỉ có thời lượng, cảm biến, bộ nhớ của game và việc phiên được chơi bằng gì; mọi giá trị suy ra từ khung hình đều là N/A</value>
   </data>
   <data name="Upscaler_None" xml:space="preserve">
     <value>Không upscaler</value>

@@ -3,6 +3,7 @@
 
 using FluentAssertions;
 using FrameLedger.App.Services;
+using FrameLedger.Application.Input;
 using FrameLedger.Shared;
 
 namespace FrameLedger.App.Tests;
@@ -56,6 +57,22 @@ public sealed class LegalDocumentsTests
             d.Text.Should().NotContain("<!--", d.Key);
             d.Text.Replace("{{RELEASE_DATE}}", string.Empty, StringComparison.Ordinal).Should().NotContain("{{", "12_BUILD §Release-time token substitution");
         }
+    }
+
+    /// <summary>
+    /// D156: the Agent reads controllers and input only once the Privacy Policy that describes the reading has been
+    /// accepted. The Agent knows that document by a key and a version of its own; both must be the App's - the key
+    /// the Legal Gate stores an acceptance under, and a version the shipped document has reached.
+    /// </summary>
+    [Fact]
+    public void TheInputReadingsTermsAreThePrivacyPolicyThisBuildShips()
+    {
+        InputTerms.PrivacyDocument.Should().Be(LegalDocuments.Privacy);
+        LegalDocument privacy = LegalDocuments.Load(BuildLine.Main).Single(static d => string.Equals(d.Key, LegalDocuments.Privacy, StringComparison.Ordinal));
+
+        InputTerms.Accepted(privacy.Version).Should().BeTrue(
+            "accepting the document this build shows must be enough for the reading it describes; shipped is " + privacy.Version);
+        privacy.Text.Should().Contain("Controllers and input", "the document the reading waits for is the one that describes it");
     }
 
     [Fact]
