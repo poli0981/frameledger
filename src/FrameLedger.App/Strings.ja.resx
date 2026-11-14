@@ -1054,7 +1054,7 @@
     <comment>review</comment>
   </data>
   <data name="AdvToken_active_render" xml:space="preserve">
-    <value>GPU 実描画 (待機時間を除く)</value>
+    <value>GPU 実描画 (ドライバーの算出値)</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_frame_time" xml:space="preserve">
@@ -1062,7 +1062,7 @@
     <comment>review</comment>
   </data>
   <data name="AdvToken_gpu_render" xml:space="preserve">
-    <value>GPU 描画、開始から終了まで (待機時間を含む)</value>
+    <value>GPU 描画 (ドライバーの開始マークから終了マークまで)</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_gsync_module" xml:space="preserve">

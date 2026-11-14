@@ -153,15 +153,18 @@ and its release facts are [`handoff/history/0.1.0-beta.48.md`](handoff/history/0
 
 1. ~~**The owner runs item 47**~~ **Run and read 2026-11-14** (item 47, *Run 2026-11-14*): the difference in
    Cyberpunk 2077 is the driver's, the holes are gone from steady play, off means off, and the stop fired once.
-2. **The owner's to say**: the wording of the two GPU labels (the mean stays — the counts say the driver's
-   active time really is the longer there); whether D141's stop should spare a game's first seconds (Kingdom
-   Come: Deliverance II lost its session's report to one call of 5.3 ms while it started). (f) and (g) are
-   said: the App's *Low Latency Mode* is off, and no hitch.
+2. **The two GPU labels were reworded on the owner's word** (D152, 2026-11-14; strings in three languages, the
+   guide — in `[Unreleased]`, not in a release yet). **D141's stop stays as it is, and nothing more of Reflex is read** (D153, the owner
+   the same evening: "it only has to tell whether the game has it or not; Kingdom Come: Deliverance II has no
+   Reflex in its settings" — so that session lost nothing to the stop). (f) and (g) are said: the App's *Low
+   Latency Mode* is off, and no hitch.
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
 4. **Train D** after it, the same way: a spike first — `sl.pcl.markers` waits for it, and §30 found its hook
    would miss a game that fetched its functions before the attach. **Read 2026-11-14 against Streamline's own
    guide (§30, *Added 2026-11-14*): the markers are the times the driver's report already gives**, so that entry
-   would add a count and nothing else. Recommended to the owner: leave Reflex and PCL out of train D.
+   would add a count and nothing else. ~~Recommended to the owner: leave Reflex and PCL out of train D.~~
+   **Decided (D153): Reflex and PCL are not part of train D** — whether a game has Reflex is all that is wanted,
+   and the driver's report already says it.
 
 ### Left open by this session
 
@@ -987,7 +990,9 @@ left unexercised; item 40 (d).
    **The stop fired in a real game for the first time** (D141): Kingdom Come: Deliverance II, 12 s after the
    attach, while the game was starting — the seventh read took 5 337 µs, and no further read was made; the
    session says so (`Slow`), the game ran 287 s and closed normally. No frame had been reported in those seven
-   reads. Elsewhere the slowest call was 22–235 µs. In Lies of P the driver reported no frame at all.
+   reads. **The owner: that game has no Reflex in its settings** — so there was no report to lose; the
+   session's line says *stopped* where, without the slow call, it would have said *the driver reported no
+   frame*. Elsewhere the slowest call was 22–235 µs. In Lies of P the driver reported no frame at all.
    **What the states say of Reflex and frame generation** (each batch carries its own): low-latency mode was
    **on at a multiplier of 1** in Cyberpunk 2077 (88 reads), Black Myth: Wukong (253), Hogwarts Legacy (299) and
    Dying Light: The Beast (345); Phantom Blade Zero without frame generation sleeps through Reflex with
@@ -1169,6 +1174,8 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D149 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Native logging | told that a bug report carries the five newest Overlay logs and so these lines: **no change to the legal texts** — the Privacy Policy names the logs of the component loaded into games, and the lines are counts and sums of microseconds |
 | D150 | [`07_IPC.md`](07_IPC.md) §Region 5 | the samples that carry no report are mended **on both sides**: the Overlay reads and publishes on a grid of one second, and the Agent no longer overwrites a reading that waits for a sample |
 | D151 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Native logging | the owner's word: Reflex is checked together with frame generation — without it the owner's games do not switch Reflex on, and a low-latency switch that reads on and off is the NVIDIA App's override. A batch of counts belongs to one state of the sleep status |
+| D152 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §The inventory | the two GPU labels say what each figure is — *the driver's own figure*, *between the driver's start and end marks* — not "idle time excluded / included": item 47 counted the active time as the longer in Cyberpunk 2077. Strings only; numbers and means unchanged |
+| D153 | [`spike-notes/30-reflex-latency.md`](spike-notes/30-reflex-latency.md) *Added 2026-11-14* | the owner's word: of Reflex it is enough to tell whether a game has it. Reflex and PCL leave train D (`sl.pcl.markers` stays refused), and D141's stop is not changed for a game's first seconds. My reading of one sentence; nothing shipped is removed by it |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

@@ -796,13 +796,13 @@
     <value>Game Ready</value>
   </data>
   <data name="AdvToken_active_render" xml:space="preserve">
-    <value>GPU active render (idle time excluded)</value>
+    <value>GPU active render (the driver's own figure)</value>
   </data>
   <data name="AdvToken_frame_time" xml:space="preserve">
     <value>GPU frame time, one frame's end to the next</value>
   </data>
   <data name="AdvToken_gpu_render" xml:space="preserve">
-    <value>GPU render, start to end (idle time included)</value>
+    <value>GPU render (between the driver's start and end marks)</value>
   </data>
   <data name="AdvToken_gsync_module" xml:space="preserve">
     <value>G-SYNC module</value>

@@ -1099,7 +1099,11 @@ session that ended in a menu read 1). **Since 0.1.0-beta.48 (D142) two more seri
 `adv.nvapi.reflex.gpu_times.` and `active_render`, `frame_time` — the driver's `gpuActiveRenderTimeUs` and
 `gpuFrameTimeUs`, each the mean over the frames of that read that gave one. They are the driver's own figures, not
 spans between two of its marks: in Phantom Blade Zero `gpu_render` (the two GPU marks, idle time included) was
-longer than `total`, which is why its label now says what it includes (D143). An entry of their own keeps the
+longer than `total`, which is why its label now says what it includes (D143). **Reworded 2026-11-14 (D152)**:
+NVIDIA's header defines the active time as that span "excluding the idles in between", and in Cyberpunk 2077
+without frame generation the active time is the longer of the two on nine frames in ten (HANDOFF, item 47) — so
+the labels now say what each is (*the driver's own figure*; *between the driver's start and end marks*) and no
+longer that one is the other less its idle time. The numbers and the means are unchanged. An entry of their own keeps the
 seven spans within what one chart draws as lines. What the *game* asked of Reflex (`nvapi.reflex.mode`) is an argument of a function no module exports:
 reading it takes a patch at an address learned at run time, which is refused.
 
