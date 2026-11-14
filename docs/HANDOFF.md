@@ -173,8 +173,23 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.~~ **Recorded
+  2026-11-14: 0.1.0-beta.47 was released 2026-11-14T01:11:19Z** (08:11 in the owner's time zone) from the signed
+  tag on `3d7c273` (#446), by run 43537436561 — green at the first attempt, one run for the one tag push. Eight
+  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the four shipped natives carry
+  `FL_BUILD_ID v0.1.0-beta.47`. The delta from beta.46 is 1 820 144 bytes beside a full package of 110 795 507 —
+  "Delta processed 0452 files. 0024 patched, 0428 unchanged". The wiki was published by run 43539059710. The
+  rehearsal on the release branch (run 43534606602, at `43426fe`, the released tree) had made a delta of 1 838 295
+  bytes with the same file counts. **SonarCloud answered on `3d7c273`: the quality gate passed and no issue is open
+  on `main`. Qodana's two reports, CodeQL and `check` are green on that commit.** On the way the advisory checks
+  found three things after local gates were green (§Traps), and no required check failed.
+- **The release branch's local gate was red once, for a reason outside the code** (2026-11-14 07:20): the freshly
+  linked `fl_guard_test.exe` was gone from the build tree seconds after the gate began — Windows Defender's log has
+  three configuration changes at 07:20:53–56 and no detection; which security program removed the file is not
+  known, and nothing of its settings was looked at further or touched. `fl_guard` ended after 0.72 s **and was
+  counted as failed, not passed**: the rule of #438 (a native test names the line it ends on) did what it was
+  written for. Run again, the gate was green.
 - **No real game has run the read.** The order in which nothing else changed for a game is not a reason to skip
   item 45's (h).
 - **No test runs the whole path through the real Agent**: the injected tests stop at the shared memory and the
