@@ -471,6 +471,48 @@ names no census lists; which feature each serves is not established.)* The sessi
 difference ("the game ships 3.7.10.0: another copy was loaded"); since beta.24 the DLSS line says where each DLSS
 library was loaded from (the game, the graphics driver, Windows) — by folder, never who put it there.
 
+## Does a game support controllers — three pieces of evidence, no verdict (0.1.0-beta.50, owner decision D163)
+
+**The owner's request, 2026-11-14:** "check whether the game supports controllers, shown in its details." From
+outside a game FrameLedger can know that a controller was in use while the game was in front — not what the game
+did with it — and a store's listing is the store's word. So the game's page shows three rows, each with where it
+comes from, and FrameLedger adds no Yes or No of its own (`App.Services.ControllerEvidence`):
+
+| Row | What it says | From | When it is N/A |
+|---|---|---|---|
+| **Controller support (store)** | *Full — as Steam lists it*, *Partial — as Steam lists it*, *Steam lists none* | `games.controller_support` (schema 0024), read from the Steam app's own file on this PC | a game no store file on this PC describes: not a Steam game, or Steam has no record of it here |
+| **Input libraries loaded** | each interface with the files seen — `XInput (xinput1_4.dll)`, `SDL (SDL2.dll)` — or *None seen* | the module snapshot of the newest session measured from inside (`sessions.runtime_modules`) | a game never measured from inside: an unhooked session takes no snapshot (`04_CAPTURE`) |
+| **Usually played with** | the share of the time in front with a controller, the keyboard and mouse, both, neither, over the sessions that recorded it | `sessions.input_*` (`03_METRICS` §Input) | no session has recorded it |
+
+### What a store lists
+
+**Steam's `appcache\appinfo.vdf`, on the disk** (`Infrastructure.Import.SteamAppInfo`). The Steam client keeps a copy
+of the store's application records there; a record's `common` section may hold `controller_support` = `full` or
+`partial`, and a record without it lists none. **No request is made to any store** (CLAUDE.md rule 8 — the
+setting `privacy.online_metadata` is still read by nothing). Only format 41 is read (magic `0x07564429`, keys as
+numbers into a table of strings at the end of the file); another magic is refused with the reason and the row reads
+N/A. The layout was checked on the developer's Steam folder on 2026-11-14: 3 581 records, every tree read to its
+last byte, 1 284 *full*, 440 *partial*, 1 857 with no such key. No length in the file is trusted — a record or a
+string that claims more than the file holds is a problem, and a file that cannot be read whole says nothing.
+
+**Read when a game's page opens** (`App.Services.StoreControllerSupport`, from `GameLibrary.LoadAsync`): the game's
+Steam record is found as Play and the artwork find it (`StoreRecords.Owning`), the file is read for that one
+application, and the row is written only when the answer differs — `IGameRepository.SetControllerSupportAsync`,
+the UI's write, which moves no `updated_at`. **A viewer reads nothing of this PC** (D52) and shows what the copy's
+rows hold. GOG, Epic, itch and the Xbox app keep no such fact on the disk that this build knows of: their games read
+N/A.
+
+### Input libraries
+
+`Domain.Input.InputLibraries`: `xinput1_4.dll`, `xinput1_3.dll`, `xinput9_1_0.dll`, `xinputuap.dll` (XInput);
+`dinput8.dll`, `dinput.dll` (DirectInput); `windows.gaming.input.dll`; `gameinput.dll`; `sdl2.dll`, `sdl3.dll`
+(SDL). The Agent's module snapshot looks for them beside the upscaling and frame-generation libraries
+(`AgentServices`), so they are in `sessions.runtime_modules` — hooked sessions only, as that snapshot always was.
+The session summary's *Libraries* line leaves them out; they are the game page's.
+
+**Loaded is not used.** Several engines load XInput whether the game reads a controller or not, and Steam's own
+overlay can bring an input library into a game. That is why this is one of three rows and not an answer.
+
 ## DLSS generation — evidence-bound (beta.24, owner decision D64)
 
 **What a session can say about which DLSS ran, and nothing more.** `Domain.Detection.DlssGeneration` names a

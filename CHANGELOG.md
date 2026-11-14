@@ -48,6 +48,12 @@ numeric core and does not move; the heading is the full version — corrected 20
   figures come with the same release. Xbox-compatible controllers and the DualSense are read for use; another
   controller is listed and never counted as in use. **None of this had been read from a real controller when it was
   written** — it was checked against data written by hand (`LIMITATIONS.md` §Controllers and input).
+- **A game's page says what is known about controller support — three things, and no verdict** (D163). *Controller
+  support (store)*: what Steam lists for the game — full, partial, or none — read from the Steam app's own file on
+  your PC when you open the page; nothing is asked of the store, and a game that is not Steam's reads N/A. *Input
+  libraries loaded*: which of XInput, DirectInput, Windows.Gaming.Input, GameInput and SDL the game had loaded the
+  last time it was measured from inside. *Usually played with*: the share of the time in front with a controller,
+  the keyboard and mouse, both and neither, over the sessions that recorded it. English, Vietnamese, Japanese.
 - **The terms are shown once: Privacy Policy 2.22 and Disclaimer 2.18.** Both said FrameLedger never reads input.
   They now say what is read — that a controller, or the keyboard or mouse, is in use — what is kept, and what never
   is (`docs/legal-drift-history.md`).

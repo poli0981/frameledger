@@ -851,6 +851,18 @@ public static class Strings
         nameof(GameDetail_AntiCheat_Header),
         nameof(GameDetail_Back),
         nameof(GameDetail_ChangeExe),
+        nameof(GameDetail_Controller_Libraries_Label),
+        nameof(GameDetail_Controller_Libraries_NoneSeen),
+        nameof(GameDetail_Controller_Libraries_Unknown),
+        nameof(GameDetail_Controller_Played_Label),
+        nameof(GameDetail_Controller_Played_Many_Format),
+        nameof(GameDetail_Controller_Played_One_Format),
+        nameof(GameDetail_Controller_Played_Unknown),
+        nameof(GameDetail_Controller_Store_Full),
+        nameof(GameDetail_Controller_Store_Label),
+        nameof(GameDetail_Controller_Store_None),
+        nameof(GameDetail_Controller_Store_Partial),
+        nameof(GameDetail_Controller_Store_Unknown),
         nameof(GameDetail_DeleteSessions),
         nameof(GameDetail_Details_Architecture),
         nameof(GameDetail_Details_Engine),
@@ -3207,6 +3219,30 @@ public static class Strings
     public static string GameDetail_Back => ResourceManager.GetString(nameof(GameDetail_Back), Culture) ?? nameof(GameDetail_Back);
 
     public static string GameDetail_ChangeExe => ResourceManager.GetString(nameof(GameDetail_ChangeExe), Culture) ?? nameof(GameDetail_ChangeExe);
+
+    public static string GameDetail_Controller_Libraries_Label => ResourceManager.GetString(nameof(GameDetail_Controller_Libraries_Label), Culture) ?? nameof(GameDetail_Controller_Libraries_Label);
+
+    public static string GameDetail_Controller_Libraries_NoneSeen => ResourceManager.GetString(nameof(GameDetail_Controller_Libraries_NoneSeen), Culture) ?? nameof(GameDetail_Controller_Libraries_NoneSeen);
+
+    public static string GameDetail_Controller_Libraries_Unknown => ResourceManager.GetString(nameof(GameDetail_Controller_Libraries_Unknown), Culture) ?? nameof(GameDetail_Controller_Libraries_Unknown);
+
+    public static string GameDetail_Controller_Played_Label => ResourceManager.GetString(nameof(GameDetail_Controller_Played_Label), Culture) ?? nameof(GameDetail_Controller_Played_Label);
+
+    public static string GameDetail_Controller_Played_Many_Format => ResourceManager.GetString(nameof(GameDetail_Controller_Played_Many_Format), Culture) ?? nameof(GameDetail_Controller_Played_Many_Format);
+
+    public static string GameDetail_Controller_Played_One_Format => ResourceManager.GetString(nameof(GameDetail_Controller_Played_One_Format), Culture) ?? nameof(GameDetail_Controller_Played_One_Format);
+
+    public static string GameDetail_Controller_Played_Unknown => ResourceManager.GetString(nameof(GameDetail_Controller_Played_Unknown), Culture) ?? nameof(GameDetail_Controller_Played_Unknown);
+
+    public static string GameDetail_Controller_Store_Full => ResourceManager.GetString(nameof(GameDetail_Controller_Store_Full), Culture) ?? nameof(GameDetail_Controller_Store_Full);
+
+    public static string GameDetail_Controller_Store_Label => ResourceManager.GetString(nameof(GameDetail_Controller_Store_Label), Culture) ?? nameof(GameDetail_Controller_Store_Label);
+
+    public static string GameDetail_Controller_Store_None => ResourceManager.GetString(nameof(GameDetail_Controller_Store_None), Culture) ?? nameof(GameDetail_Controller_Store_None);
+
+    public static string GameDetail_Controller_Store_Partial => ResourceManager.GetString(nameof(GameDetail_Controller_Store_Partial), Culture) ?? nameof(GameDetail_Controller_Store_Partial);
+
+    public static string GameDetail_Controller_Store_Unknown => ResourceManager.GetString(nameof(GameDetail_Controller_Store_Unknown), Culture) ?? nameof(GameDetail_Controller_Store_Unknown);
 
     public static string GameDetail_DeleteSessions => ResourceManager.GetString(nameof(GameDetail_DeleteSessions), Culture) ?? nameof(GameDetail_DeleteSessions);
 

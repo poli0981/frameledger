@@ -1278,6 +1278,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
         {
             Details.Add(new GameDetailRow(Strings.GameDetail_Details_NvidiaOverride, NvidiaOverrides.OverridesText(profile)));
         }
+
+        // 0.1.0-beta.50 (D163): "does it support controllers?" as three pieces of evidence, each with its source, and no
+        // verdict - what the store's own file lists, which input libraries the game loaded, how it has been played.
+        Details.Add(new GameDetailRow(Strings.GameDetail_Controller_Store_Label, ControllerEvidence.StoreText(row)));
+        Details.Add(new GameDetailRow(Strings.GameDetail_Controller_Libraries_Label, ControllerEvidence.LibrariesText(detail.Sessions)));
+        Details.Add(new GameDetailRow(Strings.GameDetail_Controller_Played_Label, ControllerEvidence.PlayedWithText(detail.Sessions)));
     }
 
     private void AddDetail(string label, string? value)

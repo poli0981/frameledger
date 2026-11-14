@@ -173,6 +173,11 @@ game — so it is there for a game FrameLedger does not measure as well.
   cent.
 - **Steam Input shows a controller twice** — the one you hold and an Xbox pad Steam presents for it. FrameLedger
   folds the two into one when they move together; with another remapper it may list two.
+- **"Does this game support controllers?" has no single answer here.** The game's page shows what Steam lists
+  (read from the Steam app's file on your PC — only Steam games have it, and only on a PC where Steam knows the
+  game), which input libraries the game loaded the last time it was measured from inside (several engines load one
+  whether the game uses a controller or not), and how you have actually played it. FrameLedger does not turn them
+  into a Yes or a No. ([Detection](docs/05_DETECTION.md))
 - **Nothing is read until you have accepted the Privacy Policy that describes it.** After an update, sessions
   recorded before FrameLedger has been opened once have no such figures, and say so in their notes.
 - **None of this had been read from a real controller when 0.1.0-beta.50 was written.** It was checked against data

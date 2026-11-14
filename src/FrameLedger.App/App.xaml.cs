@@ -512,6 +512,11 @@ public partial class App : System.Windows.Application
         services.AddSingleton<Application.Art.IStoreArtCache>(static _ => new GogArtCache());
         services.AddSingleton<Application.Art.IStoreArtCache>(static _ => new XboxArtCache());
         services.AddSingleton(static sp => new StoreRecordsReader(sp.GetServices<IStoreLibrarySource>()));
+        // D163: what the Steam app's own file on this PC lists of controller support, read when a game's page opens.
+        services.AddSingleton(static sp => new StoreControllerSupport(
+            sp.GetRequiredService<StoreRecordsReader>(),
+            sp.GetRequiredService<IGameRepository>(),
+            sp.GetRequiredService<UiMode>()));
         services.AddSingleton(static sp => new GameArt(
             sp.GetRequiredService<RegisteredSettings>(),
             sp.GetRequiredService<StoreRecordsReader>(),

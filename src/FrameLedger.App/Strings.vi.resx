@@ -3369,6 +3369,42 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="GameDetail_Details_NvidiaOverride" xml:space="preserve">
     <value>Ghi đè của NVIDIA App</value>
   </data>
+  <data name="GameDetail_Controller_Libraries_Label" xml:space="preserve">
+    <value>Thư viện nhập đã nạp</value>
+  </data>
+  <data name="GameDetail_Controller_Libraries_NoneSeen" xml:space="preserve">
+    <value>Không thấy thư viện nào trong phiên gần nhất được đo từ bên trong</value>
+  </data>
+  <data name="GameDetail_Controller_Libraries_Unknown" xml:space="preserve">
+    <value>N/A - chỉ biết được từ một phiên được đo từ bên trong game</value>
+  </data>
+  <data name="GameDetail_Controller_Played_Label" xml:space="preserve">
+    <value>Thường chơi bằng</value>
+  </data>
+  <data name="GameDetail_Controller_Played_Many_Format" xml:space="preserve">
+    <value>Tay cầm {0} · bàn phím và chuột {1} · cả hai {2} · không thao tác {3} - trên thời gian game ở phía trước, qua {4} phiên</value>
+  </data>
+  <data name="GameDetail_Controller_Played_One_Format" xml:space="preserve">
+    <value>Tay cầm {0} · bàn phím và chuột {1} · cả hai {2} · không thao tác {3} - trên thời gian game ở phía trước, qua {4} phiên</value>
+  </data>
+  <data name="GameDetail_Controller_Played_Unknown" xml:space="preserve">
+    <value>N/A - chưa có phiên nào ghi lại</value>
+  </data>
+  <data name="GameDetail_Controller_Store_Full" xml:space="preserve">
+    <value>Đầy đủ - theo Steam ghi</value>
+  </data>
+  <data name="GameDetail_Controller_Store_Label" xml:space="preserve">
+    <value>Hỗ trợ tay cầm (cửa hàng)</value>
+  </data>
+  <data name="GameDetail_Controller_Store_None" xml:space="preserve">
+    <value>Steam không ghi hỗ trợ</value>
+  </data>
+  <data name="GameDetail_Controller_Store_Partial" xml:space="preserve">
+    <value>Một phần - theo Steam ghi</value>
+  </data>
+  <data name="GameDetail_Controller_Store_Unknown" xml:space="preserve">
+    <value>N/A - không có file cửa hàng nào trên máy này mô tả game này</value>
+  </data>
   <data name="End_Running" xml:space="preserve">
     <value>Phiên ghi có giới hạn thời gian và đã kết thúc khi game vẫn đang chạy.</value>
   </data>

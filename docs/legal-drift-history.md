@@ -74,7 +74,9 @@ stores of controllers and input and what it never does — which button, stick, 
 position, a serial number, a Bluetooth address; to §3A that these numbers, unlike Advanced metrics', **are** in an
 export and in a bug report (D160); to §4 what is observed — the controllers' reports, looked at and not kept,
 XInput's state and battery, the time of the last keyboard or mouse input, the window in front — and that nothing is
-opened or sent; and narrows the sentence after it to what is still true. It also says, in §1 and §4, that nothing
+opened or sent — and that the Steam app's own file of store records is read, on the disk, when a game's page is
+opened, for whether the game is listed with controller support; and narrows the sentence after it to what is still
+true. It also says, in §1 and §4, that nothing
 of this is read until that version has been accepted on the PC (D156): the option is on unless switched off, and an
 Agent that started before the App showed the document records without it. The **Disclaimer** (2.18) gains a
 paragraph in §1 for what is read from outside the game about controllers, the keyboard and the mouse, and its "what

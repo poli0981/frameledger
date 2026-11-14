@@ -3374,6 +3374,42 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="GameDetail_Details_NvidiaOverride" xml:space="preserve">
     <value>NVIDIA App override</value>
   </data>
+  <data name="GameDetail_Controller_Libraries_Label" xml:space="preserve">
+    <value>Input libraries loaded</value>
+  </data>
+  <data name="GameDetail_Controller_Libraries_NoneSeen" xml:space="preserve">
+    <value>None seen in the last session measured from inside</value>
+  </data>
+  <data name="GameDetail_Controller_Libraries_Unknown" xml:space="preserve">
+    <value>N/A - known only from a session measured from inside the game</value>
+  </data>
+  <data name="GameDetail_Controller_Played_Label" xml:space="preserve">
+    <value>Usually played with</value>
+  </data>
+  <data name="GameDetail_Controller_Played_Many_Format" xml:space="preserve">
+    <value>Controller {0} · keyboard and mouse {1} · both {2} · no input {3} - of the time in front, over {4} sessions</value>
+  </data>
+  <data name="GameDetail_Controller_Played_One_Format" xml:space="preserve">
+    <value>Controller {0} · keyboard and mouse {1} · both {2} · no input {3} - of the time in front, over {4} session</value>
+  </data>
+  <data name="GameDetail_Controller_Played_Unknown" xml:space="preserve">
+    <value>N/A - no session has recorded it yet</value>
+  </data>
+  <data name="GameDetail_Controller_Store_Full" xml:space="preserve">
+    <value>Full - as Steam lists it</value>
+  </data>
+  <data name="GameDetail_Controller_Store_Label" xml:space="preserve">
+    <value>Controller support (store)</value>
+  </data>
+  <data name="GameDetail_Controller_Store_None" xml:space="preserve">
+    <value>Steam lists none</value>
+  </data>
+  <data name="GameDetail_Controller_Store_Partial" xml:space="preserve">
+    <value>Partial - as Steam lists it</value>
+  </data>
+  <data name="GameDetail_Controller_Store_Unknown" xml:space="preserve">
+    <value>N/A - no store file on this PC describes this game</value>
+  </data>
   <data name="End_Running" xml:space="preserve">
     <value>The capture was bounded and ended while the game still ran.</value>
   </data>

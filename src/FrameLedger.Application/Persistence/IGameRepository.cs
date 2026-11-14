@@ -87,4 +87,12 @@ public interface IGameRepository
     /// does not exist.
     /// </summary>
     ValueTask<bool> ApplyStoreMetadataAsync(long gameId, StoreMetadata store, CancellationToken ct = default);
+
+    /// <summary>
+    /// What the store's own file on the disk says of controller support (schema 0024, owner decision D163):
+    /// <c>full</c>, <c>partial</c> or <c>none</c>, the file it was read from and when. The UI's write - it reads the
+    /// store's file when a game's page is opened; never a hook column, and never a verdict of FrameLedger's. False when
+    /// no row has that id.
+    /// </summary>
+    ValueTask<bool> SetControllerSupportAsync(long gameId, string support, string source, DateTimeOffset at, CancellationToken ct = default);
 }

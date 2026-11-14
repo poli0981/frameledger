@@ -615,6 +615,9 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
             return null;
         }
 
+        // The input libraries ride the same snapshot since 0.1.0-beta.50 (D163) and are the game page's to show, as
+        // evidence of controller support: this line stays the upscaling and frame-generation libraries'.
+        modules = modules?.Where(static m => !ControllerEvidence.IsInputLibrary(m.Key)).ToDictionary(static m => m.Key, static m => m.Value, StringComparer.OrdinalIgnoreCase);
         if (modules is null || modules.Count == 0)
         {
             return null;
