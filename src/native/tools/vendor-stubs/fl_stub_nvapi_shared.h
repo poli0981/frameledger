@@ -35,6 +35,10 @@ inline constexpr std::uint32_t kDriverUs = 400u;
 inline constexpr std::uint32_t kOsQueueUs = 1200u;
 inline constexpr std::uint32_t kGpuUs = 3700u;
 inline constexpr std::uint32_t kTotalUs = 7500u;
+// The two times a driver works out itself, of every frame: the card at work, and one frame's GPU end to the next's.
+inline constexpr std::uint32_t kGpuActiveUs = 3500u;
+inline constexpr std::uint32_t kGpuFrameUs = 4200u;
+inline constexpr std::uint32_t kFgMultiplier = 2u;    // what GetSleepStatus gives while `fgMultiplier` is zero
 inline constexpr std::uint32_t kFirstFrameId = 5000u;
 inline constexpr std::uint32_t kFrameIdStep = 10u;    // how far the ids move on at each call
 
@@ -46,7 +50,8 @@ struct Shared {
     std::uint32_t queries;             // nvapi_QueryInterface calls
     std::uint32_t latencyCalls;        // GetLatency calls
     std::uint32_t sleepStatusCalls;    // GetSleepStatus calls
-    std::uint32_t reserved[2];
+    std::uint32_t fgMultiplier;        // the multiplier GetSleepStatus gives; zero = kFgMultiplier
+    std::uint32_t reserved[1];
 };
 
 inline constexpr wchar_t kSectionFormat[] = L"Local\\FrameLedger.StubNvapi.%lu";

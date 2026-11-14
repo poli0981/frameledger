@@ -136,6 +136,10 @@ int main() {
     FL_ADV_FIELD(dlssAutoExposure);
     FL_ADV_FIELD(dlssAlphaUpscaling);
     FL_ADV_FIELD(dlssPad);
+    FL_ADV_FIELD(latGpuActiveSumUs);
+    FL_ADV_FIELD(latGpuFrameSumUs);
+    FL_ADV_FIELD(latGpuCounts);
+    FL_ADV_FIELD(latMultipliersSeen);
     FL_ADV_FIELD(reservedDlss);
     FL_ADV_FIELD(ffxDispatches);
     FL_ADV_FIELD(ffxSharpenSeen);

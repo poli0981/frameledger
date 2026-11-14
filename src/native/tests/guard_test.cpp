@@ -7816,7 +7816,11 @@ void WatchLatency(const MappedRing& r, uint32_t request, int ms, LatencySeen& se
                     a.latPresentSumUs == frames * fl::stubnv::kPresentUs &&
                     (a.latDriverSumUs == frames * fl::stubnv::kDriverUs || a.latDriverSumUs == FL_LAT_SUM_NONE) &&
                     a.latOsQueueSumUs == frames * fl::stubnv::kOsQueueUs &&
-                    a.latGpuSumUs == frames * fl::stubnv::kGpuUs && a.latTotalSumUs == frames * fl::stubnv::kTotalUs;
+                    a.latGpuSumUs == frames * fl::stubnv::kGpuUs && a.latTotalSumUs == frames * fl::stubnv::kTotalUs &&
+                    // The driver's two own times: every frame of the stub gives both.
+                    a.latGpuActiveSumUs == frames * fl::stubnv::kGpuActiveUs &&
+                    a.latGpuFrameSumUs == frames * fl::stubnv::kGpuFrameUs &&
+                    a.latGpuCounts == (frames | (frames << 16));
             }
         }
         Sleep(50);
@@ -7883,6 +7887,7 @@ TEST_CASE("the driver's latency report is read only while a session asks, once a
     CHECK(((a.latState >> FL_LAT_SLEEP_SEEN_ON_SHIFT) & FL_LAT_SLEEP_BITS) == (1u | 8u));    // the stub's status
     CHECK(((a.latState >> FL_LAT_SLEEP_SEEN_OFF_SHIFT) & FL_LAT_SLEEP_BITS) == (2u | 4u | 16u));
     CHECK((a.latState >> FL_LAT_FG_MULTIPLIER_SHIFT) == 2u);
+    CHECK(a.latMultipliersSeen == (1u << fl::stubnv::kFgMultiplier));    // the one multiplier the status has given
     CHECK((a.latReads >> 16) < 2000u);    // no call of two milliseconds: that would have been the last one
 
     LatencySeen seen;
@@ -7919,6 +7924,16 @@ TEST_CASE("the driver's latency report is read only while a session asks, once a
     SetStubWord(stub->mode, fl::stubnv::kModeReports);
     REQUIRE(WaitForLatState(r, 7u, fl::FL_LAT_READING, a));
 
+    // ---- 3b. THE MULTIPLIERS SEEN: the status now gives 3. The last one is 3, and the session saw both.
+    SetStubWord(stub->fgMultiplier, 3u);
+    bool sawBoth = false;
+    for (int i = 0; i < 8 && !sawBoth; ++i) {
+        REQUIRE(ReadAdvanced(r, 7u, a, a.samples));
+        sawBoth = a.latMultipliersSeen == ((1u << 2) | (1u << 3));
+    }
+    CHECK(sawBoth);
+    CHECK((a.latState >> FL_LAT_FG_MULTIPLIER_SHIFT) == 3u);
+
     // ---- 4. NOT ASKED AGAIN. No further call.
     SetAdvancedRequest(r, 0u);
     TickFor(r, 2500);    // the watchdog has seen the zero, and a read already under way has ended
@@ -7933,6 +7948,9 @@ TEST_CASE("the driver's latency report is read only while a session asks, once a
     CHECK(LatStateOf(a) == fl::FL_LAT_READING);
     CHECK((a.latReads & 0xFFFFu) <= 3u);
     CHECK(StubWord(stub->queries) == 2u);
+    // ... and so is what it saw: the 2 of the session before is not in it, whether as a multiplier that session
+    // was given or as a read it left behind.
+    CHECK(a.latMultipliersSeen == (1u << 3));
 
     // ---- 6. THE STOP while a session asks: nothing is called after it.
     r.ctl->unhookRequested = 1;

@@ -95,9 +95,10 @@ FfxApiEffectMemoryUsage::aliasableUsageInBytes
 
 # NVIDIA's latency report and sleep status (parameters `lr`, `lf`, `ls`; Advanced metrics train C, owner decisions
 # D132, D136). NOT arguments of a hooked call: what the driver wrote into buffers the Overlay handed to its two
-# read-only getters (fl_reflex.h). Of a frame: its id and the six pairs of times the spans are made of. Not read:
-# `inputSampleTime`, the GPU times the driver reports beside the marks, the frame-generation and cross-adapter
-# times. Of the sleep status: the five switches and the frame-generation multiplier; the sleep interval is not read.
+# read-only getters (fl_reflex.h). Of a frame: its id, the six pairs of times the spans are made of and, since
+# 0.1.0-beta.48 (owner decision D142), the two times the driver works out itself -- the GPU's active render time and
+# its frame time. Not read: `inputSampleTime`, the camera, frame-generation and cross-adapter times. Of the sleep
+# status: the five switches and the frame-generation multiplier; the sleep interval is not read.
 NV_LATENCY_RESULT_PARAMS::frameReport
 NV_LATENCY_RESULT_PARAMS::FrameReport::frameID
 NV_LATENCY_RESULT_PARAMS::FrameReport::simStartTime
@@ -112,6 +113,8 @@ NV_LATENCY_RESULT_PARAMS::FrameReport::osRenderQueueStartTime
 NV_LATENCY_RESULT_PARAMS::FrameReport::osRenderQueueEndTime
 NV_LATENCY_RESULT_PARAMS::FrameReport::gpuRenderStartTime
 NV_LATENCY_RESULT_PARAMS::FrameReport::gpuRenderEndTime
+NV_LATENCY_RESULT_PARAMS::FrameReport::gpuActiveRenderTimeUs
+NV_LATENCY_RESULT_PARAMS::FrameReport::gpuFrameTimeUs
 NV_GET_SLEEP_STATUS_PARAMS::bLowLatencyMode
 NV_GET_SLEEP_STATUS_PARAMS::bFsVrr
 NV_GET_SLEEP_STATUS_PARAMS::bCplVsyncOn

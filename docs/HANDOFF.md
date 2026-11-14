@@ -169,8 +169,10 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
    211–215): read, 65 µs at the slowest, and *not read* where it should be. **Still to run of it**: Reflex off in
    a game's menu, off means off; and the owner's word on whether the games felt different.
 2. **The owner answered on the *GPU render* line (2026-11-14): read the driver's active time.** Two more members
-   of the report FrameLedger already fetches — no further call into the driver. **Plan first**, as one train with
-   what else is open: the multiplier row that keeps only the last value, the pages that still say no real game
+   of the report FrameLedger already fetches — no further call into the driver. ~~**Plan first**~~ **Planned and
+   approved the same day as the train of 0.1.0-beta.48 (D142–D147)**: the native half first, then the Agent, the
+   App and the texts, then the sampling period, then the release and owner-only item 46 — one batch of tests for
+   the owner, with what is left of item 45 in it. What the plan gathered: the multiplier row that keeps only the last value, the pages that still say no real game
    was read, the Agent's 1.32 s between samples beside `hz` 1.0. The owner tests what is left once, on that
    release. Still the owner's to say: more titles; the session summary's latency fields; D141 (the slowest call
    seen in a game is 65 µs, thirty times under it).
@@ -976,6 +978,12 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D139 | [`spike-notes/31-reflex-route-d-harness.md`](spike-notes/31-reflex-route-d-harness.md) §The leg with a sleep | before any Overlay code the probe runs a leg with `NvAPI_D3D_SetSleepMode` and `NvAPI_D3D_Sleep` — writes, in the probe's own process, on its own device, in no shipped binary |
 | D140 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14 | an `nvapi64.dll` loaded from the game's own folder — a replacement, not the driver's — is refused, and the session says why |
 | D141 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M14 | one call into the driver of 2 ms or more switches the Reflex read off until the game exits |
+| D142 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a driver | asked on 2026-11-14 with Phantom Blade Zero's *GPU render* longer than its total: read the driver's `gpuActiveRenderTimeUs`, and with it `gpuFrameTimeUs` — two more members of the report already fetched, no further call |
+| D143 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §The inventory | the start-to-end *GPU render* line stays, stored and shown, under a label that says it includes the card's idle time |
+| D144 | [`07_IPC.md`](07_IPC.md) §Region 5 | the driver's frame-generation multiplier is kept as every value a session saw, not the last one |
+| D145 | [`../legal/ACCURACY.md`](../legal/ACCURACY.md) | the accuracy statement, the README and the guide say two real games were read on one driver (they said none); Privacy Policy 2.21 and Disclaimer 2.17 with it |
+| D146 | [`06_DATA_MODEL.md`](06_DATA_MODEL.md) §sensor_blobs | the Agent's samples were 1.32 s apart under a 1 s setting (it waited the whole interval after its work): sample on a fixed period, and store the rate the samples had |
+| D147 | [`03_METRICS.md`](03_METRICS.md) | the session summary's latency fields stay N/A: the driver's total is simulation start to GPU end, not input to display |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

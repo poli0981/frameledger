@@ -35,6 +35,22 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **For developers: the part inside a game reads two more figures of NVIDIA's latency report, and keeps every
+  frame-generation multiplier a session saw** (owner decisions D142, D144; nothing a user sees until the Agent and
+  the App read them). In a real game the driver's span between its two GPU marks was longer than the frame's whole
+  — it includes the card's waiting. The driver's own *active* render time and its GPU frame time are members of
+  the report FrameLedger already fetches; they are read from it, with **no further call into the driver**. Four
+  reserved words of the shared memory carry them and the multipliers seen (layout 5 as it was). `fl_reflex_summary`
+  and the injected `[latency]` cases hold it. Measured: +36 ns a read, once a second.
+
+### Fixed
+
+- **A session could start with the last read of the session before it.** In a game that kept running between two
+  sessions, a read of the driver's latency report that ended after the first session's last tick was taken as the
+  second session's first point. A new session now drops it.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

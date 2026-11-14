@@ -180,6 +180,16 @@ What the region is, as a contract between the two sides:
   sum of all ones is a span some summed frame did not report. `FL_ADV_VALID_LATENCY` (bit 7 of the mask) is set once
   a read returned OK for the request; it is not one of "the game's calls were read", and `latState` is published
   whether or not it is set.
+- **Four more latency words (0.1.0-beta.48; owner decisions D142, D144).** The first line was full, so they are
+  four of the seven reserved words that ended the `sl::DLSSOptions` line (@100..115; three remain, @116..127) —
+  nothing of DLSS's, and **the layout is still 5** for the same reasons. `latGpuActiveSumUs` and `latGpuFrameSumUs`
+  are the two times the driver works out itself — the graphics card's render time *excluding the idles in
+  between* (`gpuActiveRenderTimeUs`) and one frame's GPU end to the next's (`gpuFrameTimeUs`) — summed over the
+  frames of the newest read that gave one; `latGpuCounts` holds how many did, the first in its low half and the
+  second in its high half, because a frame can give one and not the other. A frame that gives zero (an older
+  driver leaves both zero) or more than a second is in neither the sum nor the count, and is still summed for the
+  seven spans. `latMultipliersSeen` is the session's: bit n is set once the sleep status gave frame-generation
+  multiplier n since the request, bit 31 standing for 31 and more; `latState` still carries the last one.
 - The Vulkan layer never writes it. `ShmLayoutMirrorTests.TheAdvancedStateMirrorMatches` checks every member's
   offset against `fl-layout-dump`; `ShmRingReaderTests` the three reads and that the request is stored either way.
 

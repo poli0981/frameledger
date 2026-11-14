@@ -75,6 +75,10 @@
 // reader of an older build finds zeros where it was told to expect zeros, and the build-id handshake refuses a
 // mismatched pair before either reads the other -- the precedent is slShutdowns. A trial must also be removable
 // without a layout 7.
+//
+// STILL 5 (2026-11-14, 0.1.0-beta.48, owner decisions D142 and D144): four of the seven reserved words that ended
+// region 5's second line became four more latency words (latGpuActiveSumUs .. latMultipliersSeen) -- the first line
+// was full. The same reasons, and three reserved words remain there.
 #define FL_SHM_LAYOUT_VERSION 5u
 
 #define FL_SHM_HANDSHAKE_OFFSET 0x00u
@@ -1083,12 +1087,22 @@ struct alignas(64) FlAdvancedState {
     uint32_t dlssExposureScaleBits;    // @84
     // sl::DLSSPreset PLUS ONE, in the header's order: DLAA, quality, balanced, performance, ultra performance,
     // ultra quality (the last is struct version 2's - 0 where the game's struct is older).
-    uint8_t  dlssPresets[6];         // @88..93
-    uint8_t  dlssColorBuffersHdr;    // @94   sl::Boolean PLUS ONE; 0 = not read
-    uint8_t  dlssAutoExposure;       // @95   (struct version 2)
-    uint8_t  dlssAlphaUpscaling;     // @96   (struct version 3)
-    uint8_t  dlssPad[3];             // @97..99  must be zero
-    uint32_t reservedDlss[7];        // @100..127  must be zero
+    uint8_t dlssPresets[6];         // @88..93
+    uint8_t dlssColorBuffersHdr;    // @94   sl::Boolean PLUS ONE; 0 = not read
+    uint8_t dlssAutoExposure;       // @95   (struct version 2)
+    uint8_t dlssAlphaUpscaling;     // @96   (struct version 3)
+    uint8_t dlssPad[3];             // @97..99  must be zero
+    // Reflex latency again (0.1.0-beta.48, D142 and D144): the first line was full, and this one had seven words
+    // spare. Nothing here is DLSS's. The two sums and their counts are of the newest read not yet published, as
+    // latFrames is; the two times are the driver's own figures, not spans between two of its marks, and each has
+    // a count of its own because a frame can give one and not the other. A frame that gives zero, or more than a
+    // second, is not in the sum and not in the count.
+    uint32_t latGpuActiveSumUs;     // @100  gpuActiveRenderTimeUs over the frames that gave one, microseconds
+    uint32_t latGpuFrameSumUs;      // @104  gpuFrameTimeUs over the frames that gave one
+    uint32_t latGpuCounts;          // @108  bits 0..15 frames in the first sum, bits 16..31 in the second
+    uint32_t latMultipliersSeen;    // @112  bit n: the sleep status gave fgMultiplier n since the request;
+                                    //       bit 31 stands for 31 and more
+    uint32_t reservedDlss[3];       // @116..127  must be zero
 
     // ---- line 2: the ffx upscale dispatch, beyond its two sizes ---------------------------------------------------
     uint32_t ffxDispatches;            // @128  upscale dispatches whose extras were read (wraps)
@@ -1406,7 +1420,10 @@ static_assert(offsetof(FlAdvancedState, dlssPreExposureBits) == 80);
 static_assert(offsetof(FlAdvancedState, dlssPresets) == 88);
 static_assert(offsetof(FlAdvancedState, dlssColorBuffersHdr) == 94);
 static_assert(offsetof(FlAdvancedState, dlssAlphaUpscaling) == 96);
-static_assert(offsetof(FlAdvancedState, reservedDlss) == 100);
+static_assert(offsetof(FlAdvancedState, latGpuActiveSumUs) == 100);
+static_assert(offsetof(FlAdvancedState, latGpuCounts) == 108);
+static_assert(offsetof(FlAdvancedState, latMultipliersSeen) == 112);
+static_assert(offsetof(FlAdvancedState, reservedDlss) == 116);
 static_assert(offsetof(FlAdvancedState, ffxDispatches) == 128);
 static_assert(offsetof(FlAdvancedState, ffxFrameTimeSumUs) == 188);
 static_assert(offsetof(FlAdvancedState, ffxMemoryTotalBytes) == 192);

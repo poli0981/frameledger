@@ -656,8 +656,13 @@ inline void ObserveSlShutdown(Accumulators& a) noexcept {
 //     ls  const NV_GET_SLEEP_STATUS_PARAMS&             the driver's sleep status
 //
 // WHAT IS NOT READ: inputSampleTime (the probe never saw it set, and "when the player pressed something" is nothing
-// a frame-time tool needs), the GPU times the driver reports beside the marks, and the sleep interval -- it changes
-// with every frame, so it is not a fact of a session.
+// a frame-time tool needs), the camera, cross-adapter and frame-generation times, and the sleep interval -- it
+// changes with every frame, so it is not a fact of a session.
+//
+// TWO TIMES THE DRIVER WORKS OUT ITSELF (0.1.0-beta.48, owner decision D142): gpuActiveRenderTimeUs -- the header:
+// the GPU's start to its end "excluding the idles in between" -- and gpuFrameTimeUs, one frame's GPU end to the
+// next's. In a real game the span between the two GPU marks was longer than the frame's whole (HANDOFF, item 45):
+// it includes the waiting. They are members of the report already in hand; no call is added.
 //
 // THE RULES A GAME NEEDS (spike-notes §31). The newest frames of a report are not final -- one run read a span of
 // half an hour in the newest -- so the two newest ids are never summed. A span whose end point is zero was not
@@ -682,6 +687,11 @@ struct LatencyTally {
     uint32_t refused = 0;           // frames refused
     uint32_t sumUs[kLatSpans]{};    // microseconds, over the frames summed
     uint32_t lacking = 0;           // bit n: a summed frame did not report span n
+    // The driver's two own times, each over the summed frames that gave one: a count apiece.
+    uint32_t activeSumUs = 0;
+    uint32_t activeFrames = 0;
+    uint32_t frameTimeSumUs = 0;
+    uint32_t frameTimeFrames = 0;
 };
 
 // Where the reader is in the game's frame ids: the newest one already summed or refused. 0 = none yet.
@@ -714,6 +724,17 @@ inline uint64_t LatencyFrameId(const NV_LATENCY_RESULT_PARAMS::FrameReport& lf) 
     return lf.frameID;
 }
 
+// One of the driver's own times, of a frame that is summed. Zero is a frame the driver gave no such time for
+// (an older driver leaves both zero, and so did the probe's frames, which had no work for the card); more than a
+// second is a time no frame can have. Neither is summed, and neither refuses the frame: which frames the spans are
+// made of does not depend on these.
+inline void LatencyAddTime(uint32_t us, uint32_t& sumUs, uint32_t& frames) noexcept {
+    if (us != 0u && us <= kLatSpanLimitUs) {
+        sumUs += us;
+        ++frames;
+    }
+}
+
 inline void ObserveLatencyFrame(const NV_LATENCY_RESULT_PARAMS::FrameReport& lf, LatencyTally& tally) noexcept {
     uint32_t       us[kLatSpans]{};
     const uint32_t kind[kLatSpans] = {
@@ -741,6 +762,8 @@ inline void ObserveLatencyFrame(const NV_LATENCY_RESULT_PARAMS::FrameReport& lf,
             tally.sumUs[i] += us[i];
         }
     }
+    LatencyAddTime(lf.gpuActiveRenderTimeUs, tally.activeSumUs, tally.activeFrames);
+    LatencyAddTime(lf.gpuFrameTimeUs, tally.frameTimeSumUs, tally.frameTimeFrames);
 }
 
 // One report: the frames newer than the cursor, the two newest left for the next read.
@@ -797,12 +820,18 @@ inline LatencySleep ObserveSleepStatus(const NV_GET_SLEEP_STATUS_PARAMS& ls) noe
     return seen;
 }
 
+// The bit of fl_shm.h's latMultipliersSeen for one multiplier the status gave: bit n for n, bit 31 for 31 and more.
+inline uint32_t LatencyMultiplierBit(uint32_t value) noexcept {
+    return 1u << (value > 31u ? 31u : value);
+}
+
 // What the watchdog publishes of it. THE WATCHDOG'S: filled from what a read left behind while nobody is reading.
 struct LatencyOut {
     uint32_t     state = FL_LAT_NONE;    // FlLatencyState
     uint32_t     sleepSeenOn = 0;        // switches the status showed on, since the request
     uint32_t     sleepSeenOff = 0;       // ... and off
     uint32_t     multiplier = 0;         // the last frame-generation multiplier the status gave
+    uint32_t     multipliersSeen = 0;    // every one it gave since the request (LatencyMultiplierBit)
     uint32_t     reads = 0;              // reads made since the request
     uint32_t     worstUs = 0;            // the slowest call since the request
     LatencyTally tally;                  // of the newest read not yet published; Publish empties it
@@ -898,8 +927,8 @@ inline void Reset(Accumulators& a) noexcept {
 // -> even with no compare-exchange. The frame-time pair is drained, so each
 // publication carries the dispatches since the last one.
 //
-// `latency` is the watchdog's summary of the driver's latency report, or null for a caller that has none: the ten
-// words are then left as they are -- zero, in a region nobody else writes.
+// `latency` is the watchdog's summary of the driver's latency report, or null for a caller that has none: the
+// fourteen latency words are then left as they are -- zero, in a region nobody else writes.
 inline void Publish(Accumulators& a, FlAdvancedState* region, uint32_t request, uint64_t qpc,
                     LatencyOut* latency = nullptr) noexcept {
     if (region == nullptr) {
@@ -940,6 +969,10 @@ inline void Publish(Accumulators& a, FlAdvancedState* region, uint32_t request, 
         put32(region->latOsQueueSumUs, LatencySum(out.tally, 4u));
         put32(region->latGpuSumUs, LatencySum(out.tally, 5u));
         put32(region->latTotalSumUs, LatencySum(out.tally, kLatTotal));
+        put32(region->latGpuActiveSumUs, out.tally.activeSumUs);
+        put32(region->latGpuFrameSumUs, out.tally.frameTimeSumUs);
+        put32(region->latGpuCounts, Stop16(out.tally.activeFrames) | (Stop16(out.tally.frameTimeFrames) << 16));
+        put32(region->latMultipliersSeen, out.multipliersSeen);
         out.tally = LatencyTally{};    // one publication carries one read: a reader never adds two up
     }
 
