@@ -1,0 +1,33 @@
+# The Windows functions the input reader calls (docs/21_INPUT_DEVICES.md, owner decisions D155-D163).
+# One name a line. tools/input-readonly-check.ps1 holds this list to src/FrameLedger.Infrastructure/Input/Win32Input.cs
+# in both directions, and refuses a name that sends to a device, injects input or reads a key whatever this file says.
+
+# Raw input for game controllers: their reports while the Agent is in the background, who arrived and left, and what
+# a device is by its two USB ids. It opens no device.
+RegisterRawInputDevices
+GetRawInputBuffer
+GetRawInputData
+GetRawInputDeviceInfoW
+GetRawInputDeviceList
+
+# XInput: a pad's state, whether it is wireless, its battery. Getters only.
+XInputGetState
+XInputGetCapabilities
+XInputGetBatteryInformation
+
+# Keyboard and mouse: the time of the last input, and nothing else (D158).
+GetLastInputInfo
+
+# The window raw input is delivered to: never shown, a child of HWND_MESSAGE, answered by the default procedure.
+RegisterClassExW
+UnregisterClassW
+CreateWindowExW
+DestroyWindow
+DefWindowProcW
+PeekMessageW
+DispatchMessageW
+GetModuleHandleW
+
+# The reader's own cost: the processor time its thread used.
+GetCurrentThread
+GetThreadTimes
