@@ -179,3 +179,26 @@ is what tells the two apart afterwards — a driver that holds a call does it ag
 milliseconds, once.
 
 **The owner was asked again with this table in hand and kept D141 as it is: one call** (2026-11-13).
+
+### The first real game (2026-11-14, 0.1.0-beta.47, the owner's sessions 208–210)
+
+Phantom Blade Zero, Direct3D 12, three sessions — frame generation ×3, then off twice. What only a game could say,
+and now has for one title on this driver:
+
+- **The game's own device is the one the driver takes**, and `nvapi64.dll` is findable by name in a game that uses
+  Reflex through Streamline: resolved four to five seconds after the attach, the shim in System32 and the getters
+  in `nvapi64_impl.dll`.
+- **No latch fired in 1 515 seconds of reading**: the slowest call was 24, 20 and 45 µs, under a game's real load
+  and with frame generation's pacer running. The busy-PC reading above put a false latch at a few sessions in a
+  hundred at worst; three sessions cannot confirm or deny that.
+- **The report is real**: with frame generation ×3 the total is 23 ms; without it, 5.4 ms at 149 presents a second
+  and 15.9 ms at 67. `inputSampleTime` is not read; `driverStartTime` is reported (the driver series has points).
+- **The sleep status' low-latency switch reads on in a game** (on at times, off at others) — it never did for the
+  probe. And the driver's `fgMultiplier` read 3 in the session FrameLedger measured at ×3.0.
+- **`gpuRenderStartTime` lies before `simStartTime` in this game**: start to end is 16.4 ms where simulation start
+  to GPU end is 5.4 ms. The span includes whatever the GPU did before this frame's simulation began — it reads
+  like the interval between two frames' GPU ends. The header's `gpuActiveRenderTimeUs` is the active time and is
+  not read by FrameLedger. The probe could not show this: its frames have no GPU work to speak of.
+
+Not said by these sessions: Cyberpunk 2077 (REDengine's own NVAPI use), a game that enforces Control Flow Guard,
+another driver, and whether the player feels the read.
