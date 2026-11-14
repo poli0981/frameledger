@@ -127,6 +127,20 @@ internal sealed class FakeGameRepository : IGameRepository
     public ValueTask<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default) => throw new NotSupportedException();
 
     /// <summary>The UI's recording switch (2026-09-23), applied to the row so the watcher tests see it.</summary>
+    public ValueTask<bool> SetControllerSupportAsync(long gameId, string support, string source, DateTimeOffset at, CancellationToken ct = default)
+    {
+        foreach ((string key, GameRow row) in Rows)
+        {
+            if (row.Id == gameId)
+            {
+                Rows[key] = row with { ControllerSupport = support, ControllerSupportSource = source, ControllerSupportAt = at };
+                return ValueTask.FromResult(true);
+            }
+        }
+
+        return ValueTask.FromResult(false);
+    }
+
     public ValueTask<bool> SetRecordingAsync(long gameId, bool record, CancellationToken ct = default)
     {
         foreach ((string key, GameRow row) in Rows)

@@ -21,9 +21,12 @@ public sealed class GameLibrary
     private readonly ISessionRepository _sessions;
     private readonly ISessionAnnotationRepository _annotations;
     private readonly TimeProvider _clock;
+    private readonly StoreControllerSupport? _controllers;
 
-    public GameLibrary(IGameRepository games, ISessionRepository sessions, ISessionAnnotationRepository annotations, TimeProvider? clock = null)
+    public GameLibrary(IGameRepository games, ISessionRepository sessions, ISessionAnnotationRepository annotations, TimeProvider? clock = null,
+        StoreControllerSupport? controllers = null)
     {
+        _controllers = controllers;
         _games = games ?? throw new ArgumentNullException(nameof(games));
         _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
         _annotations = annotations ?? throw new ArgumentNullException(nameof(annotations));
@@ -45,6 +48,12 @@ public sealed class GameLibrary
         if (row is null)
         {
             return null;
+        }
+
+        // D163: what the store's own file on this PC lists of controller support, read as the page opens.
+        if (_controllers is not null)
+        {
+            row = await _controllers.RefreshAsync(row, ct).ConfigureAwait(false);
         }
 
         IReadOnlyList<SessionRow> sessions = await _sessions.ListByGameAsync(gameId, sessionLimit, ct).ConfigureAwait(false);

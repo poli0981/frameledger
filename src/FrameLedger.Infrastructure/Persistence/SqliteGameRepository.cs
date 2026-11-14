@@ -36,6 +36,11 @@ public sealed class SqliteGameRepository : IGameRepository
         + "ac_exception_lapsed_at, ac_exception_lapsed_reason, engine_version_source, ac_exception_trial_failed_at, "
         + "controller_support, controller_support_source, controller_support_at";
 
+    // Schema 0024 (D163): the store's word, read from its file on the disk. updated_at is not moved: nothing the user
+    // or the detection did changed.
+    private const string _setControllerSupport =
+        "UPDATE games SET controller_support = @support, controller_support_source = @source, controller_support_at = @at WHERE id = @id";
+
     private const string _selectByPath = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
     private const string _selectById = $"SELECT {_columns} FROM games WHERE id = @id";
@@ -233,6 +238,14 @@ public sealed class SqliteGameRepository : IGameRepository
     public ValueTask<bool> SetRecordingAsync(long gameId, bool record, CancellationToken ct = default) =>
         _db.WriteAsync(async (c, tx, token) => await c.ExecuteAsync(new CommandDefinition(
             _setRecording, new { id = gameId, record = record ? 1 : 0, now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }, tx, cancellationToken: token)).ConfigureAwait(false) == 1, ct);
+
+    public ValueTask<bool> SetControllerSupportAsync(long gameId, string support, string source, DateTimeOffset at, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(support);
+        ArgumentException.ThrowIfNullOrWhiteSpace(source);
+        return _db.WriteAsync(async (c, tx, token) => await c.ExecuteAsync(new CommandDefinition(
+            _setControllerSupport, new { id = gameId, support, source, at = at.ToUnixTimeMilliseconds() }, tx, cancellationToken: token)).ConfigureAwait(false) == 1, ct);
+    }
 
     public ValueTask<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default) =>
         _db.WriteAsync(async (c, tx, token) =>

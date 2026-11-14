@@ -4485,6 +4485,54 @@
     <value>NVIDIA App の上書き</value>
     <comment>review</comment>
   </data>
+  <data name="GameDetail_Controller_Libraries_Label" xml:space="preserve">
+    <value>読み込まれた入力ライブラリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Libraries_NoneSeen" xml:space="preserve">
+    <value>内部から計測した直近のセッションでは見つかりませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Libraries_Unknown" xml:space="preserve">
+    <value>N/A - ゲーム内部から計測したセッションでのみ分かります</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Played_Label" xml:space="preserve">
+    <value>ふだんのプレイ方法</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Played_Many_Format" xml:space="preserve">
+    <value>コントローラー {0} · キーボードとマウス {1} · 両方 {2} · 入力なし {3} - ゲームが前面にあった時間に対する割合、{4} セッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Played_One_Format" xml:space="preserve">
+    <value>コントローラー {0} · キーボードとマウス {1} · 両方 {2} · 入力なし {3} - ゲームが前面にあった時間に対する割合、{4} セッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Played_Unknown" xml:space="preserve">
+    <value>N/A - まだ記録したセッションがありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Store_Full" xml:space="preserve">
+    <value>フル対応 - Steam の記載</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Store_Label" xml:space="preserve">
+    <value>コントローラー対応 (ストア)</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Store_None" xml:space="preserve">
+    <value>Steam に対応の記載なし</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Store_Partial" xml:space="preserve">
+    <value>一部対応 - Steam の記載</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Controller_Store_Unknown" xml:space="preserve">
+    <value>N/A - この PC にはこのゲームを記載したストアのファイルがありません</value>
+    <comment>review</comment>
+  </data>
   <data name="End_Running" xml:space="preserve">
     <value>キャプチャは時間指定で、ゲームの実行中に終了しました。</value>
     <comment>review</comment>

@@ -97,7 +97,9 @@ internal static class AgentServices
             sp.GetRequiredService<LatestProcessSnapshot>()));
         services.AddSingleton<ITargetLivenessSource, HeldProcessLivenessSource>();
         services.AddSingleton<IRingAttacher>(static _ => new ShmRingAttacher(NativeAntiCheatGuard.BuildId()));
-        services.AddSingleton<IRuntimeModuleSnapshot>(static _ => new RuntimeModuleSnapshot(CensusNames.ModuleFileNames));
+        // The input libraries ride the same snapshot (D163): which of them a hooked game had loaded is one of the three
+        // pieces of evidence for "supports controllers". The App leaves them out of the Libraries line.
+        services.AddSingleton<IRuntimeModuleSnapshot>(static _ => new RuntimeModuleSnapshot([.. CensusNames.ModuleFileNames, .. Domain.Input.InputLibraries.FileNames]));
         AddNvidia(services);
 
         AddRecording(services, paths);

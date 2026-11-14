@@ -9,8 +9,9 @@ The numbers a session makes of it are in [`03_METRICS.md`](03_METRICS.md) §Inpu
 > (`FrameLedger.Domain.Input`, `FrameLedger.Application.Input`, `Application.Recording.InputSessionBuilder`), the
 > storage (schema 0024, the `.partial` file's chunk 11 — `06_DATA_MODEL`), the reader (`Application.Input.InputReader`,
 > `Infrastructure.Input`) and its composition into the Agent (`capture.input_devices`, `Application.Input.InputTerms`)
-> are written and under test. The screens, the store's word and the input libraries come in the pull requests after
-> this one, and this note is rewritten by each. **No report from a real controller has passed through any of this code**
+> are written and under test; and a game's page shows the three pieces of evidence for "supports controllers"
+> (`05_DETECTION` §Does a game support controllers). The session's own screens come in the next pull request, and
+> this note is rewritten by it. **No report from a real controller has passed through any of this code**
 > (owner decision D157): the developer has no controller, and what happens on a real one is owner-only item 48.
 
 ## The owner's request and decisions (2026-11-14)
