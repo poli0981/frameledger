@@ -356,8 +356,9 @@ here is designed yet, and what is marked *to verify* is a lead, not a finding.
    draws in the game's process — so it comes last, with a risk review of its own (rule 5, and what an
    anti-cheat makes of a drawing module).
 5. **Distribution: winget and the Microsoft Store.** The owner uploads to the Store and fills in its listing by
-   hand (Partner Center already has a product of the type *EXE or MSI app*, in the state *Attention needed*); the
-   repository's part is what the two channels need from a release. *To verify, before anything is promised*:
+   hand. FrameLedger has no product in Partner Center yet — the one there today is another program of the
+   owner's — so which type it is submitted as (*EXE or MSI app*, or *MSIX or PWA app*) is part of what the plan
+   settles. The repository's part is what the two channels need from a release. *To verify, before anything is promised*:
    - whether the Store accepts an **unsigned** installer for an *EXE or MSI app* — the installer is unsigned
      today (`CLAUDE.md`, Packaging), and if the Store wants a certificate that is a cost and a decision of the
      owner's; whether an MSIX package is a real alternative for a program that loads a library into games and
