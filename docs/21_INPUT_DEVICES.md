@@ -56,6 +56,13 @@ Everything is a Windows API in a library Windows ships. **No third-party library
 | `GetForegroundWindow`, `GetWindowThreadProcessId` | whose window is in front | already used for the focus sample (`04_CAPTURE`) |
 | Steam's `appcache\appinfo.vdf`, on the disk | whether the store lists controller support for a library game | a local file: no request is made (rule 8) |
 
+**The time `GetLastInputInfo` gives is compared only with the time it gave before** — "did it change since the last
+slice". It is never set against a clock of .NET's. *Measured 2026-11-15, by accident*: on the developer PC, which
+had slept for five hours since it started, that time and `Environment.TickCount` stood five hours apart — Windows'
+tick counts the time asleep and .NET's does not — and a test that assumed one clock failed (it now asks only that
+the time does not go back). Anything built on these times later — the time actually played, `15_ROADMAP` §After the
+controller train — must work in differences of this one source, or it breaks on every PC that sleeps.
+
 **Rejected, with the reason** (the checklist of `18_GPU_VENDOR_APIS` §Checklist applies to any library):
 
 - **Windows.Gaming.Input** — its readings stop when the program is not in front, which the Agent never is.

@@ -171,6 +171,14 @@ it meets the owner's Xbox controller and DualSense.**
   PC with no controller.
 - **A stored session of the test ledger with frames takes its own sensor blobs now** (`SessionWithFramesAsync`'s
   `sensors`), with their own `t_ms`.
+- **`GetLastInputInfo`'s time is not on `Environment.TickCount`'s clock once the PC has slept**: five hours apart
+  on the developer PC after a sleep of five hours. The reader never compares the two; a test of #467 did, passed
+  on every runner (they do not sleep) and failed the local gate before this release — fixed here
+  (`21_INPUT_DEVICES` §What is read). **The time actually played, next on the roadmap, must not make the same
+  assumption.**
+- **`dotnet format --verify-no-changes` through a pipe that counts lines says nothing when it fails** — print its
+  exit code. #470's first push carried a naming violation in a test fixture that way; `check` and the first
+  rehearsal (run 43646963371) caught it, and the second rehearsal is of the fixed tree.
 
 ### NEXT
 
