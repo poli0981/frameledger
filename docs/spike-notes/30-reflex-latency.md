@@ -199,7 +199,8 @@ above fired on the harness, and it ends in the question of one real title.
 - **The markers are the report.** `slPCLSetMarker` replaces `NvAPI_D3D_SetLatencyMarker`, and the times the
   markers carry (simulation, render submit, present) are the ones the driver hands back in the report this
   product already reads (route D). `sl.pcl.markers` would add a count of calls, the ping and the flash trigger —
-  nothing a player reads. **Recommended to the owner: leave Reflex and PCL out of train D.**
+  nothing a player reads. **Recommended to the owner: leave Reflex and PCL out of train D** — **decided the
+  same evening (D153)**: whether a game has Reflex is all that is wanted.
 - **PC latency is not in the report, and NVIDIA takes it from outside the game**: its PCL statistics, read by
   tools started from an administrator's prompt (route E here). D147 stands on that; two design tables that still
   promised "PC latency as reported by Reflex" were corrected today (`03_METRICS`, `05_DETECTION`).
