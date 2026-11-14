@@ -6,7 +6,6 @@ using FluentAssertions;
 using FrameLedger.Application.Input;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
-using FrameLedger.Application.Telemetry;
 using FrameLedger.Domain.Input;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Shared;
@@ -231,7 +230,7 @@ public sealed class SessionFinalizerTests
     public void BothTiersStoreWhatTheSessionWasPlayedWith(bool hooked)
     {
         (SessionFinalizer finalizer, _) = Make();
-        List<TelemetrySample> sensors = SessionFixtures.Sensors(3);
+        List<Application.Telemetry.TelemetrySample> sensors = SessionFixtures.Sensors(3);
         var pad = new InputDevice { Id = 1, Family = ControllerFamily.Xbox, XInputSlot = 0 };
         sensors[0] = sensors[0] with { Input = Played(controller: 1000, pad) };
         sensors[2] = sensors[2] with { Input = Played(controller: 0, pad) with { KeyboardMouseMs = 700, IdleMs = 300 } };
