@@ -21,6 +21,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/reporters/catch_reporter_event_listener.hpp>
 #include <catch2/reporters/catch_reporter_registrars.hpp>
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
@@ -6198,6 +6199,38 @@ bool LogHasLine(const std::string& text, const char* code, const std::string& na
     return false;
 }
 
+// The `a` and `b` of the LAST line of this code whose text starts with `name`; false when there is none.
+bool LogLineWords(const std::string& text, const char* code, const std::string& name, uint32_t& a, uint64_t& b) {
+    const std::string head = std::string("s  ") + code + " ";
+    bool              found = false;
+    std::size_t       at = 0;
+    while (at < text.size()) {
+        std::size_t end = text.find('\n', at);
+        if (end == std::string::npos) {
+            end = text.size();
+        }
+        const std::string line = text.substr(at, end - at);
+        const std::size_t h = line.find(head);
+        const std::size_t words = line.rfind(" a=");
+        if (h != std::string::npos && words != std::string::npos) {
+            std::size_t n = h + head.size();
+            while (n < line.size() && line[n] == ' ') {
+                ++n;
+            }
+            unsigned           first = 0;
+            unsigned long long second = 0;
+            if (line.compare(n, name.size(), name) == 0 &&
+                sscanf_s(line.c_str() + words, " a=%u b=0x%llx", &first, &second) == 2) {
+                a = first;
+                b = second;
+                found = true;
+            }
+        }
+        at = end + 1;
+    }
+    return found;
+}
+
 std::size_t CountOf(const std::string& text, const char* needle) {
     std::size_t n = 0;
     for (std::size_t at = text.find(needle); at != std::string::npos; at = text.find(needle, at + 1)) {
@@ -7344,6 +7377,13 @@ TEST_CASE("FSR's plane at infinity (beta.42, D119): a far plane of FLT_MAX reach
     SetAdvancedRequest(r, 11u);
     fl::FlAdvancedState a{};
     REQUIRE(ReadAdvanced(r, 11u, a, 0u, fl::FL_ADV_VALID_FFX_UPSCALE));
+    // The ranges are since the request, and the first publication that carries the descriptor may hold one dispatch
+    // of it: since 0.1.0-beta.49 a request seen on a tick the loader woke is published by the periodic tick that
+    // follows, however soon that is. The field of view alternates, so both of its values have been seen once the
+    // range is one.
+    for (int i = 0; i < 5 && a.ffxFovMinBits == a.ffxFovMaxBits; ++i) {
+        REQUIRE(ReadAdvanced(r, 11u, a, a.samples, fl::FL_ADV_VALID_FFX_UPSCALE));
+    }
     INFO("near 0x" << std::hex << a.ffxNearBits << " far 0x" << a.ffxFarBits);
     CHECK(a.ffxFarBits == FL_ADV_FLOAT_INFINITE);
     CHECK(std::bit_cast<float>(a.ffxFarBits) > 3.0e38f);    // the float it decodes to IS infinity
@@ -7904,7 +7944,7 @@ TEST_CASE("the frames a read summed are counted in the native log, each by its G
             continue;
         }
         text = ReadWholeFile(log);
-        complete = CountOf(text, "LATENCY_FRAMES") >= 6u;
+        complete = CountOf(text, "LATENCY_FRAMES") >= 7u;
     }
     INFO("log " << Narrow(log) << ":\n" << text);
     REQUIRE(complete);
@@ -7912,7 +7952,17 @@ TEST_CASE("the frames a read summed are counted in the native log, each by its G
         INFO("line " << line << ": " << names[line] << " ..." << tails[line]);
         CHECK(LogHasLine(text, "LATENCY_FRAMES", names[line], tails[line]));
     }
-    CHECK(CountOf(text, "LATENCY_FRAMES") == 6u);    // one batch: the next is twenty reads away
+    // The seventh line is the watchdog's own: ten reads took about ten seconds and ten periodic ticks or a few more
+    // (the ticks before the module was found), and the loader woke it at most a few times.
+    uint32_t spannedMs = 0;
+    uint64_t ticks = 0;
+    REQUIRE(LogLineWords(text, "LATENCY_FRAMES", "ms spanned", spannedMs, ticks));
+    CHECK(spannedMs >= 9000u);
+    CHECK(spannedMs <= 16000u);
+    CHECK((ticks >> 32) >= 10u);
+    CHECK((ticks >> 32) <= 16u);
+    CHECK((ticks & 0xFFFFFFFFu) <= 8u);
+    CHECK(CountOf(text, "LATENCY_FRAMES") == 7u);    // one batch: the next is twenty reads away
     CHECK(r.ctl->logFlushRequested == 0u);           // nobody asked for it
 
     // What is published is what it was: these counts are the log's.
@@ -7924,7 +7974,7 @@ TEST_CASE("the frames a read summed are counted in the native log, each by its G
     }
 
     // ---- THE REST, WHEN THE AGENT ASKS. A few reads more, then a flush request: the batch in hand is written with
-    // the log, six lines whose frames are ten a read.
+    // the log, seven lines whose frames are ten a read.
     TickFor(r, 3200);
     ++r.ctl->logFlushRequested;
     complete = false;
@@ -7933,12 +7983,12 @@ TEST_CASE("the frames a read summed are counted in the native log, each by its G
         Sleep(50);
         if (i % 10 == 9) {
             text = ReadWholeFile(log);
-            complete = CountOf(text, "LATENCY_FRAMES") >= 12u;
+            complete = CountOf(text, "LATENCY_FRAMES") >= 14u;
         }
     }
     INFO("log after the flush request:\n" << text);
     REQUIRE(complete);
-    CHECK(CountOf(text, "LATENCY_FRAMES") == 12u);
+    CHECK(CountOf(text, "LATENCY_FRAMES") == 14u);
     bool rest = false;
     for (uint32_t reads = 1u; reads < 20u && !rest; ++reads) {    // the thirtieth read would close it itself
         char frames[32]{};
@@ -7947,6 +7997,145 @@ TEST_CASE("the frames a read summed are counted in the native log, each by its G
     }
     CHECK(rest);
     CHECK(r.st->faultCount == 0u);
+}
+
+TEST_CASE("a watchdog the loader keeps waking reads the driver once a second all the same, and every publication "
+          "carries a read",
+          "[guard][inject][shm][advanced][latency][log]") {
+    // WHAT A REAL SESSION SHOWED (HANDOFF, item 46): 0.4 to 16 % of a session's samples carried no report. The
+    // watchdog's ticks were a second and their own work apart, and a tick the LoadLibrary detour woke took the read,
+    // published it and armed none. Here a thread asks the loader for opengl32.dll for as long as the target lives --
+    // a module the detour wakes the watchdog for, and one the harness already holds, so nothing is ever unloaded
+    // under a hook: the watchdog is woken without pause. Until 0.1.0-beta.49 every such tick published region 5.
+    // (sl.common.dll, D123's churn, wakes nobody: it is in neither the inventory nor the census.)
+    LatencyTarget      t;
+    const std::wstring presenting = L"--churn-module opengl32.dll --hold-presenting-d3d12 30";
+    REQUIRE(StartLatencyTarget(t, LatencyArgs(presenting.c_str()), true));
+    const MappedRing&   r = t.r;
+    fl::stubnv::Shared* stub = t.stub.words;
+    if (stub == nullptr || r.st == nullptr || r.ctl == nullptr) {
+        return;    // not reached after the REQUIRE; said in the form a static analyser follows (cpp:S2259)
+    }
+    REQUIRE(WaitForRecords(r));
+    SetAdvancedRequest(r, 7u);
+    fl::FlAdvancedState first{};
+    REQUIRE(ReadAdvanced(r, 7u, first, 0u, fl::FL_ADV_VALID_LATENCY));    // the first publication with a read
+
+    // Eight seconds of publications, looked for every 20 ms: far finer than the half second two may be apart.
+    uint32_t   lastSamples = first.samples;
+    uint32_t   withFrames = 0;
+    uint32_t   withoutFrames = 0;
+    bool       twoAtOnce = false;
+    long long  closestMs = 1'000'000;
+    const auto began = std::chrono::steady_clock::now();
+    auto       lastAt = began;
+    bool       haveLast = false;
+    while (std::chrono::steady_clock::now() - began < std::chrono::milliseconds(8000)) {
+        ++r.ctl->guardTicks;
+        Sleep(20);
+        fl::FlAdvancedState a{};
+        if (!CopyAdvanced(r, a) || a.request != 7u || a.samples == lastSamples) {
+            continue;
+        }
+        const auto at = std::chrono::steady_clock::now();
+        twoAtOnce = twoAtOnce || a.samples != lastSamples + 1u;
+        if (haveLast) {
+            const long long apart = std::chrono::duration_cast<std::chrono::milliseconds>(at - lastAt).count();
+            closestMs = apart < closestMs ? apart : closestMs;
+        }
+        haveLast = true;
+        lastAt = at;
+        lastSamples = a.samples;
+        if ((a.latFrames & 0xFFFFu) != 0u) {
+            ++withFrames;
+        } else {
+            ++withoutFrames;
+        }
+    }
+    const uint32_t publications = lastSamples - first.samples;
+    INFO("publications " << publications << " in eight seconds: " << withFrames << " with frames, " << withoutFrames
+                         << " without; the two closest " << closestMs << " ms apart; stub calls "
+                         << StubWord(stub->latencyCalls));
+    CHECK(publications >= 6u);
+    CHECK(publications <= 9u);     // one a second: not one for every time the loader woke the thread
+    CHECK_FALSE(twoAtOnce);        // never two inside one look
+    CHECK(closestMs >= 400);       // half a second at the least, less what the looking itself costs
+    CHECK(withoutFrames <= 1u);    // a publication carries the read its tick's predecessor armed
+    CHECK(withFrames + 1u >= publications);
+    CHECK(StubWord(stub->latencyCalls) + 2u >= publications);
+    CHECK(StubWord(stub->latencyCalls) <= publications + 3u);
+
+    // THE FIXTURE DID WAKE IT: the batch's own line says how many ticks were on time and how many were woken early.
+    ++r.ctl->logFlushRequested;
+    std::wstring log;
+    std::string  text;
+    uint32_t     spannedMs = 0;
+    uint64_t     ticks = 0;
+    bool         written = false;
+    for (int i = 0; i < 100 && !written; ++i) {
+        ++r.ctl->guardTicks;
+        Sleep(50);
+        if (i % 10 != 9 || (log.empty() && !FindOverlayLog(t.child.pi.dwProcessId, t.child.pi.hProcess, log))) {
+            continue;
+        }
+        text = ReadWholeFile(log);
+        written = LogLineWords(text, "LATENCY_FRAMES", "ms spanned", spannedMs, ticks);
+    }
+    INFO("log " << Narrow(log) << ":\n" << text);
+    REQUIRE(written);
+    const auto onTime = static_cast<uint32_t>(ticks >> 32);
+    const auto wokenEarly = static_cast<uint32_t>(ticks & 0xFFFFFFFFu);
+    INFO("the batch spans " << spannedMs << " ms: " << onTime << " ticks on time, " << wokenEarly << " woken early");
+    CHECK(wokenEarly > 20u);    // or this case proved nothing about a woken watchdog
+    CHECK(onTime >= 6u);
+    CHECK(onTime * 1000u <= spannedMs + 1500u);    // a tick a second, by the batch's own clock
+    CHECK(r.st->faultCount == 0u);
+}
+
+// A number for a pull request, not a gate: how evenly the reads come over a minute and a half, by the batches' own
+// seventh line. Hidden: `fl_guard_test "[.measure]"`.
+TEST_CASE("how evenly the driver is read over ninety reads, with a quiet loader and with one that never stops",
+          "[.measure]") {
+    for (const wchar_t* presenting :
+         {L"--hold-presenting-d3d12 110", L"--churn-module opengl32.dll --hold-presenting-d3d12 110"}) {
+        LatencyTarget t;
+        REQUIRE(StartLatencyTarget(t, LatencyArgs(presenting), true));
+        const MappedRing& r = t.r;
+        REQUIRE(WaitForRecords(r));
+        SetAdvancedRequest(r, 7u);
+        std::wstring log;
+        std::string  text;
+        for (int i = 0; i < 2100 && CountOf(text, "ms spanned") < 3u; ++i) {
+            ++r.ctl->guardTicks;
+            Sleep(50);
+            if (i % 20 == 19 && (!log.empty() || FindOverlayLog(t.child.pi.dwProcessId, t.child.pi.hProcess, log))) {
+                text = ReadWholeFile(log);
+            }
+        }
+        // The numbers of each batch's first and last line, parsed: what a file held is never printed as it stands
+        // (SonarCloud's cppsecurity:S5145 on a line of the log handed to printf).
+        std::printf("%ls\n", presenting);
+        std::size_t at = 0;
+        while (at < text.size()) {
+            std::size_t end = text.find('\n', at);
+            end = end == std::string::npos ? text.size() : end;
+            const std::string  line = text.substr(at, end - at);
+            const std::size_t  words = line.rfind(" a=");
+            unsigned           first = 0;
+            unsigned long long second = 0;
+            if (line.find("LATENCY_FRAMES") != std::string::npos && words != std::string::npos &&
+                sscanf_s(line.c_str() + words, " a=%u b=0x%llx", &first, &second) == 2) {
+                if (line.find("reads /") != std::string::npos) {
+                    std::printf("  %u reads", first);
+                } else if (line.find("ms spanned") != std::string::npos) {
+                    std::printf(" in %u ms: %llu ticks on time, %llu woken early\n", first, second >> 32,
+                                second & 0xFFFFFFFFull);
+                }
+            }
+            at = end + 1;
+        }
+        CHECK(CountOf(text, "ms spanned") >= 3u);
+    }
 }
 
 TEST_CASE("the driver's latency report is read only while a session asks, once a second, and stops with the request "

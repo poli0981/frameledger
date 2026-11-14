@@ -1003,7 +1003,7 @@ enum FlLatencyState : uint32_t {
     FL_LAT_ERROR = 6,        // the last read returned an NVAPI status that is not OK; reading goes on
     FL_LAT_SLOW = 7,         // one call took 2 ms or more: off until the game exits (D141)
     FL_LAT_FAULTED = 8,      // a getter faulted: off until the game exits, and counted once in faultCount
-    FL_LAT_STALLED = 9,      // a call had not returned after a second: nothing can stop it; reported and left
+    FL_LAT_STALLED = 9,      // a call had not returned after two seconds: nothing can stop it; reported and left
 };
 
 // latState, above the state: the driver's sleep status as SEEN -- a switch can be in both groups in one session.

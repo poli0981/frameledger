@@ -177,9 +177,15 @@ ids that start again, and the ten words of a publication — and since 0.1.0-bet
 refuse nothing) and the bit a multiplier has — and since 0.1.0-beta.49 the counts for the native log: every place
 a summed frame can be in, a span of a microsecond, an active time as long as the span, a refused frame, when a
 batch is due, a batch closed by a change of state and the thirty-two such closings a request has, the six lines
-and what each carries; a hidden `[.bench]` case is the measurement of one report's cost. `fl_guard`'s eight
-`[latency]` cases (the eighth reads the log: the first batch after ten reads, by number, and what is left when a
-flush is asked for — against the stand-in's `kModeGpuShapes`) inject the Overlay
+and what each carries; a hidden `[.bench]` case is the measurement of one report's cost. `fl_watchdog_tick`
+(Catch2, no thread and no clock) drives the grid the watchdog's periodic tick is on: sixty ticks each late and
+each followed by work keep whole seconds, a wait is never rounded down, a tick woken early is not periodic and
+moves nothing, a late tick is not followed by another within half a period. `fl_guard`'s nine `[latency]` cases
+(the eighth reads the log: the first batch after ten reads, by number, and what is left when a flush is asked for
+— against the stand-in's `kModeGpuShapes`; the ninth keeps the loader waking the watchdog without pause — a
+thread that asks for `opengl32.dll` for as long as the target lives — and holds one publication a second, each
+with a read, none within half a second of another: 35 720 publications in eight seconds on the code before it; a
+hidden `[.measure]` case prints ninety reads' own lines) inject the Overlay
 into a Direct3D 12 target that has loaded a stand-in `nvapi64.dll`, and read that module's call counts from outside
 through its named section (`fl_stub_nvapi_shared.h`) — so "the driver was not called" is a count: not asked → not
 even asked for the addresses; asked → about one read a second, sums equal to the stand-in's, every counted read a

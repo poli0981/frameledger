@@ -49,6 +49,17 @@ numeric core and does not move; the heading is the full version — corrected 20
   batch, under a minute. A bug report carries those logs, as it carried them before. Measured: 65 billionths of a
   second more for each reading of the report, once a second; a presented frame costs what it did.
 
+### Fixed
+
+- **NVIDIA's latency report is read on a grid of one second, and a busy loader no longer leaves holes in it**
+  (owner decision D150; the Overlay's half). After a session's first report, 0.4 to 16 % of its samples carried
+  none — the *Latency* charts had gaps. The Overlay's background thread waited a second *after* each round of its
+  work, so it fell behind the capture agent, which samples exactly every second; and whenever the game loaded a
+  library that thread was woken early, published what it had and asked for no new reading, so the round after it
+  had nothing to publish. Its once-a-second round is now due at fixed moments whatever the work took, and a round
+  woken early no longer publishes or takes a reading. Two readings are never less than half a second apart.
+  Nothing on a game's own threads changed.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

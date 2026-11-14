@@ -485,7 +485,7 @@ TEST_CASE("a batch belongs to one state of the sleep status: another state close
     CHECK(sum == 0xFFFFFFFFu);
 }
 
-TEST_CASE("a batch is six lines of the log: a text that fits, a count in decimal, and a word in hex", "[latency]") {
+TEST_CASE("a batch is seven lines of the log: a text that fits, a count in decimal, and a word in hex", "[latency]") {
     fl::adv::LatencyBatch batch;
     batch.reads = 10u;
     batch.frames = 152u;
@@ -503,10 +503,14 @@ TEST_CASE("a batch is six lines of the log: a text that fits, a count in decimal
     batch.gpu.withinFrames = 26u;
     batch.gpu.withinSpanUs = 96200u;
     batch.gpu.withinActiveUs = 91000u;
+    batch.spannedMs = 10012u;
+    batch.ticksOnTime = 10u;
+    batch.ticksEarly = 3u;
 
     const std::uint64_t expectedB[fl::adv::kLatBatchLines] = {
-        0x41609ull, 3ull, 61ull, 31ull, (111000ull << 32) | 120000ull, (96200ull << 32) | 91000ull};
-    const std::uint32_t expectedA[fl::adv::kLatBatchLines] = {10u, 152u, 5u, 30u, 30u, 26u};
+        0x41609ull,          3ull, 61ull, 31ull, (111000ull << 32) | 120000ull, (96200ull << 32) | 91000ull,
+        (10ull << 32) | 3ull};
+    const std::uint32_t expectedA[fl::adv::kLatBatchLines] = {10u, 152u, 5u, 30u, 30u, 26u, 10012u};
     for (std::uint32_t line = 0; line < fl::adv::kLatBatchLines; ++line) {
         const fl::adv::LatencyLogLine entry = fl::adv::LatencyBatchLine(batch, line);
         INFO("line " << line << ": " << entry.text);
