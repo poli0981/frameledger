@@ -35,50 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **The frames NVIDIA's latency report gives are counted, for the Overlay's own log** (owner decisions D148,
-  D151; nothing new is stored, shown, asked of the driver or read from its report). The owner's sessions on
-  0.1.0-beta.48 showed both of the driver's own GPU times in two games — and in Cyberpunk 2077 without frame
-  generation an *active render* time longer than the span from the card's start on a frame to its end, which the
-  two averages cannot explain: one is over every frame, one only over the frames that gave a time. While a session
-  with *Advanced metrics* reads the driver, the Overlay now places each frame by its own two numbers and writes
-  the counts to `overlay-<pid>-….log` as `LATENCY_FRAMES` lines, in batches that each belong to **one state of
-  the driver's low-latency status and its frame-generation multiplier** — the counts are read together with
-  Reflex and frame generation, never apart. About six lines a minute; a game that exits by itself loses the last
-  batch, under a minute. A bug report carries those logs, as it carried them before. Measured: 65 billionths of a
-  second more for each reading of the report, once a second; a presented frame costs what it did.
-
-### Fixed
-
-- **NVIDIA's latency report is read on a grid of one second, and a busy loader no longer leaves holes in it**
-  (owner decision D150; the Overlay's half). After a session's first report, 0.4 to 16 % of its samples carried
-  none — the *Latency* charts had gaps. The Overlay's background thread waited a second *after* each round of its
-  work, so it fell behind the capture agent, which samples exactly every second; and whenever the game loaded a
-  library that thread was woken early, published what it had and asked for no new reading, so the round after it
-  had nothing to publish. Its once-a-second round is now due at fixed moments whatever the work took, and a round
-  woken early no longer publishes or takes a reading. Two readings are never less than half a second apart.
-  Nothing on a game's own threads changed.
-- **A reading that waits for a sample is no longer overwritten by the next one** (D150; the capture agent's
-  half). The agent kept one reading from the game until a sensor sample could carry it, and replaced it when
-  another arrived first. When a reading landed just after a sample, that sample went without and a reading was
-  lost a little later — in one session of the owner's, one sample in five for four minutes. Two readings may now
-  wait and the older is stored first; a point can stand up to a second after its reading was taken. With the
-  sensor interval above one second, not every reading is stored, as before.
-
-### Changed
-
-- **The guide says whose switches the latency table shows**: the driver's, not the game's menu. `bLowLatencyMode`
-  is also on when *Low Latency Mode* is set for the game in the NVIDIA App, and `bUseGameSleep` says whether the
-  game itself paces its frames through Reflex — in some games only with frame generation on (the owner's word,
-  2026-11-14, and what Clair Obscur's sessions of that afternoon read).
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.49` | 2026-11-14 | [`docs/changelog/0.1.0-beta.49.md`](docs/changelog/0.1.0-beta.49.md) |
 | `0.1.0-beta.48` | 2026-11-14 | [`docs/changelog/0.1.0-beta.48.md`](docs/changelog/0.1.0-beta.48.md) |
 | `0.1.0-beta.47` | 2026-11-14 | [`docs/changelog/0.1.0-beta.47.md`](docs/changelog/0.1.0-beta.47.md) |
 | `0.1.0-beta.46` | 2026-11-13 | [`docs/changelog/0.1.0-beta.46.md`](docs/changelog/0.1.0-beta.46.md) |

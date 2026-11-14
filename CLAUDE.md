@@ -142,6 +142,11 @@ src/
                                #   Since 0.1.0-beta.48 (D142-D144) also two figures the driver works out itself, of
                                #   the same report - no further call: an entry of their own, nvapi.reflex.gpu_times,
                                #   two adv.* series; and the table lists every frame-generation multiplier seen.
+                               #   Since 0.1.0-beta.49 (D148-D151) the Overlay also counts each frame of that report
+                               #   by its GPU span and the driver's active time - for its native log ONLY
+                               #   (LATENCY_FRAMES, a batch per state of the sleep status; nothing published or
+                               #   stored); its watchdog's periodic tick is on a grid (fl_watchdog_tick.h), and
+                               #   Recording/PendingInGameReadings keeps the reading that waits for a sample.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,
