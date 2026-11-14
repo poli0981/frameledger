@@ -791,13 +791,13 @@
     <value>Game Ready</value>
   </data>
   <data name="AdvToken_active_render" xml:space="preserve">
-    <value>GPU thực sự vẽ (không tính lúc nghỉ)</value>
+    <value>GPU thực sự vẽ (số do driver tự tính)</value>
   </data>
   <data name="AdvToken_frame_time" xml:space="preserve">
     <value>nhịp khung của GPU, từ lúc xong khung này tới lúc xong khung kế</value>
   </data>
   <data name="AdvToken_gpu_render" xml:space="preserve">
-    <value>GPU vẽ, từ lúc bắt đầu tới lúc xong (gồm cả lúc nghỉ)</value>
+    <value>GPU vẽ (giữa mốc bắt đầu và mốc kết thúc của driver)</value>
   </data>
   <data name="AdvToken_gsync_module" xml:space="preserve">
     <value>Mô-đun G-SYNC</value>

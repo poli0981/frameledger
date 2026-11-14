@@ -455,13 +455,16 @@ public sealed class AdvancedPresenterTests
         ];
         AdvancedPresenter.Metrics(series, []).Select(static m => m.Id).Should().BeEquivalentTo("nvapi.reflex.frame_report", "nvapi.reflex.gpu_times");
 
-        // The span between the driver's two GPU marks says what it includes, in every language (D143).
+        // The span between the driver's two GPU marks says what it is, in every language (D143) - and neither label says
+        // which of the two holds the other (D152): in Cyberpunk 2077 the driver's active time is the longer.
         foreach (string culture in new[] { "", "vi", "ja" })
         {
             string render = Strings.ResourceManager.GetString(nameof(Strings.AdvToken_gpu_render), CultureInfo.GetCultureInfo(culture))!;
             string active = Strings.ResourceManager.GetString(nameof(Strings.AdvToken_active_render), CultureInfo.GetCultureInfo(culture))!;
-            render.Should().Contain("(", "the label carries what the span includes");
+            render.Should().Contain("(", "the label carries what the span is");
             render.Should().NotBe(active);
+            render.Should().NotContain("idle", "the span is not said to include the active time's idle time");
+            active.Should().NotContain("idle", "the active time is not said to be the span less its idle time");
         }
     }
 

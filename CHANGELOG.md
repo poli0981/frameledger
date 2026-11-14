@@ -37,6 +37,12 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Changed
 
+- **The two lines of the graphics card's time say what each is, not which holds the other** (D152, the owner's
+  decision). *GPU active render (idle time excluded)* and *GPU render, start to end (idle time included)* are now
+  *GPU active render (the driver's own figure)* and *GPU render (between the driver's start and end marks)*, in
+  English, Vietnamese and Japanese, and the guide says why: in Cyberpunk 2077 without frame generation the
+  driver's active time is longer than its two marks are apart. The numbers are unchanged.
+
 - **The guide's page on Advanced metrics says what two of the driver's switches mean** (`guide/12`): the latency
   report is there in a game that has Reflex built in, whether Reflex is on or off in its menu; `bUseGameSleep`
   says the game calls Reflex's sleep — NVIDIA asks for that even with Reflex off — and `bLowLatencyMode` is the

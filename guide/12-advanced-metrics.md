@@ -101,11 +101,15 @@ while Reflex is off, so *On* there does not say Reflex is on — `bLowLatencyMod
 while frame generation is on. Frame generation needs Reflex and not the other way round: the mode can be on
 with `fgMultiplier` at 1.
 
-**The stages overlap; they are not parts that add up to the total.** And *GPU render, start to end* includes the
-time the card spent waiting between pieces of work — in one game it is longer than the whole frame. So a second
-chart, **the graphics card's time per frame, as the driver works it out**, has two lines of the driver's own
-figures: *GPU active render*, the same stage without the waiting, and *GPU frame time*, from the end of one
-frame's work to the end of the next. A driver may give neither; the chart is then not there, and nothing is wrong.
+**The stages overlap; they are not parts that add up to the total.** And *GPU render* is the time between two
+marks the driver sets, at the start and at the end of the card's work on a frame: where the card waits between
+pieces of work, the waiting is in it — in one game it is longer than the whole frame. So a second chart, **the
+graphics card's time per frame, as the driver works it out**, has two lines of the driver's own figures: *GPU
+active render*, how long the driver says the card worked on the frame, and *GPU frame time*, from the end of one
+frame's work to the end of the next. **The active time is usually the shorter of the two, and not always**: in
+Cyberpunk 2077 without frame generation it is about a fifth longer than the two marks are apart, frame after
+frame — the driver counts work its marks do not enclose. Both are shown as the driver gives them. A driver may
+give neither; the chart is then not there, and nothing is wrong.
 
 Three things to know about them:
 

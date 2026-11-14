@@ -153,8 +153,8 @@ and its release facts are [`handoff/history/0.1.0-beta.48.md`](handoff/history/0
 
 1. ~~**The owner runs item 47**~~ **Run and read 2026-11-14** (item 47, *Run 2026-11-14*): the difference in
    Cyberpunk 2077 is the driver's, the holes are gone from steady play, off means off, and the stop fired once.
-2. **The owner's to say**: the wording of the two GPU labels (the mean stays — the counts say the driver's
-   active time really is the longer there); whether D141's stop should spare a game's first seconds (Kingdom
+2. **The two GPU labels were reworded on the owner's word** (D152, 2026-11-14; strings in three languages, the
+   guide — in `[Unreleased]`, not in a release yet). **Still the owner's to say**: whether D141's stop should spare a game's first seconds (Kingdom
    Come: Deliverance II lost its session's report to one call of 5.3 ms while it started). (f) and (g) are
    said: the App's *Low Latency Mode* is off, and no hitch.
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
@@ -1169,6 +1169,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D149 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Native logging | told that a bug report carries the five newest Overlay logs and so these lines: **no change to the legal texts** — the Privacy Policy names the logs of the component loaded into games, and the lines are counts and sums of microseconds |
 | D150 | [`07_IPC.md`](07_IPC.md) §Region 5 | the samples that carry no report are mended **on both sides**: the Overlay reads and publishes on a grid of one second, and the Agent no longer overwrites a reading that waits for a sample |
 | D151 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Native logging | the owner's word: Reflex is checked together with frame generation — without it the owner's games do not switch Reflex on, and a low-latency switch that reads on and off is the NVIDIA App's override. A batch of counts belongs to one state of the sleep status |
+| D152 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §The inventory | the two GPU labels say what each figure is — *the driver's own figure*, *between the driver's start and end marks* — not "idle time excluded / included": item 47 counted the active time as the longer in Cyberpunk 2077. Strings only; numbers and means unchanged |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---
