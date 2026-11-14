@@ -14,6 +14,7 @@ namespace FrameLedger.Application.Recording;
 [JsonSerializable(typeof(FgMixRecord))]
 [JsonSerializable(typeof(DriverProfileRecord))]
 [JsonSerializable(typeof(Dictionary<string, SensorSeriesStats>))]
+[JsonSerializable(typeof(InputDevicesRecord))]
 public sealed partial class RecordingJsonContext : JsonSerializerContext
 {
 }
