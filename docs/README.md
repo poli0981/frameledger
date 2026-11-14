@@ -69,6 +69,7 @@ are safety items, and something listed there as unresolved should not be built t
 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) | Telemetry layers (DXGI/PDH, LibreHardwareMonitor, NVAPI), the game process's memory, licences |
 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) | The anti-cheat guard, what a finding does, the user-mode exception, what will never be built |
 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) | Every unresolved question, defect and measurement, with its status marker |
+| [`21_INPUT_DEVICES.md`](21_INPUT_DEVICES.md) | Controllers and keyboard-and-mouse activity: what is read from outside the game, from where, and what never is |
 | [`HANDOFF.md`](HANDOFF.md) | Sequencing, the open owner-only items, the index of the owner's decisions |
 | [`handoff/`](handoff/) | Since beta.24 (D66): the history of every train and phase, the passed owner-only items, the traps — moved out of `HANDOFF.md` verbatim |
 | [`open-questions/`](open-questions/) | Since beta.24 (D66): the entries §S24 marks resolved, moved out of `20_OPEN_QUESTIONS.md` verbatim — a table there lists them |

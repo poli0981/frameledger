@@ -976,6 +976,60 @@ min / max in `sensor_stats_json` (§Sensor aggregates). MiB stored; shown in GB 
 
 ~~`vramUsedMb` from `IDXGIAdapter3::QueryVideoMemoryInfo(LOCAL)` inside the game = **this game's** usage and budget. **MiB, truncating, and it must use the same divisor as `vramBudgetMb`** — the two are compared, and mismatched rounding would put a systematic bias into `budget_exceeded_pct`. Residual: a flip within 1 MiB of the budget, 0.004% of a 24 GiB card. Stored as its own series and clearly labelled apart from the adapter-wide figure from `18_GPU_VENDOR_APIS`. Aggregates: avg, max, and `budget_exceeded_pct` (share of samples where `CurrentUsage > Budget`, i.e. the driver was likely evicting — a genuinely useful stutter explanation).~~
 
+## Input — what a session was played with, both tiers (owner decisions D155–D163)
+
+**Owner request, 2026-11-14:** the share of a session played with a controller and with the keyboard, how often a
+controller connected and dropped, the battery state that lasted longest, the switches between makers' controllers.
+What is read and what never is: [`21_INPUT_DEVICES.md`](21_INPUT_DEVICES.md). The arithmetic is
+`Domain.Input` and `Application.Recording.InputSessionBuilder`. **Not built end to end yet** — nothing reads a device
+until the pull requests after the one that wrote this section; until then these are definitions under test.
+
+**What it can say, and what it cannot.** Everything is read from outside the game. So a number here says that a
+controller, or the keyboard or mouse, was *in use while the game's window was in front* — never what the game did with
+it, and never which button or key.
+
+**The unit is a slice** of about a tenth of a second, and a slice counts for a session only when a window of the
+session's game was in front and the session was not paused (a pause is a gap, as for frames). A slice with another
+program in front is not classified: typing in a browser beside the game is not the game played with the keyboard.
+
+| Class | A slice in front in which |
+|---|---|
+| Controller | a controller was in use and the time of the last keyboard-or-mouse input did not move |
+| Keyboard & mouse | that time moved and no controller was in use. One class: only a time is read (D158) |
+| Both | both |
+| No input | neither |
+
+- **A controller is in use** when a button is down, a trigger is past its threshold, or a stick is outside its dead
+  zone. A stick held counts. One that drifts inside the dead zone does not — a pad lying on a desk is not played with.
+- **A share** is a class's time over the time the game was in front (`input_foreground_ms`). The four add up to it.
+- **A switch of method** is a change between *controller* and *keyboard & mouse* from one tick (a second) to a later
+  one. A tick played with both, or with neither, is no one thing and does not end the run before it: putting the
+  controller down and picking it up again is not a switch.
+- **Connections** are counted from the session's second slice: a controller that is there when the session starts has
+  not connected. A Bluetooth pad that goes to sleep has disconnected.
+- **A battery** is timed by the clock, in front or not: the time at each level, the level that lasted longest, the
+  first and the last. Each source keeps its own steps — XInput's four words, a DualSense's per cent in tens — and none
+  is converted into another's. **A rate**, in per cent an hour, is the fall from the first to the last reading on
+  battery over the time read on battery; it is given only for a level in per cent that fell, was not put on power in
+  between, and was read on battery for ten minutes or more.
+- **A maker's share** is the time its controllers were in use over that time for every maker. **A switch of maker**
+  is counted like a switch of method, between ticks in which one maker's controllers alone were in use.
+- **One pad seen twice is one controller.** With Steam Input in front of a controller Windows shows the controller the
+  player holds and an Xbox pad Steam presents for it. One of XInput's pads that was in use at the same moments as
+  another controller — nine tenths of the busier one's time, over ten seconds or more — is folded into it: into a
+  controller that is not XInput's at any time, into another of XInput's pads only in a session in which Steam's
+  virtual gamepad was seen. Two players pressing in step are two players.
+
+**The timeline** is one series, `input.class`: what each tick was mostly played with, as the class's number (0 no
+input, 1 controller, 2 keyboard & mouse, 3 both), and no value for a tick with the game not in front. Each of the
+first eight controllers has `input.dev.N.active` (the part of the tick's time in front it was in use; no value where
+it was not connected) and, with a battery that has a level, `input.dev.N.battery`.
+
+**Known limits.** Keyboard and mouse cannot be told apart. Input a program injects counts as keyboard and mouse — Steam
+Input mapping a pad to keys, a macro tool — so a pad mapped that way reads as *both*. A game whose window belongs to
+another process reads as never in front (the focus sample's limit). Whether a controller's own input moves Windows'
+last-input time has not been checked on a real PC.
+
 ## Sensor aggregates
 
 Per session over 1 Hz samples: `avg` (mean of non-null), `max` — and since beta.12 the `median` (the linear-interpolation
