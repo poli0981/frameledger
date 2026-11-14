@@ -92,7 +92,11 @@ of simulation to the end of the graphics card's work. They are seven lines under
 second, each the average of the frames of one reading, in microseconds. A table beside them shows the driver's
 low-latency state as five switches, by NVIDIA's own names, each *On*, *Off* or *On at times, off at others*, and
 `fgMultiplier`: every frame-generation multiplier the driver gave during the session (*1, 2* is a session that
-generated frames at ×2 for part of it).
+generated frames at ×2 for part of it). **They are the driver's switches, not the game's menu.** `bLowLatencyMode`
+is on when the game switched Reflex on *and* when **Low Latency Mode** is set for that game in the NVIDIA App —
+an override there shows here, and can read *On at times, off at others* in a game whose own setting never
+changed. `bUseGameSleep` says whether the game itself is pacing its frames through Reflex; some games do that
+only while frame generation is on, so read the two together.
 
 **The stages overlap; they are not parts that add up to the total.** And *GPU render, start to end* includes the
 time the card spent waiting between pieces of work — in one game it is longer than the whole frame. So a second

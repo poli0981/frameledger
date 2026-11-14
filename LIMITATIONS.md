@@ -131,7 +131,8 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   second. They are the driver's numbers, not FrameLedger's measurement. **The stages overlap and do not add up to
   the total**, and the graphics card's stage includes the time the card waited — in one game it is longer than the
   whole frame; the driver's own figure for the card's active time is shown beside it where the driver gives one.
-  One point is one reading; with the sensor interval set above one second, some readings are not stored.
+  One point is one reading, drawn at the sample that carried it — up to a second after it was taken; with the
+  sensor interval set above one second, some readings are not stored.
   FrameLedger asks the driver for them from inside the game; a read that is slow or faults is switched off until the game is closed, and the session says so.
   ([Advanced metrics](guide/12-advanced-metrics.md))
 

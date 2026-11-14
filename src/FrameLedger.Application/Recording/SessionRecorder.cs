@@ -374,7 +374,7 @@ public sealed class SessionRecorder : ISessionRecorder
         // What the game told its upscaler (train B): read inside the game by the Overlay, only for a session that
         // records Advanced metrics - the same condition the shared reader is held under.
         private readonly InGameAdvancedSampler? _inGame = advanced is null ? null : new InGameAdvancedSampler();
-        private IReadOnlyList<AdvancedReading>? _inGamePending;
+        private readonly PendingInGameReadings _inGamePending = new();
         private (IReadOnlyList<AdvancedFact> Facts, AdvancedInGameStatus Status, InGameCallStates Calls) _inGameContext =
             ([], AdvancedInGameStatus.Unknown, default);
         private IReadOnlyList<AdvancedFact> _sessionWithGame = [];
@@ -417,8 +417,9 @@ public sealed class SessionRecorder : ISessionRecorder
             FollowAdapter(progress.AdapterLuid);
             if (_inGame?.Take(progress.InGameAdvanced) is { } fresh)
             {
-                // The newest stands until a telemetry sample carries it: both arrive once a second, out of step.
-                _inGamePending = fresh;
+                // It waits until a telemetry sample carries it: both arrive once a second, out of step - and it is no
+                // longer replaced by the one after it (owner decision D150; PendingInGameReadings says why).
+                _inGamePending.Offer(fresh);
             }
 
             DrainTelemetry();
@@ -631,13 +632,12 @@ public sealed class SessionRecorder : ISessionRecorder
 
             _drained.Clear();
             poller.Drain(_drained);
-            if (_inGamePending is { } pending && _drained.Count > 0)
+            if (_drained.Count > 0 && _inGamePending.TryTake(out IReadOnlyList<AdvancedReading>? pending))
             {
                 // What the game said rides the newest sample of this drain, beside whatever the Agent's own reader
-                // gave it: one tick, one set of readings.
+                // gave it: one tick, one set of readings - the oldest that waits.
                 TelemetrySample newest = _drained[^1];
                 _drained[^1] = newest with { Advanced = newest.Advanced is { Count: > 0 } own ? [.. own, .. pending] : pending };
-                _inGamePending = null;
             }
 
             writer.AddSensors(_drained);
