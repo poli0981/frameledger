@@ -496,6 +496,11 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 > Sensor series are aligned to `t_ms` (milliseconds from `qpc_epoch`) and a tick with no reading is stored as
 > **−1** — never 0, which would be a reading — because temperatures, loads, power and memory are never negative.
 >
+> **A reading taken inside a game stands at the sample that carried it** (0.1.0-beta.49, owner decision D150): the
+> Overlay publishes about once a second and the Agent samples exactly once a second, so a publication waits for
+> the next sample — two may wait, the older is carried first (`PendingInGameReadings`). An `adv.*` point that
+> came from a game can therefore stand up to a second after its read; a tick with nothing waiting is NaN.
+>
 > **`t_ms` is the time axis; `hz` is the fallback** (written here 2026-11-14, owner decision D146 — the code cited
 > this rule before the page had it). Every series of a session is stored beside `t_ms`, which carries each
 > sample's own time, and the App draws against it; `hz` is read only for a row that has no `t_ms`

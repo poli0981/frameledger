@@ -59,6 +59,19 @@ numeric core and does not move; the heading is the full version — corrected 20
   had nothing to publish. Its once-a-second round is now due at fixed moments whatever the work took, and a round
   woken early no longer publishes or takes a reading. Two readings are never less than half a second apart.
   Nothing on a game's own threads changed.
+- **A reading that waits for a sample is no longer overwritten by the next one** (D150; the capture agent's
+  half). The agent kept one reading from the game until a sensor sample could carry it, and replaced it when
+  another arrived first. When a reading landed just after a sample, that sample went without and a reading was
+  lost a little later — in one session of the owner's, one sample in five for four minutes. Two readings may now
+  wait and the older is stored first; a point can stand up to a second after its reading was taken. With the
+  sensor interval above one second, not every reading is stored, as before.
+
+### Changed
+
+- **The guide says whose switches the latency table shows**: the driver's, not the game's menu. `bLowLatencyMode`
+  is also on when *Low Latency Mode* is set for the game in the NVIDIA App, and `bUseGameSleep` says whether the
+  game itself paces its frames through Reflex — in some games only with frame generation on (the owner's word,
+  2026-11-14, and what Clair Obscur's sessions of that afternoon read).
 
 ## Releases
 

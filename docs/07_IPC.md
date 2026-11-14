@@ -130,6 +130,14 @@ What the region is, as a contract between the two sides:
   ends — and every one after it a second's. A reader takes ranges and "seen" words as *since the request*, which
   they are, and never reads a single publication as complete. No game thread writes the region, so the seqlock has a single writer: `seq` odd, the fields,
   `seq` even.
+- **A publication waits for a sample, and is not replaced while it waits** (0.1.0-beta.49, owner decision D150;
+  the Agent's half). `SessionRecorder` looks at the region and at the telemetry poller about ten times a second
+  and attaches a publication's readings to the newest sample it drains. It used to keep one set and overwrite it:
+  a publication that landed just after a sample left that sample without a report, and at the next change of
+  step the set that had waited was overwritten — one sample in five for minutes in the owner's session 223. Two
+  sets now wait, the older is carried first (`PendingInGameReadings`): a session lacks a report at one sample at
+  most when the two fall out of step, and loses no reading after it. With the sensor interval above a second
+  more publications arrive than samples and the oldest is pushed out, as before.
 - **The reader keeps its last consistent copy** (`ShmRingReader.AdvancedState`): null until something was published
   for its request;
   the same copy while `seq` has not moved, without copying 1472 bytes again; and that copy still when the writer is
