@@ -145,8 +145,9 @@ read is and what bounds it is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls t
 
 ### NEXT
 
-1. **The owner runs item 46** — one batch on beta.48, with what is left of item 45 in it. Every outcome's meaning
-   is written there.
+1. ~~**The owner runs item 46**~~ **Run and read 2026-11-14** (the item, below): the samples are a second apart,
+   both games gave both figures, the multipliers are listed, off means off. **The owner's word on how the games
+   felt is what is left of it**, and whether session 221 was the one with Reflex off.
 2. **Then the owner's to say**: more titles; D141 on a larger sample (the slowest call seen in a game is 65 µs);
    whether the processor update is worth timing on their PC and moving off the poll's thread (below).
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
@@ -166,8 +167,15 @@ read is and what bounds it is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls t
   release branch (run 43555020289, at `0c210d0`, the released tree) had made a delta of 1 966 174 bytes with the
   same file counts. **SonarCloud answered on `aec1736`: the quality gate passed and no issue is open on `main`. Qodana's two reports, CodeQL and `check` are green on that
   commit**, as they were on each of #450–#453 before its merge; no advisory check found anything in this train.
-- **No real game has given the two new figures yet.** In the probe `gpuActiveRenderTimeUs` read 0; whether
-  Phantom Blade Zero's is the short number the reading of 2026-11-14 expects is item 46's to say.
+- ~~**No real game has given the two new figures yet.**~~ **Two have (item 46, 2026-11-14)**, in every frame
+  report: Phantom Blade Zero's active render is the short number the reading expected (9.6 ms inside a span of
+  16.4 ms at 60 FPS). **In Cyberpunk 2077 without frame generation active render is longer than the span between
+  the two GPU marks** (3.17 against 2.79 ms) **and why is not established** — the two averages are over different
+  frames, or the driver counts work outside the marks. The label says *idle time included*, which that game's
+  numbers do not show; the texts say the figures are the driver's own. Not changed.
+- **After a session's first report, 0.4–7.3 % of its samples carry none** (item 46): the Overlay's reads are a
+  second apart or two — its watchdog's tick — and the Agent's samples exactly one. Read in the code, not measured;
+  not changed.
 - **Where the third of a second of a poll goes is not established.** Unelevated, a poll takes about a millisecond
   (the layers composed as the Agent composes them, each read under a stopwatch). In the owner's ledger 180 of 186
   sessions are 1.32 s apart and six are 1.0 s: the two with no `cpu_temp` series (an Agent not elevated) are among
@@ -182,8 +190,9 @@ read is and what bounds it is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls t
 - **Two install batches of beta.46 took 0.61 s and 1.26 s and nothing explains them.** Cyberpunk 2077's eight
   batches on beta.47 took 85–221 ms, each in one apply; Hogwarts Legacy has not been run since.
 - **The Japanese strings are new and unreviewed**, as every `ja` string is.
-- **Off means off has never been exercised on a real game** (item 43 (f), 44 (g), 45 (g), now 46 (e)); nor (c)
-  and (h) of item 43, which only the owner sees.
+- ~~**Off means off has never been exercised on a real game**~~ **It was, 2026-11-14** (item 46 (e), session
+  226: no `LATENCY` line, none of the hooks Advanced metrics adds, no row). (c) and (h) of item 43, which only the
+  owner sees, are still not.
 - **Valor Mortis's crash at 51 s** (twice, beta.40 and beta.44) **and Black Myth: Wukong's fault in Steam's crash
   handler at every exit** are not explained. One session of each with hooking off is the comparison that is missing.
 - **What item 41 left unexercised**: a configure through the FidelityFX 2.3 loader (Cyberpunk 2077 with FSR frame
@@ -194,7 +203,7 @@ read is and what bounds it is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls t
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** item 46; one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41
+**Owner-only:** item 46 (g), how the games felt; one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41
 left unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
@@ -830,6 +839,55 @@ left unexercised; item 40 (d).
    and the driver reported no frame* are possible and neither is wrong. *(e) the log has a `LATENCY` line*: off
    does not mean off — say so at once, with the log. **A fault, a freeze, a game closing by itself, a hitch every
    second, or a session that says *stopped***: as item 45 says for each — say so at once.
+   **Run 2026-11-14, 12:49–14:12, and read the same afternoon** from a copy of the ledger and the logs: ten
+   sessions on beta.48 — Phantom Blade Zero seven times (217, 219, 220, 223–226), Cyberpunk 2077 three times (218,
+   221, 222). Every one tier 1, exit code 0, no fault counted, nothing dropped; nothing in Windows' application
+   log. (Session 216, an hour of Phantom Blade Zero, was still beta.47 — it ran while the release was cut — and
+   is 1.32 s apart like the ones before it.)
+   **The samples are a second apart**: the median gap is 996–1002 ms in all ten (session 223: 2 294 of 2 394 gaps
+   round to 1.00 s, the rest lie between 0.80 and 1.27 s), and `hz` reads 1.000–1.017.
+   (a) `legal_acceptance` holds Privacy Policy 2.21 and Disclaimer 2.17, accepted at 12:48:40.
+   (b) **Both figures were given by both games, in every frame report**: in the nine sessions with the option on,
+   every sample that has a *GPU render* span has both (3 834 of 3 834). **Phantom Blade Zero is what the reading of
+   2026-11-14 expected**: at 60 FPS (217) the span's median is 16.39 ms, *GPU frame time* 16.67 ms and *GPU active
+   render* **9.59 ms**; in the menu (224) 16.39 / 16.67 / **2.77**; at 91 FPS (225) 11.49 / 11.79 / 10.05; with
+   frame generation ×5 (223) 15.67 / 15.88 / 14.08. So in that game the span is the time from one frame to the
+   next less a third of a millisecond, whatever the card did in it, and active render is never longer than it
+   (0 of 3 406 samples). **Cyberpunk 2077 is the outcome written above as "active render longer than GPU render,
+   start to end"**: without frame generation it is longer at 157 of 158 samples (218: medians 3.17 against
+   2.79 ms, frame time 6.02) and at 48 of 48 (221: 2.03 against 1.82, frame time 2.37); with frame generation ×2
+   (222) it is shorter at all 222 (4.85 against 6.35, frame time 6.67). Shown as reported. **Why is not
+   established**, and two things could do it: the two are averages over different frames — the span over every
+   summed frame, one of no length included (the smallest mean span of a sample there is 0.5 µs, the smallest active
+   time 0.29 ms), active render over the frames that gave one — or the driver counts work the two marks do not
+   enclose. The ledger cannot tell them apart; a count of the frames whose span has no length would.
+   (c) `fgMultiplier` reads **1, 2** in Cyberpunk 2077 (222: ×2.0 for 69 % of it), **1, 5** in Phantom Blade Zero
+   (220: ×5.0 for 71 %, 30 → 151 FPS; 223: ×5.0 for 95 %, 63 → 316) and **1** in the seven sessions that generated
+   nothing.
+   (d) **Session 221** (Cyberpunk 2077, 59 s of menus at 421 FPS) is the only Cyberpunk session whose
+   `bLowLatencyMode` reads *on and off* — 218 and 222 read *on*, as 211 and 212 did — and is taken to be the one
+   where Reflex was switched off; the owner has not said which it was. Its line reads *read*, 48 of 57 samples
+   carry a report, every one from the first on, and the slowest call took 19 µs: the driver goes on reporting
+   frames.
+   (e) **Off means off, on a real game for the first time**: session 226 (`telemetry.advanced` 0) has no
+   `session_advanced` row and 19 series where the others have 240; its log has ten hooks, none of the ones
+   Advanced metrics adds, and **no `LATENCY` line**. The setting was still off when the ledger was copied.
+   (f) No other game was in the batch.
+   **The read itself**: one `reading the driver's latency report` line a session, 1.4–6.7 s after the attach, in
+   the same two files, and none after it; the slowest call of a session 18–123 µs; no latch. The install batches
+   took 75–191 ms, every one `install`.
+   **Samples with no report**: after a session's first report, 0.4–7.3 % of its samples carry none (1 of 223 in
+   222; 134 of 2 377 in 223, minutes of four in five there). They are not the sensor library's ticks (25 of the 134
+   fall on one, 24 just after one). What the code says, not measured: the watchdog ticks once a second and arms a
+   read when a second has passed since the last arm, so a tick that comes a moment early waits for the next one —
+   the reads are a second apart or two, the samples exactly one. Nothing is lost by it; a sample shows a gap.
+   (g) **The owner has not said how the games felt.** What the frames say, in the sessions without frame
+   generation: a frame three times the median of the 120 before it and 8 ms longer comes 0.33 times a second
+   with the option on (225) and 0.32 with it off (226), and such frames do not gather at a period of one second
+   (vector strength 0.05–0.10 where chance gives 0.10–0.20; 217, 218 and 222 the same). Sessions with frame
+   generation cannot be judged that way. **Not seen in the ledger**: what the page looked like, and the Agent's
+   processor use now that a poll comes every second.
+   **Read, not passed**: (a)–(f) are answered; (g) and whether session 221 was (d) are the owner's to say.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
