@@ -35,6 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Documentation
+
+- **0.1.0-beta.50's release facts are recorded** (`docs/HANDOFF.md` §Left open by this session): the run, the eight
+  assets and their digests, the build id in the five native libraries, the delta, the wiki, the rehearsals, what
+  SonarCloud and Qodana said of the released commit — and that the release shows two dates, the owner's day in
+  the documents and UTC's on GitHub and in the legal texts.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

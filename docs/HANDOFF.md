@@ -195,9 +195,30 @@ it meets the owner's Xbox controller and DualSense.**
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta, what SonarCloud and Qodana said of the
+- ~~**This release's own facts** — the tag's run, the digests, the delta, what SonarCloud and Qodana said of the
   released commit — are not in any file yet: the release is cut after this text. Record them in the next pull
-  request.
+  request.~~ **Recorded 2026-11-15: 0.1.0-beta.50 was released 2026-11-14T23:41:15Z** (06:41 on 2026-11-15 in the
+  owner's time zone) from the signed tag on `5764d21` (#471), by run 43652686348 — green at the first attempt, one
+  run for the one tag push. Eight assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed,
+  and the portable package hashed here equals its line; the five native libraries in it carry `FL_BUILD_ID
+  v0.1.0-beta.50`, none of them `-dirty`, and both entry points are there. The delta from beta.49 is 3 099 231
+  bytes beside a full package of 111 085 471 — "Delta processed 0452 files. 0026 patched, 0426 unchanged". The
+  wiki was published by run 43654502311 (31 pages, the new *Controllers and input* among them). **The tag's
+  message reads `0.1.0-beta.50`**, the bare version again.
+  **Three rehearsals on the release branch, and the third is of the released tree**: run 43646963371 at `9c69a32`
+  failed in the quality gate on a naming violation in a test fixture of #470; run 43648289839 and run 43649328136
+  were cancelled as the tree moved (the test of the last-input time; Qodana's notice); run 43650415247 at
+  `d6e4685` passed, and `main` at `5764d21` is that tree (a delta of 3 112 641 bytes, the same file counts).
+  **`./build.ps1 check` ran green on the developer PC at `6dadd05`**; the two commits after it were inspected
+  (ReSharper's InspectCode, no problem of any severity) and the App's suite run again. The owner's
+  `%LOCALAPPDATA%\FrameLedger\rules` hashed the same before and after.
+  **SonarCloud analysed `5764d21`: the quality gate passed. Qodana's two reports, CodeQL and `check` are green
+  on that commit.** On the way: Qodana's managed report on #470 was red with one notice when auto-merge merged
+  it (fixed in #471, §Traps); SonarCloud passed #467 (81.4 % of new code covered) and #468 (83.6 %).
+  **One date is two dates**: the changelog, the README and this file say 2026-11-15, the owner's day; GitHub
+  shows the release on 2026-11-14 (UTC), and the legal texts in the installer are stamped 2026-11-14, the day
+  `release.yml` reads from UTC. Nothing reads either; a train that ends before 07:00 in the owner's time zone
+  will show it again.
 - **The reader's cost with a controller connected is not measured** (`20_OPEN_QUESTIONS` §M17 f). With none it is
   inside the noise.
 - **A game run as administrator under an Agent that is not** has not been tried: Windows may not report input
