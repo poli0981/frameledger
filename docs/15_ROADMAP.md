@@ -332,6 +332,50 @@ CI/CD with the native build (`release.yml` exists since P4 PR-5, 2026-09-14 — 
 
 **Total ≈ 5.5–6.5 weeks full-time** — roughly 1.5–2 weeks more than the ETW design, which is the honest price of the accuracy.
 
+## After the controller train — the owner's order (2026-11-14)
+
+Advanced metrics is closed (D154) and the controller feature is being built as 0.1.0-beta.50's train. Asked what
+comes after, the owner was shown six directions and chose four of them, and added distribution. **This is the
+order of work after the controller train; each begins with a plan of its own and the owner's approval.** Nothing
+here is designed yet, and what is marked *to verify* is a lead, not a finding.
+
+1. **Time actually played (AFK segmentation).** The v2 backlog's "AFK segmentation via `GetLastInputInfo`", moved
+   up: the controller train already stores when the keyboard, the mouse or a controller was in use, so the time
+   nobody was at the game can be told apart and left out of a session's averages. Timestamps of activity only —
+   never a key, as that train's Privacy text says.
+2. **More from what is already stored — interface only, no hook.** The comparison of two stretches of one
+   session ("before and after I changed DLSS Quality to Balanced", v1.1 below), and a timeline for a game that
+   marks where the driver, the game's build or the settings changed, so a drop in frame rate has a date. *To
+   verify*: which of those changes the ledger already records for every session.
+3. **Stutter from shader compilation (PSO).** `03_METRICS` defines *PSO stutter %* and `05_DETECTION` says no
+   writer exists. New hooks at pipeline creation: staged like Advanced metrics' train B — small releases, the
+   overhead measured, the owner's real games between them, never first on a game inside the user-mode
+   exception's trial (D38).
+4. **The in-game overlay (FR-15).** v1.1's first line below: live frame rate, frame time, upscaler and
+   ray-tracing state drawn in the game, per game, off by default. The largest and the riskiest of the four — it
+   draws in the game's process — so it comes last, with a risk review of its own (rule 5, and what an
+   anti-cheat makes of a drawing module).
+5. **Distribution: winget and the Microsoft Store.** The owner uploads to the Store and fills in its listing by
+   hand. FrameLedger has no product in Partner Center yet — the one there today is another program of the
+   owner's — so which type it is submitted as (*EXE or MSI app*, or *MSIX or PWA app*) is part of what the plan
+   settles. The repository's part is what the two channels need from a release. *To verify, before anything is promised*:
+   - whether the Store accepts an **unsigned** installer for an *EXE or MSI app* — the installer is unsigned
+     today (`CLAUDE.md`, Packaging), and if the Store wants a certificate that is a cost and a decision of the
+     owner's; whether an MSIX package is a real alternative for a program that loads a library into games and
+     registers a Vulkan layer;
+   - the installer's silent switch and a versioned, permanent download address for each release, which both
+     channels ask for; whether either takes a pre-release version;
+   - who updates an installation that came from winget or the Store — the App's own updater (Velopack) or the
+     channel — and that the two cannot fight;
+   - a winget manifest per release (address, SHA-256, switches) and whether `release.yml` writes it or the owner
+     submits it;
+   - rule 8 is untouched: a channel that delivers the installer is not a network call of the App's.
+
+**Not chosen, and not refused**: a stabilising pass with a cross-check against another tool (the limits page
+still says no reading has been checked against one), and export for CapFrameX and for video overlays. Two things
+only the owner can settle stay open beside them: what leaving beta takes, and code signing — which direction 5
+may force.
+
 ## v1.1 — earned features (only after the data path is stable)
 
 - **In-game overlay** (FR-15): we are already in the process; draw live FPS/frametime/upscaler/RT state. Opt-in per game, off by default. Borderless and fullscreen-flip both handled since we own the swapchain.
