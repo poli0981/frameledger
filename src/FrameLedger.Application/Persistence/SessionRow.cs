@@ -401,4 +401,38 @@ public sealed record SessionRow
 
     /// <summary>Application frames per joule of the card's power — FPS per watt; never over displayed frames (rule 6).</summary>
     public double? AppFramesPerJoule { get; init; }
+
+    // --- Schema 0024 (beta.50, D155-D163): what the session was played with (03_METRICS §Input), both tiers - read by the
+    // Agent from outside the game. Null on a row written before it, with the option off, and before the terms that
+    // describe the reading were accepted.
+
+    /// <summary>The time the input reader ran and the session was not paused, in milliseconds.</summary>
+    public long? InputObservedMs { get; init; }
+
+    /// <summary>Of <see cref="InputObservedMs"/>, the time a window of the game was in front: what every share is a share of.</summary>
+    public long? InputForegroundMs { get; init; }
+
+    /// <summary>The time in front a controller was in use and the keyboard and mouse were not.</summary>
+    public long? InputControllerMs { get; init; }
+
+    /// <summary>The time in front the keyboard or mouse was in use and no controller was. One class: only the time of the last input is read (D158).</summary>
+    public long? InputKeyboardMouseMs { get; init; }
+
+    public long? InputBothMs { get; init; }
+
+    /// <summary>The time in front with no input at all.</summary>
+    public long? InputIdleMs { get; init; }
+
+    /// <summary>How many times the player went from a controller to the keyboard and mouse or back.</summary>
+    public int? InputMethodSwitches { get; init; }
+
+    /// <summary>The sources that answered: <c>rawinput</c>, <c>xinput</c>, <c>lastinput</c>, joined by <c>+</c>.</summary>
+    public string? InputSource { get; init; }
+
+    /// <summary>The session's controllers, their batteries and makers, and what the reader's sources did, as <c>InputDevicesRecord</c>'s JSON.</summary>
+    public string? InputDevicesJson { get; init; }
+
+    /// <summary>The share of the time in front spent in one class, 0-100; null when nothing was read or the game was never in front.</summary>
+    public double? InputSharePercent(long? classMs) =>
+        InputForegroundMs is > 0 and var front && classMs is { } ms ? 100d * ms / front : null;
 }

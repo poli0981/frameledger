@@ -53,8 +53,14 @@ public sealed class SqliteSessionRepository : ISessionRepository
 
     // The fixed series; an advanced one (schema 0023) is a row of the same table under a name that starts with 'adv.'.
     // In LIKE the dot is a literal and the only wildcard is the trailing %, so 'adv.%' is exactly that prefix.
+    // The input series (schema 0024) are rows of it too, under 'input.': a class's number and a controller's part are
+    // not sensor values, and they too mark a tick with nothing to say by NaN.
     private const string _selectSensors =
-        "SELECT series, hz, codec, data FROM sensor_blobs WHERE session_id = @sessionId AND series NOT LIKE 'adv.%' ORDER BY series";
+        "SELECT series, hz, codec, data FROM sensor_blobs WHERE session_id = @sessionId AND series NOT LIKE 'adv.%' AND series NOT LIKE 'input.%' ORDER BY series";
+
+    private const string _selectInputSensors =
+        "SELECT series, hz, codec, data FROM sensor_blobs WHERE session_id = @sessionId AND (series = 't_ms' OR series LIKE 'input.%') "
+        + "ORDER BY CASE WHEN series = 't_ms' THEN 0 ELSE 1 END, series";
 
     private const string _selectAdvancedSensors =
         "SELECT series, hz, codec, data FROM sensor_blobs WHERE session_id = @sessionId AND (series = 't_ms' OR series LIKE 'adv.%') "
@@ -215,6 +221,11 @@ public sealed class SqliteSessionRepository : ISessionRepository
     public ValueTask<IReadOnlyList<SensorBlob>> FindAdvancedSensorsAsync(long sessionId, CancellationToken ct = default) =>
         _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
             c, new CommandDefinition(_selectAdvancedSensors, new { sessionId }, cancellationToken: token),
+            static r => new SensorBlob { Series = r.GetString(0), Hz = r.GetDouble(1), Codec = r.GetString(2), Data = (byte[])r.GetValue(3) }), ct);
+
+    public ValueTask<IReadOnlyList<SensorBlob>> FindInputSensorsAsync(long sessionId, CancellationToken ct = default) =>
+        _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
+            c, new CommandDefinition(_selectInputSensors, new { sessionId }, cancellationToken: token),
             static r => new SensorBlob { Series = r.GetString(0), Hz = r.GetDouble(1), Codec = r.GetString(2), Data = (byte[])r.GetValue(3) }), ct);
 
     public ValueTask<AdvancedSessionRow?> FindAdvancedAsync(long sessionId, CancellationToken ct = default) =>

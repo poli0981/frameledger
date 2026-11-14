@@ -44,6 +44,13 @@ numeric core and does not move; the heading is the full version — corrected 20
   slices and turns them into a reading a second; `InputSessionBuilder` turns a session's readings into its totals, its
   controllers as JSON and its timeline. A telemetry sample can carry a reading; none does. **Every byte and reading
   under test was written by hand — no report from a real controller has passed through this code.**
+- **For developers: a session can store what it was played with — schema 0024** (D160; `docs/06_DATA_MODEL.md`). Nine
+  columns on `sessions` (the time in front and its four classes, the switches of method, the sources that answered,
+  the controllers as JSON) and three on `games` (what a store lists of controller support), ADD COLUMN only; the
+  `.partial` file gains chunk 11, so a session recovered after the Agent died keeps its readings; the finalizer
+  stores them for hooked and unhooked sessions alike; the input series are `sensor_blobs` rows named `input.*`, which
+  the sensors' read leaves out. Nothing produces a reading yet. **A ledger this build has opened cannot be opened by
+  0.1.0-beta.49 or earlier.**
 
 ### Changed
 

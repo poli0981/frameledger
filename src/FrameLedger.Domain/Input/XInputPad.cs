@@ -19,7 +19,6 @@ public static class XInputPad
     /// <summary><c>XINPUT_GAMEPAD_TRIGGER_THRESHOLD</c>.</summary>
     public const int TriggerThreshold = 30;
 
-    private const int _typeDisconnected = 0x00;
     private const int _typeWired = 0x01;
     private const int _typeAlkaline = 0x02;
     private const int _typeNimh = 0x03;
@@ -42,7 +41,8 @@ public static class XInputPad
     {
         _typeWired => BatteryReading.Wired,
         _typeAlkaline or _typeNimh => new BatteryReading(BatteryState.Discharging, BatteryScale.FourLevels, Math.Clamp(level, 0, _levelFull)),
-        _typeDisconnected => null,
+
+        // 0 is XInput's "disconnected" and 0xFF its "unknown": neither is a battery to show.
         _ => null,
     };
 

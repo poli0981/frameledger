@@ -143,6 +143,8 @@ public sealed class SeriesDigestTests
 
         public ValueTask<IReadOnlyList<SensorBlob>> FindAdvancedSensorsAsync(long sessionId, CancellationToken ct = default) => inner.FindAdvancedSensorsAsync(sessionId, ct);
 
+        public ValueTask<IReadOnlyList<SensorBlob>> FindInputSensorsAsync(long sessionId, CancellationToken ct = default) => inner.FindInputSensorsAsync(sessionId, ct);
+
         public ValueTask<AdvancedSessionRow?> FindAdvancedAsync(long sessionId, CancellationToken ct = default) => inner.FindAdvancedAsync(sessionId, ct);
 
         public ValueTask<long> InsertFinalizedAsync(FinalizedSession session, CancellationToken ct = default) => inner.InsertFinalizedAsync(session, ct);

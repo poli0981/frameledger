@@ -269,7 +269,7 @@ public sealed class PartialSessionFileAdvancedTests : IDisposable
     }
 
     /// <summary>One chunk as the format frames it: type, length, payload, then the IEEE CRC-32 of the first three.</summary>
-    private static byte[] Chunk(uint type, byte[] payload)
+    internal static byte[] Chunk(uint type, byte[] payload)
     {
         byte[] chunk = new byte[12 + payload.Length];
         BinaryPrimitives.WriteUInt32LittleEndian(chunk, type);
@@ -289,7 +289,7 @@ public sealed class PartialSessionFileAdvancedTests : IDisposable
         return chunk;
     }
 
-    private static List<int> ChunkOffsets(byte[] file)
+    internal static List<int> ChunkOffsets(byte[] file)
     {
         var offsets = new List<int>();
         for (int at = 0; at < file.Length; at += 12 + BitConverter.ToInt32(file, at + 4))
@@ -300,5 +300,5 @@ public sealed class PartialSessionFileAdvancedTests : IDisposable
         return offsets;
     }
 
-    private static uint[] ChunkTypes(byte[] file) => [.. ChunkOffsets(file).Select(at => BitConverter.ToUInt32(file, at))];
+    internal static uint[] ChunkTypes(byte[] file) => [.. ChunkOffsets(file).Select(at => BitConverter.ToUInt32(file, at))];
 }

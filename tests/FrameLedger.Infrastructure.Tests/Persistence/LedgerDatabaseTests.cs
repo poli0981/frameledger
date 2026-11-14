@@ -962,6 +962,79 @@ public sealed class LedgerDatabaseTests
         }
     }
 
+    /// <summary>
+    /// Schema 0024 (2026-11-14, owner decisions D155-D163): what a session was played with, nine columns of
+    /// <c>sessions</c>, and what a game's store lists of controller support, three of <c>games</c> - ADD COLUMN only. A
+    /// session and a game written before have none of them: N/A, never a zero.
+    /// </summary>
+    [Fact]
+    public async Task ScriptTwentyFourAddsTheInputColumnsAndAnEarlierSessionAndGameHaveNone()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(24);
+        long gameId = (await new SqliteGameRepository(f.Db).EnsureAsync(
+            new() { ExePath = @"C:\Games\A\a.exe", SizeBytes = 1, MtimeUnixMs = 2 }, "A", Ct).ConfigureAwait(true)).Id;
+        long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "g" }, DateTimeOffset.UnixEpoch, Ct)
+            .ConfigureAwait(true);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c23 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c23.ConfigureAwait(true))
+        {
+            await c23.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c23, 23).ConfigureAwait(true);
+            (await c23.ExecuteScalarAsync<long>(new CommandDefinition(
+                "SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name LIKE 'input!_%' ESCAPE '!'", cancellationToken: Ct)).ConfigureAwait(true))
+                .Should().Be(0, "a ledger at schema 23 has no input column");
+            await c23.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO sessions (session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, exit_status, frame_count, app_frame_count, displayed_frame_count, dropped_frames) "
+                + "VALUES ('00000000-0000-0000-0000-000000000024', @gameId, @snapshotId, 0, 60000, 60, 0, 10000000, 2, 'attach', 'normal', 0, 0, 0, 0)",
+                new { gameId, snapshotId }, cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            IReadOnlyList<string> sessionColumns = await migrated.ReadAsync(async (c, ct) => (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('sessions') WHERE name LIKE 'input!_%' ESCAPE '!' ORDER BY cid", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            IReadOnlyList<string> gameColumns = await migrated.ReadAsync(async (c, ct) => (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('games') WHERE name LIKE 'controller!_%' ESCAPE '!' ORDER BY cid", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            sessionColumns.Should().Equal(
+                "input_observed_ms", "input_foreground_ms", "input_controller_ms", "input_km_ms", "input_both_ms", "input_idle_ms", "input_method_switches", "input_source", "input_devices");
+            gameColumns.Should().Equal("controller_support", "controller_support_source", "controller_support_at");
+
+            var sessions = new SqliteSessionRepository(migrated);
+            SessionRow before = (await sessions.FindAsync(Guid.Parse("00000000-0000-0000-0000-000000000024"), Ct).ConfigureAwait(true))!;
+            before.InputObservedMs.Should().BeNull("a session recorded before the reading existed has none - N/A, never a zero");
+            before.InputForegroundMs.Should().BeNull();
+            before.InputMethodSwitches.Should().BeNull();
+            before.InputSource.Should().BeNull();
+            before.InputDevicesJson.Should().BeNull();
+            before.InputSharePercent(before.InputControllerMs).Should().BeNull();
+            (await sessions.FindInputSensorsAsync(before.Id, Ct).ConfigureAwait(true)).Should().BeEmpty();
+
+            GameRow game = (await new SqliteGameRepository(migrated).FindByIdAsync(gameId, Ct).ConfigureAwait(true))!;
+            game.ControllerSupport.Should().BeNull();
+            game.ControllerSupportSource.Should().BeNull();
+            game.ControllerSupportAt.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void ScriptTwentyFourOnlyAddsColumnsAndNamesNoIdentifier()
+    {
+        // D160: the numbers are columns of sessions on purpose - the trend, the comparison, the export and the bug bundle
+        // read a session's row. What may never be a column: a controller's serial number, its address, its path.
+        string sql = MigrationRunner.Scripts()[24];
+        string statements = string.Join('\n', sql.Split('\n').Where(static l => !l.TrimStart().StartsWith("--", StringComparison.Ordinal)).Select(static l => l.Split("--")[0]));
+
+        statements.Should().NotContainAny("CREATE", "DROP", "UPDATE", "DELETE");
+        statements.Should().NotContainAny("serial", "address", "path", "mac", "uuid");
+        Regex.Matches(statements, @"ALTER\s+TABLE\s+(?<table>\w+)\s+ADD\s+COLUMN", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1)).Select(static m => m.Groups["table"].Value)
+            .Distinct(StringComparer.Ordinal).Should().Equal("sessions", "games");
+    }
+
     [Fact]
     public void ScriptTwentyThreeAddsNoColumnToSessionsAndNamesNoIdentifier()
     {

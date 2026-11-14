@@ -130,7 +130,12 @@ internal sealed class FakeSessionRepository : ISessionRepository
 
     public ValueTask<IReadOnlyList<SensorBlob>> FindSensorsAsync(long sessionId, CancellationToken ct = default) =>
         ValueTask.FromResult<IReadOnlyList<SensorBlob>>(sessionId >= 1 && sessionId <= Stored.Count
-            ? [.. Stored[(int)sessionId - 1].Sensors.Where(static s => !s.Series.StartsWith("adv.", StringComparison.Ordinal))]
+            ? [.. Stored[(int)sessionId - 1].Sensors.Where(static s => !s.Series.StartsWith("adv.", StringComparison.Ordinal) && !s.Series.StartsWith("input.", StringComparison.Ordinal))]
+            : []);
+
+    public ValueTask<IReadOnlyList<SensorBlob>> FindInputSensorsAsync(long sessionId, CancellationToken ct = default) =>
+        ValueTask.FromResult<IReadOnlyList<SensorBlob>>(sessionId >= 1 && sessionId <= Stored.Count
+            ? [.. Stored[(int)sessionId - 1].Sensors.Where(static s => string.Equals(s.Series, "t_ms", StringComparison.Ordinal) || s.Series.StartsWith("input.", StringComparison.Ordinal))]
             : []);
 
     public ValueTask<IReadOnlyList<SensorBlob>> FindAdvancedSensorsAsync(long sessionId, CancellationToken ct = default) =>

@@ -3,8 +3,10 @@
 
 using System.Reflection;
 using FluentAssertions;
+using FrameLedger.Application.Input;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
+using FrameLedger.Domain.Input;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Shared;
 
@@ -217,6 +219,71 @@ public sealed class SessionFinalizerTests
         SensorSeriesStats.Parse(null).Should().BeEmpty();
         SensorSeriesStats.Parse("{not json").Should().BeEmpty("text this build cannot read is no statistics, never a throw into the UI");
     }
+
+    /// <summary>
+    /// What a session was played with (D155-D163) is read by the Agent from outside the game, so a session that was not
+    /// hooked has it as a hooked one does: the totals on the row, the series beside the sensors'.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void BothTiersStoreWhatTheSessionWasPlayedWith(bool hooked)
+    {
+        (SessionFinalizer finalizer, _) = Make();
+        List<Application.Telemetry.TelemetrySample> sensors = SessionFixtures.Sensors(3);
+        var pad = new InputDevice { Id = 1, Family = ControllerFamily.Xbox, XInputSlot = 0 };
+        sensors[0] = sensors[0] with { Input = Played(controller: 1000, pad) };
+        sensors[2] = sensors[2] with { Input = Played(controller: 0, pad) with { KeyboardMouseMs = 700, IdleMs = 300 } };
+
+        FinalizedSession built = finalizer.Build(hooked
+            ? new FinalizeInput { Skeleton = SessionFixtures.Skeleton(), Hooked = SessionFixtures.Hooked(SessionFixtures.Stream(600, FlMeasured.None)), Sensors = sensors }
+            : new FinalizeInput { Skeleton = SessionFixtures.Skeleton(tier: CaptureTier.NotHooked), Sensors = sensors });
+
+        built.Row.Tier.Should().Be(hooked ? CaptureTier.Hooked : CaptureTier.NotHooked);
+        built.Row.InputObservedMs.Should().Be(2000);
+        built.Row.InputForegroundMs.Should().Be(2000);
+        built.Row.InputControllerMs.Should().Be(1000);
+        built.Row.InputKeyboardMouseMs.Should().Be(700);
+        built.Row.InputBothMs.Should().Be(0);
+        built.Row.InputIdleMs.Should().Be(300);
+        built.Row.InputMethodSwitches.Should().Be(1);
+        built.Row.InputSource.Should().Be("rawinput+lastinput");
+        built.Row.InputSharePercent(built.Row.InputControllerMs).Should().Be(50);
+        InputDevicesRecord.Parse(built.Row.InputDevicesJson)!.Devices.Should().ContainSingle().Which.XInputSlot.Should().Be(0);
+        built.Sensors.Select(static s => s.Series).Should().Contain(["t_ms", "input.class", "input.dev.1.active"]);
+        float[] timeline = RawSeriesCodec.Floats(built.Sensors.Single(static s => string.Equals(s.Series, "input.class", StringComparison.Ordinal)).Data);
+        timeline[0].Should().Be((float)InputClass.Controller);
+        float.IsNaN(timeline[1]).Should().BeTrue("the tick the reader took no slice in");
+        timeline[2].Should().Be((float)InputClass.KeyboardMouse);
+    }
+
+    [Fact]
+    public void ASessionWithNoInputReadingKeepsEveryInputColumnNullAndStoresNoInputSeries()
+    {
+        (SessionFinalizer finalizer, _) = Make();
+
+        FinalizedSession built = finalizer.Build(new FinalizeInput { Skeleton = SessionFixtures.Skeleton(tier: CaptureTier.NotHooked), Sensors = SessionFixtures.Sensors(3) });
+
+        built.Row.InputObservedMs.Should().BeNull("the option was off, or the terms that describe the reading were not accepted yet: N/A, never a zero");
+        built.Row.InputForegroundMs.Should().BeNull();
+        built.Row.InputControllerMs.Should().BeNull();
+        built.Row.InputMethodSwitches.Should().BeNull();
+        built.Row.InputSource.Should().BeNull();
+        built.Row.InputDevicesJson.Should().BeNull();
+        built.Sensors.Should().NotContain(static s => s.Series.StartsWith("input.", StringComparison.Ordinal));
+    }
+
+    private static InputReading Played(int controller, InputDevice pad) => new()
+    {
+        SpanMs = 1000,
+        ObservedMs = 1000,
+        ForegroundMs = 1000,
+        ControllerMs = controller,
+        IdleMs = 1000 - controller,
+        Devices = [new InputDeviceReading(pad.Id, Connected: true, ActiveMs: controller, Battery: null, Connects: 0, Disconnects: 0)],
+        Table = [pad],
+        Health = new InputHealth { RawInputRegistered = true, LastInputAvailable = true },
+    };
 
     [Fact]
     public async Task TooShortIsDiscardedAndNothingIsWritten()

@@ -61,6 +61,12 @@ public sealed class SessionFinalizer
         // hooked has them all the same. Nothing when the option was off - no series, no row.
         double hz = SampleRate(input.Sensors, row.QpcFrequency);
         (IReadOnlyList<SensorBlob> advancedBlobs, AdvancedSessionRow? advanced) = AdvancedSessionBuilder.Build(input.Sensors, input.Advanced, _codec, hz);
+
+        // What the session was played with (D155-D163), both tiers and for the same reason: the Agent reads it from outside
+        // the game. From the samples alone, so a session recovered from its .partial file has it. Nothing when no sample
+        // carries a reading - the option was off, or the terms that describe the reading were not accepted yet.
+        (IReadOnlyList<SensorBlob> inputBlobs, InputSessionSummary? played) = InputSessionBuilder.Build(input.Sensors, _codec, hz);
+        row = WithInput(row, played);
         if (input.Hooked is null)
         {
             // A Tier-2 row has no frames and every sensor the machine provided (2026-09-22): the same averages a
@@ -68,7 +74,7 @@ public sealed class SessionFinalizer
             return new FinalizedSession
             {
                 Row = SessionAggregator.WithSensorAggregates(row with { Tier = CaptureTier.NotHooked }, input.Sensors),
-                Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency, hz), .. advancedBlobs],
+                Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency, hz), .. advancedBlobs, .. inputBlobs],
                 Advanced = advanced,
             };
         }
@@ -83,10 +89,26 @@ public sealed class SessionFinalizer
             {
                 FirstPresentMs = FirstPresentMs(r.Dominant, row.QpcEpoch, row.QpcFrequency),
             },
-            Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency, hz), .. advancedBlobs],
+            Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency, hz), .. advancedBlobs, .. inputBlobs],
             Advanced = advanced,
         };
     }
+
+    /// <summary>The row with what the session was played with (schema 0024); unchanged when nothing was read.</summary>
+    private static SessionRow WithInput(SessionRow row, InputSessionSummary? played) => played is null
+        ? row
+        : row with
+        {
+            InputObservedMs = played.ObservedMs,
+            InputForegroundMs = played.ForegroundMs,
+            InputControllerMs = played.ControllerMs,
+            InputKeyboardMouseMs = played.KeyboardMouseMs,
+            InputBothMs = played.BothMs,
+            InputIdleMs = played.IdleMs,
+            InputMethodSwitches = played.MethodSwitches,
+            InputSource = played.Source,
+            InputDevicesJson = played.DevicesJson,
+        };
 
     /// <summary>
     /// The rate the session's samples had, a second (owner decision D146): the gaps between the first and the last
