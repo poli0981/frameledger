@@ -169,15 +169,15 @@ public sealed class InputPresentationTests
     [Fact]
     public void WhatTheReaderCouldNotDoIsSaid() => In("en", () =>
     {
-        InputPresentation.Notes(Played(), InputFixtures.Record()).Should().BeEmpty("every source worked and Windows showed no pad twice");
-        InputPresentation.Notes(Played(), null).Should().BeEmpty();
+        InputPresentation.Notes(InputFixtures.Record()).Should().BeEmpty("every source worked and Windows showed no pad twice");
+        InputPresentation.Notes(null).Should().BeEmpty();
 
         InputDevicesRecord broken = InputFixtures.Record() with
         {
             VirtualPad = true,
             Health = new InputHealth { RawInputRegistered = false, XInputAvailable = false, LastInputAvailable = false, Faults = 3 },
         };
-        IReadOnlyList<string> notes = InputPresentation.Notes(Played(), broken);
+        IReadOnlyList<string> notes = InputPresentation.Notes(broken);
         notes.Should().HaveCount(5);
         notes[0].Should().StartWith("Steam Input, or another remapper,");
         notes[1].Should().StartWith("Windows did not accept the registration");
