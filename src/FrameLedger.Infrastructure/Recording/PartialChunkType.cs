@@ -49,4 +49,12 @@ internal enum PartialChunkType
     /// last one wins.
     /// </summary>
     AdvancedContext = 10,
+
+    /// <summary>
+    /// The input readings of the samples of the <see cref="SensorsWide"/> chunk before it (owner decisions D155-D163):
+    /// <c>InputSampleCodec</c> - per sample its QPC, how its time in front divides between a controller, the keyboard
+    /// and mouse, both and neither, and each controller's part with what the controller is. Written only when a sample
+    /// of the batch carries one, so a session recorded with the option off has none.
+    /// </summary>
+    SensorsInput = 11,
 }

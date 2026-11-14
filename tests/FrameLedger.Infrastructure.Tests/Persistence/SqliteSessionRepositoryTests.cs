@@ -111,6 +111,15 @@ public sealed class SqliteSessionRepositoryTests
         AppFramesPerJoule = 0.3125,
         RuntimeModuleSourcesJson = "{\"nvngx_dlss.dll\":\"graphics_driver\"}",
         DlssNrPct = 97.25,
+        InputObservedMs = 5_400_000,
+        InputForegroundMs = 5_000_000,
+        InputControllerMs = 3_500_000,
+        InputKeyboardMouseMs = 900_000,
+        InputBothMs = 100_000,
+        InputIdleMs = 500_000,
+        InputMethodSwitches = 4,
+        InputSource = "rawinput+xinput+lastinput",
+        InputDevicesJson = "{\"V\":1,\"Devices\":[{\"Index\":1,\"Family\":\"playstation\",\"Model\":\"DualSense\"}]}",
         FgMixJson = "{\"Rows\":[{\"Kind\":\"generated\",\"Factor\":3.99,\"NativeFps\":70.5,\"DisplayedFps\":281.3,\"Seconds\":120,\"Share\":0.75,\"Windows\":24}]}",
     };
 
@@ -545,6 +554,34 @@ public sealed class SqliteSessionRepositoryTests
         float[] rail = SeriesCodec.DecodeFloat32(series[1].Data.ToArray());
         rail[0].Should().Be(-11.97f, "a negative reading is a reading");
         float.IsNaN(rail[1]).Should().BeTrue("a tick with no reading is NaN");
+    }
+
+    [Fact]
+    public async Task TheInputSeriesAreReadOnTheirOwnAndTheFixedReadNeverSeesThem()
+    {
+        // Schema 0024 (D155-D163). The input series are rows of sensor_blobs too, and the read every summary and chart
+        // uses leaves them out: a class's number is not a sensor's value, and NaN marks a tick with nothing to say.
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        var repo = new SqliteSessionRepository(f.Db);
+        SensorBlob[] sensors =
+        [
+            .. SensorsWithAdvanced(),
+            new() { Series = "input.class", Hz = 1, Codec = SeriesCodec.Tag, Data = SeriesCodec.EncodeSparseFloat32([1f, float.NaN, 2f]) },
+            new() { Series = "input.dev.1.active", Hz = 1, Codec = SeriesCodec.Tag, Data = SeriesCodec.EncodeSparseFloat32([1f, float.NaN, 0f]) },
+        ];
+
+        long id = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId), Sensors = sensors, Advanced = Advanced() }, Ct);
+        long without = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000)), Sensors = [.. SensorsWithAdvanced().Take(2)] }, Ct);
+
+        (await repo.FindSensorsAsync(id, Ct)).Select(static s => s.Series).Should().Equal("gpu_temp", "t_ms");
+        (await repo.FindAdvancedSensorsAsync(id, Ct)).Select(static s => s.Series).Should().NotContain(static s => s.StartsWith("input.", StringComparison.Ordinal));
+        IReadOnlyList<SensorBlob> series = await repo.FindInputSensorsAsync(id, Ct);
+        series.Select(static s => s.Series).Should().Equal("t_ms", "input.class", "input.dev.1.active");
+        float[] timeline = SeriesCodec.DecodeFloat32(series[1].Data.ToArray());
+        timeline[0].Should().Be(1f);
+        float.IsNaN(timeline[1]).Should().BeTrue("a tick with the game not in front has no class");
+        (await repo.FindInputSensorsAsync(without, Ct)).Select(static s => s.Series).Should().Equal("t_ms");
     }
 
     [Fact]

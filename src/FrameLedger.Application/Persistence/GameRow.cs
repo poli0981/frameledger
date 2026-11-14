@@ -128,6 +128,19 @@ public sealed record GameRow
     /// </summary>
     public AntiCheatExceptionState AcException { get; init; } = AntiCheatExceptionState.None;
 
+    /// <summary>
+    /// What the store's own file on the disk says of controller support (schema 0024, D163): <c>full</c>, <c>partial</c>,
+    /// or <c>none</c> for a game the store knows and lists no support for. Null when no store file describes the game or
+    /// none was read yet. It is the store's word, one of three pieces of evidence - never a verdict of FrameLedger's.
+    /// </summary>
+    public string? ControllerSupport { get; init; }
+
+    /// <summary>The file <see cref="ControllerSupport"/> was read from: <c>steam-appinfo</c> (schema 0024).</summary>
+    public string? ControllerSupportSource { get; init; }
+
+    /// <summary>When <see cref="ControllerSupport"/> was read (schema 0024).</summary>
+    public DateTimeOffset? ControllerSupportAt { get; init; }
+
     public bool InLibrary => RemovedAt is null;
 
     /// <summary>

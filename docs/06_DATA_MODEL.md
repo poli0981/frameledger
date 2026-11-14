@@ -342,7 +342,25 @@ CREATE TABLE sessions (
   display_source TEXT,                         -- swapchain | opengl | window: the strongest witness any sample had
   display_window_w INTEGER, display_window_h INTEGER,     -- client area, in the mode that lasted longest (the last seen, beta.27)
   display_buffer_w INTEGER, display_buffer_h INTEGER,     -- the swap chain's back buffer, same mode
-  display_monitor_w INTEGER, display_monitor_h INTEGER, display_monitor_hz INTEGER
+  display_monitor_w INTEGER, display_monitor_h INTEGER, display_monitor_hz INTEGER,
+
+  -- schema 0024 (2026-11-14, beta.50, D155-D163): what the session was played with, both tiers (03_METRICS §Input) -
+  -- read by the Agent from outside the game. Milliseconds. NULL before, with the option off, and before the terms
+  -- that describe the reading were accepted - N/A, never 0. From the samples, so a recovered session has them.
+  input_observed_ms INTEGER,                   -- the reader ran and the session was not paused
+  input_foreground_ms INTEGER,                 -- of it, a window of the game was in front: the four below add up to this
+  input_controller_ms INTEGER,                 -- a controller in use, the keyboard and mouse not
+  input_km_ms INTEGER,                         -- the keyboard or mouse in use (one class - only a time is read), no controller
+  input_both_ms INTEGER,
+  input_idle_ms INTEGER,                       -- no input at all
+  input_method_switches INTEGER,               -- changes between a controller and the keyboard and mouse
+  input_source TEXT,                           -- the sources that answered: rawinput, xinput, lastinput, joined by +
+  input_devices TEXT                           -- InputDevicesRecord's JSON: {"V":1,"Devices":[{"Index","Family","VendorId",
+                                               --   "ProductId","Model","Connection","XInputSlot","Virtual","Remapped",
+                                               --   "ConnectedMs","ActiveMs","Connects","Disconnects","Battery":{"Scale",
+                                               --   "States":[{"State","Level","Ms"}],"First","Last","DrainPercentPerHour"}}],
+                                               --   "Families":[{"Family","ActiveMs","Share"}],"FamilySwitches","VirtualPad",
+                                               --   "Health":{...counts...}} - no serial number, no address, no path
 );
 CREATE INDEX ix_sessions_game_started ON sessions(game_id, started_at DESC);
 
@@ -402,6 +420,12 @@ CREATE TABLE sensor_blobs (
                                    -- since schema 0023 (2026-11-11, D102) also the ADVANCED series, every one under a name
                                    -- that starts with `adv.` (Application.Advanced.AdvancedMetricCatalog): NaN, not -1,
                                    -- for a tick with no reading, and read by FindAdvancedSensorsAsync only
+                                   -- since schema 0024 (2026-11-14, D155-D163) also the INPUT series, every one under a
+                                   -- name that starts with `input.`: input.class (what the tick was mostly played with:
+                                   -- 0 no input, 1 controller, 2 keyboard and mouse, 3 both), input.dev.N.active (the
+                                   -- part of the tick's time in front controller N was in use, 0-1) and
+                                   -- input.dev.N.battery (its level, in its own scale) - NaN for a tick with nothing to
+                                   -- say, and read by FindInputSensorsAsync only
                                    -- cpu_load / ram_mb / cpu_temp and sessions.avg_cpu_load, avg_cpu_temp, max_cpu_temp,
                                    -- avg_ram_mb were in schema 0001 with NO producer until 2026-09-21 (Telemetry.SystemTelemetrySource
                                    -- on the poller's tick). Rows before that date hold NULL, which is what they measured; no migration.
@@ -528,6 +552,15 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 > (`AdvancedSessionBuilder.MaxSeries`); what is beyond is counted in its directory, not stored.
 > **Size, measured 2026-11-11** on values shaped like the dev box's reader (17 series with a reading every tick, 41
 > with one every fifth): one hour is 816 KiB raw and **189 KiB stored** — well inside NFR-5's 3 MB an hour.
+>
+> **The input series follow the same rule under their own name (schema 0024, owner decisions D155–D163).** A series
+> whose name starts with `input.` stores NaN for a tick with nothing to say — the game was not in front, the
+> controller was not connected, the tick carried no reading — through the same sparse encoder. `FindSensorsAsync`
+> leaves them out as well (`series NOT LIKE 'input.%'`): a class's number is not a sensor's value, and the sensors'
+> statistics and chart would take it for one. `FindInputSensorsAsync` returns them with `t_ms` first. A session
+> stores `input.class` and, for each of its first eight controllers (`InputSessionBuilder.MaxDevices`),
+> `input.dev.N.active` and — where the battery has a level — `input.dev.N.battery`: at most seventeen, a few KiB an
+> hour stored.
 
 ## The `.partial` file
 
@@ -552,6 +585,7 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 > | 8 `SensorsWide` | the same samples under a 32-bit presence mask that carries the game process's memory (D43) | each flush, since beta.12 *(row added 2026-10-04)* |
 > | 9 `SensorsAdvanced` | the advanced readings of the samples of the type-8 chunk before it (D101): `u16` names, then per name `u16` bytes and UTF-8; `u32` samples, then per sample `i64` QPC, `u16` readings and per reading `u16` name, `f64` value. Each chunk carries its own names, so it reads without any earlier chunk | each flush **in which a sample carries any** — with Advanced metrics off, never; the file is then byte for byte what it was (2026-11-11) |
 > | 10 `AdvancedContext` | UTF-8 JSON (`AdvancedJson.OfContext`): the PC's facts, the session's, its series' directory, each source's state; the last one wins | the first flush after the recorder set it, and again only when it changed (2026-11-11) |
+> | 11 `SensorsInput` | the input readings of the samples of the type-8 chunk before it (D155–D163, `InputSampleCodec`): `u32` samples, then per sample `i64` QPC, seven `i32` (span, observed, in front, controller, keyboard and mouse, both, no input), `u8` flags, the reader's health (`u8` answers, six `i64` counts, `i32` faults), `u8` controllers and 23 bytes a controller — what it is (maker, the two USB ids, connection, XInput pad) and its part of the tick (connected, time in use, battery, connections, drops). Each sample describes every controller it counts, so a chunk reads without any earlier one | each flush **in which a sample carries one** — with the option off, never; the file is then byte for byte what it was (2026-11-14) |
 >
 > **A chunk of a type the reader does not know is skipped, not the end of the file (owner decision D106,
 > 2026-11-11).** Its length and checksum have been verified by then, so it is a whole chunk a newer build wrote.
@@ -801,6 +835,28 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > undoes a script's `CREATE TABLE` and `CREATE INDEX` as well as its `ADD COLUMN`), the repository's four cases.
 > **Nothing produces a row yet**: the option that switches the reader on is the next pull request's.
 > **A beta.38 cannot open a ledger a later build migrated.**
+
+> **`0024_input_devices.sql` (0.1.0-beta.50, 2026-11-14, owner decisions D155–D163) — what a session was played
+> with, and what a store lists.** ADD COLUMN only, twelve columns. **Nine on `sessions`**: `input_observed_ms`,
+> `input_foreground_ms` and the four classes that add up to it (`input_controller_ms`, `input_km_ms`,
+> `input_both_ms`, `input_idle_ms`), `input_method_switches`, `input_source`, and `input_devices` — the session's
+> controllers as `Application.Recording.InputDevicesRecord`'s JSON (`03_METRICS` §Input). **On `sessions` and not in
+> a table of their own, on purpose** (D160) — the opposite of 0023's choice, for the opposite reason: the trend and
+> the comparison read a session's row, and these numbers are meant to be in the JSON export and the bug bundle,
+> which carry the whole row; the Privacy Policy's §3A says so. What may never be a column or a key of that JSON: a
+> controller's serial number, its Bluetooth address, its device path
+> (`LedgerDatabaseTests.ScriptTwentyFourOnlyAddsColumnsAndNamesNoIdentifier`,
+> `InputSessionBuilderTests.TheStoredJsonHasNoKeyThatCouldCarryASerialNumberAnAddressOrAPath`). **Three on
+> `games`**: `controller_support` (`full`, `partial`, or `none` for a game the store knows and lists no support
+> for), `controller_support_source` (`steam-appinfo`) and `controller_support_at` — the store's own word, from its
+> file on the disk, never a verdict of FrameLedger's (D163). Written by `SessionFinalizer.Build` from the session's
+> samples, before the tier branch — both tiers, and a session recovered from its crash file, which carries the
+> readings in chunk 11. NULL before; with the option off; before the terms that describe the reading were accepted
+> (D156); on a game no store file describes. The series are `sensor_blobs` rows named `input.*` (§Blob encoding).
+> `LatestVersion` is 24; `LedgerDatabaseTests.ScriptTwentyFourAddsTheInputColumnsAndAnEarlierSessionAndGameHaveNone`,
+> the repository round trip. **Nothing produces a reading yet, and nothing writes the three `games` columns yet**:
+> the reader, the switch and the store file are the pull requests after this one.
+> **A beta.49 cannot open a ledger a later build migrated.**
 
 > **`0022_dlss_nr.sql` (beta.34, 2026-11-06, owner decision D84) — DLSS 5's neural rendering, measured.** One REAL column,
 > ADD COLUMN only: `dlss_nr_pct`, the share (0–100) of the presents that drained a Streamline evaluation on which the game

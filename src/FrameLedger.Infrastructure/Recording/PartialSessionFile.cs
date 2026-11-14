@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using FrameLedger.Application.Advanced;
+using FrameLedger.Application.Input;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Telemetry;
 using FrameLedger.Shared;
@@ -166,6 +167,7 @@ public static class PartialSessionFile
                 PartialChunkType.Touches => Int64s(payload, _touches),
                 PartialChunkType.SensorsAdvanced => AdvancedSensors(payload),
                 PartialChunkType.AdvancedContext => AdvancedContext(payload),
+                PartialChunkType.SensorsInput => InputSensors(payload),
 
                 // A type this build does not know, in a chunk whose length and checksum are right (TryReadChunk has
                 // verified both): a newer build wrote it, and it is passed over (owner decision D106, 2026-11-11).
@@ -302,6 +304,30 @@ public static class PartialSessionFile
             return true;
         }
 
+        /// <summary>The input readings of samples already read, attached as <see cref="AdvancedSensors"/> attaches its own: by QPC, to the last sample that has none yet.</summary>
+        private bool InputSensors(ReadOnlySpan<byte> payload)
+        {
+            var read = new List<(long Qpc, InputReading Reading)>();
+            if (!InputSampleCodec.TryRead(payload, read))
+            {
+                return false;
+            }
+
+            foreach ((long qpc, InputReading reading) in read)
+            {
+                for (int i = _sensors.Count - 1; i >= 0; i--)
+                {
+                    if (_sensors[i].QpcTicks == qpc && _sensors[i].Input is null)
+                    {
+                        _sensors[i] = _sensors[i] with { Input = reading };
+                        break;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         private bool AdvancedContext(ReadOnlySpan<byte> payload)
         {
             _advancedContext = Encoding.UTF8.GetString(payload);
@@ -404,6 +430,12 @@ public static class PartialSessionFile
             if (AdvancedSampleCodec.Write(samples) is byte[] advanced)
             {
                 Append(PartialChunkType.SensorsAdvanced, advanced);
+            }
+
+            // And the input readings, the same way and for the same reason (D155-D163).
+            if (InputSampleCodec.Write(samples) is byte[] input)
+            {
+                Append(PartialChunkType.SensorsInput, input);
             }
         }
 
