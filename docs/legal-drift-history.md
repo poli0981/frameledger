@@ -63,7 +63,7 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
-### What version 2.20 of the Privacy Policy and 2.16 of the Disclaimer changed (train C; the release after 0.1.0-beta.46)
+### What version 2.20 of the Privacy Policy and 2.16 of the Disclaimer changed (0.1.0-beta.47, train C)
 
 **The part inside a game makes a call of its own** (owner decisions D132, D136, D138–D141; the wording's main
 points approved with the plan of 2026-11-13). Every earlier version could say that the component reads only what a

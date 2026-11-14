@@ -811,7 +811,7 @@ public enum FlAdvancedValid : uint
     SlShutdown = 1u << 6,
 
     /// <summary>
-    /// Train C (declared 2026-11-13, written by nothing yet): a read of the driver's latency report returned OK for
+    /// Train C (0.1.0-beta.47): a read of the driver's latency report returned OK for
     /// this request. Not one of the game's calls: the Overlay makes this read itself, and
     /// <see cref="FlAdvancedState.LatState"/> says where it stands even while this bit is clear.
     /// </summary>
@@ -929,7 +929,7 @@ public unsafe struct FlAdvancedState
     public ulong SampleQpc;
 
     /// <summary>
-    /// Reflex latency (train C, declared 2026-11-13; the ten words that were <c>ReservedHeader</c>). The low byte is a
+    /// Reflex latency (train C, 0.1.0-beta.47; the ten words that were <c>ReservedHeader</c>). The low byte is a
     /// <see cref="FlLatencyState"/>; above it the driver's sleep status as seen (<see cref="LatSleepSeenOnShift"/>,
     /// <see cref="LatSleepSeenOffShift"/>, <see cref="LatFgMultiplierShift"/>). Zero in a process nobody asked.
     /// </summary>
