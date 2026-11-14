@@ -4,11 +4,12 @@ What FrameLedger reads about game controllers and about the keyboard and mouse, 
 The numbers a session makes of it are in [`03_METRICS.md`](03_METRICS.md) §Input; the columns are in
 [`06_DATA_MODEL.md`](06_DATA_MODEL.md).
 
-> **Status, 2026-11-14 — nothing reads a device yet.** The model and the arithmetic exist (`FrameLedger.Domain.Input`,
-> `FrameLedger.Application.Input`, `Application.Recording.InputSessionBuilder`), under tests whose every byte and
-> reading was written by hand; and a session can store what it is given — schema 0024, the `.partial` file's chunk
-> 11, the finalizer for both tiers (`06_DATA_MODEL`). The reader, the switch and the screens come in the pull
-> requests after it, and this note is rewritten by each. **No report from a real controller has passed through any of this code**
+> **Status, 2026-11-14 — the reader exists and the Agent does not start it yet.** The model and the arithmetic
+> (`FrameLedger.Domain.Input`, `FrameLedger.Application.Input`, `Application.Recording.InputSessionBuilder`), the
+> storage (schema 0024, the `.partial` file's chunk 11, the finalizer for both tiers — `06_DATA_MODEL`) and the reader
+> itself (`Application.Input.InputReader`, `Infrastructure.Input`) are written and under test. Nothing composes the
+> reader into the Agent: the switch, the terms and the screens come in the pull requests after this one, and this
+> note is rewritten by each. **No report from a real controller has passed through any of this code**
 > (owner decision D157): the developer has no controller, and what happens on a real one is owner-only item 48.
 
 ## The owner's request and decisions (2026-11-14)
@@ -36,8 +37,7 @@ Everything is a Windows API in a library Windows ships. **No third-party library
 
 | Source | What it gives | Why this one |
 |---|---|---|
-| Raw Input (`RegisterRawInputDevices`, usage page 1, usages 4 and 5, `RIDEV_INPUTSINK \| RIDEV_DEVNOTIFY`) | the reports game controllers send, while the Agent is in the background; a controller arriving and leaving; its vendor and product ids | the documented way to receive a HID controller's reports without being in front, and it opens no handle to the device |
-| `hid.dll`'s parser (`HidP_GetCaps`, `HidP_GetUsages`, `HidP_GetUsageValue`) | which usages of a report are set | a parser, not I/O: it reads the bytes Raw Input handed over |
+| Raw Input (`RegisterRawInputDevices`, usage page 1, usages 4 and 5, `RIDEV_INPUTSINK \| RIDEV_DEVNOTIFY`; `GetRawInputBuffer`, `GetRawInputData`, `GetRawInputDeviceInfo`, `GetRawInputDeviceList`) | the reports game controllers send, while the Agent is in the background; a controller arriving and leaving; its vendor and product ids | the documented way to receive a HID controller's reports without being in front, and it opens no handle to the device |
 | XInput 1.4 (`XInputGetState`, `XInputGetCapabilities`, `XInputGetBatteryInformation`) | each of its four pads: its state, wired or wireless, a battery in four levels | what an Xbox pad's battery is reported through |
 | `GetLastInputInfo` | the time of the last keyboard or mouse input in the user's session | a time and nothing else (D158) |
 | `GetForegroundWindow`, `GetWindowThreadProcessId` | whose window is in front | already used for the focus sample (`04_CAPTURE`) |
@@ -51,6 +51,10 @@ Everything is a Windows API in a library Windows ships. **No third-party library
   remapper's, exclusive open of it fail. Raw Input needs none.
 - **A sixth native library** — parsing bytes a device controls in C++, inside an Agent that may run as administrator.
   The reader is C#, and what parses a report is `FrameLedger.Domain.Input`, with no pointer in it.
+- **Windows' own HID parser** (`hid.dll`'s `HidP_*`), to read *any* controller generically. It would have let a
+  controller of a maker this build does not know count as *in use* — and nothing here could be tried on one. A
+  controller whose layout this build does not know is listed, with its connections and drops, and is never *in
+  use*: a guess would be a made-up number (§The reader).
 
 ## What is never read
 
@@ -99,6 +103,49 @@ arrives padded to 78 bytes with the id the USB report has: the connection, not t
 
 The layout was written from the open descriptions of the protocol. No code was taken from the Linux kernel's driver,
 which is under a licence this project cannot take code from.
+
+## The reader
+
+`Application.Input.InputReader` over `Infrastructure.Input.Win32InputBackend`, on the thread of
+`Infrastructure.Input.InputDeviceHub` — named `fl-input`, and **there only while a session has a view of the hub**:
+with no session there is no thread, no window and no registration.
+
+**A slice, about ten times a second.** The reader takes what Windows has: the controllers that came and went, the
+reports that arrived (in bulk — `GetRawInputBuffer` — not one message at a time: a DualSense sends some hundreds a
+second, and the Agent's whole budget is 2.5 % of one core, NFR-2), the state of XInput's connected pads, the time of
+the last keyboard or mouse input, and the process whose window is in front. From that it makes one `InputSlice`,
+the same for every session that is running; each session's view counts it when a window of *its* game was in front
+(`Application.Input.InputTickAccumulator`), and the telemetry poller takes the sum once a second.
+
+**The window.** Raw input is delivered to a window. The reader's is a child of `HWND_MESSAGE`: never shown, in no
+task bar, receiving no broadcast, answered by Windows' default procedure. It is registered for HID usage page 1,
+usages 4 (joystick) and 5 (gamepad) — `InputReader.RegisteredUsages` — and for nothing else.
+
+**What a controller is.** Each of XInput's pads that is connected is one; each controller Windows does *not* present
+through XInput is one. A device Windows presents through XInput is also seen by raw input and is **not** a second
+controller: it gives the pads their name where that cannot be mistaken — every XInput-class device a player could
+hold has the same two ids — and is otherwise only the witness of the next paragraph. An empty XInput slot is asked
+about once in twenty slices (XInput looks for a device each time) and at once when a controller arrives or leaves;
+a connected pad's battery once in fifty.
+
+**Where XInput says nothing.** If XInput returns a pad at rest for ever because the Agent's window is never in front
+(§XInput), the device's own reports are the evidence: a slice in which an XInput-class device's reports *changed*
+while no pad's packet number moved — in that slice or the one before — is counted (`XInputSilent`). After ten of
+them, **and only if XInput has never once been seen to move**, such a slice counts the lowest connected pad as in
+use. That is coarser than XInput's dead zones — a stick that drifts counts — and is used only where the better
+source is silent; a session's stored counts say which it was.
+
+**Which controllers are read for use.** XInput's pads, and a DualSense by its own reports. Any other controller —
+a DualShock 4, a Switch Pro controller — is listed with its connections and drops and is never *in use*.
+
+**Faults.** A slice that throws is counted and skipped; twenty in a row end the run with one line in the Agent's
+log, and the sessions go on without readings. When a run ends, one line says what it did: slices, whether Windows
+accepted the registration, reports received and not read, XInput's reads and silent slices, whether the time of the
+last input could be read, the thread's processor time, faults. Nothing in it names a device.
+
+**Held by a gate.** `tools/input-readonly-check.ps1` (`12_BUILD` step 14g): the reader's calls are a committed list,
+none of which sends to a device, injects input or reads a key; no other managed source and no native source names
+an input function.
 
 ## What the reader says about itself
 

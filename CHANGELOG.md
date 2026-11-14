@@ -51,6 +51,16 @@ numeric core and does not move; the heading is the full version — corrected 20
   stores them for hooked and unhooked sessions alike; the input series are `sensor_blobs` rows named `input.*`, which
   the sensors' read leaves out. Nothing produces a reading yet. **A ledger this build has opened cannot be opened by
   0.1.0-beta.49 or earlier.**
+- **For developers: the input reader, which the Agent does not start yet** (D155, D158, D159; `docs/21_INPUT_DEVICES.md`
+  §The reader). `Application.Input.InputReader` takes a slice about ten times a second from
+  `Infrastructure.Input.Win32InputBackend` — raw input for joysticks and gamepads delivered to a window that is never
+  shown, three of XInput's getters, the time of the last keyboard or mouse input, the window in front — on the thread
+  of `InputDeviceHub`, which exists only while a session has a view of it. It opens no device, sends nothing to one,
+  and registers for no keyboard or mouse. A new gate, `tools/input-readonly-check.ps1`, holds the reader's Windows
+  calls to a committed list and refuses, on the list or off it, a call that sends to a device, injects input or reads
+  a key; no other managed source and no native source may name an input function. **With no controller at hand, what
+  the reader does with one connected is not established**: its tests use a Windows whose answers they write, and one
+  suite runs it on the real Windows of the machine and asserts only that it opens, answers and closes.
 
 ### Changed
 

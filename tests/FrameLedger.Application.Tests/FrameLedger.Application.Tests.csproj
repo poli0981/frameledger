@@ -29,4 +29,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- Windows as the input reader asks it, with every answer written by the test (D157): shared with the other suites that drive the reader. -->
+  <ItemGroup>
+    <Compile Include="..\Shared\FakeInputBackend.cs" Link="Shared\FakeInputBackend.cs" />
+  </ItemGroup>
+
 </Project>
