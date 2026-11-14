@@ -3,6 +3,7 @@
 
 using System.Runtime.InteropServices;
 using FrameLedger.Application.Advanced;
+using FrameLedger.Application.Input;
 
 namespace FrameLedger.Application.Telemetry;
 
@@ -32,5 +33,11 @@ namespace FrameLedger.Application.Telemetry;
 /// was new at this poll, or null — the option is off, or that reader published nothing since the last poll. Null on
 /// every sample recorded before it existed. Never a repeat of an earlier tick's readings: a reading is of one tick.
 /// </param>
+/// <param name="Input">
+/// What the input reader saw for this session since the sample before (owner decisions of 2026-11-14,
+/// <c>21_INPUT_DEVICES</c>): how the time the game was in front divides between a controller, the keyboard and mouse,
+/// both and neither, and each controller's part. Null when the option is off, when the terms that say what is read
+/// were not accepted yet, and on every sample recorded before it existed.
+/// </param>
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct TelemetrySample(long QpcTicks, GpuSample Sample, SystemReading System = default, ProcessReading Game = default, IReadOnlyList<AdvancedReading>? Advanced = null);
+public readonly record struct TelemetrySample(long QpcTicks, GpuSample Sample, SystemReading System = default, ProcessReading Game = default, IReadOnlyList<AdvancedReading>? Advanced = null, InputReading? Input = null);

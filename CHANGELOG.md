@@ -35,6 +35,16 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **For developers: the arithmetic of controller statistics, with nothing reading a device yet** (D155–D163, the
+  owner's decisions of 2026-11-14; `docs/21_INPUT_DEVICES.md`, `docs/03_METRICS.md` §Input). `FrameLedger.Domain.Input`
+  says whether an XInput state or a DualSense report is a pad in use and what its battery is, adds a battery's readings
+  up, counts switches, and decides when two entries are one pad seen twice; `Application.Input` holds one session's
+  slices and turns them into a reading a second; `InputSessionBuilder` turns a session's readings into its totals, its
+  controllers as JSON and its timeline. A telemetry sample can carry a reading; none does. **Every byte and reading
+  under test was written by hand — no report from a real controller has passed through this code.**
+
 ### Changed
 
 - **Advanced metrics is closed: the ten readings that were "being studied" are now "not read", with the reason**
