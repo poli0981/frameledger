@@ -7926,11 +7926,11 @@ TEST_CASE("the frames a read summed are counted in the native log, each by its G
     snprintf(tails[2], sizeof(tails[2]), " a=0 b=0x%x", zero);
     snprintf(tails[3], sizeof(tails[3]), " a=30 b=0x%x", 30u);    // shape 4; shape 3
     snprintf(tails[4], sizeof(tails[4]), " a=%u b=0x%llx", longer,
-             (static_cast<unsigned long long>(longer * fl::stubnv::kGpuUs) << 32) |
-                 (longer * fl::stubnv::kGpuActiveLongUs));
+             (static_cast<unsigned long long>(longer) * fl::stubnv::kGpuUs << 32) |
+                 (static_cast<unsigned long long>(longer) * fl::stubnv::kGpuActiveLongUs));
     snprintf(tails[5], sizeof(tails[5]), " a=%u b=0x%llx", within,
-             (static_cast<unsigned long long>(within * fl::stubnv::kGpuUs) << 32) |
-                 (within * fl::stubnv::kGpuActiveUs));
+             (static_cast<unsigned long long>(within) * fl::stubnv::kGpuUs << 32) |
+                 (static_cast<unsigned long long>(within) * fl::stubnv::kGpuActiveUs));
     const char* names[6] = {"reads / sleep switches",   "frames summed / refused", "GPU span absent / of no length",
                             "active time with no span", "active longer than span", "active within span"};
 
