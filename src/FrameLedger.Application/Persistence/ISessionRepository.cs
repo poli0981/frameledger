@@ -89,6 +89,14 @@ public interface ISessionRepository
     ValueTask<IReadOnlyList<SensorBlob>> FindAdvancedSensorsAsync(long sessionId, CancellationToken ct = default);
 
     /// <summary>
+    /// The session's input series (schema 0024, <c>03_METRICS</c> §Input), still encoded, with <c>t_ms</c> first: what
+    /// each tick was mostly played with, and each controller's part and battery. For a session that stored none that
+    /// is <c>t_ms</c> alone, or nothing. They are not among <see cref="FindSensorsAsync"/>'s for the reason the advanced
+    /// ones are not: NaN marks a tick with nothing to say, and their values are not a sensor's.
+    /// </summary>
+    ValueTask<IReadOnlyList<SensorBlob>> FindInputSensorsAsync(long sessionId, CancellationToken ct = default);
+
+    /// <summary>
     /// The session's row of <c>session_advanced</c> with the machine profile it points to, or null: it was recorded
     /// with Advanced metrics off (or before they existed).
     /// </summary>

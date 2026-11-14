@@ -6,8 +6,9 @@ The numbers a session makes of it are in [`03_METRICS.md`](03_METRICS.md) §Inpu
 
 > **Status, 2026-11-14 — nothing reads a device yet.** The model and the arithmetic exist (`FrameLedger.Domain.Input`,
 > `FrameLedger.Application.Input`, `Application.Recording.InputSessionBuilder`), under tests whose every byte and
-> reading was written by hand. The reader, the storage, the switch and the screens come in the pull requests after
-> it, and this note is rewritten by each. **No report from a real controller has passed through any of this code**
+> reading was written by hand; and a session can store what it is given — schema 0024, the `.partial` file's chunk
+> 11, the finalizer for both tiers (`06_DATA_MODEL`). The reader, the switch and the screens come in the pull
+> requests after it, and this note is rewritten by each. **No report from a real controller has passed through any of this code**
 > (owner decision D157): the developer has no controller, and what happens on a real one is owner-only item 48.
 
 ## The owner's request and decisions (2026-11-14)
