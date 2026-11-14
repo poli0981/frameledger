@@ -158,17 +158,10 @@ src/
                                #   GetLastInputInfo - it opens no device and sends nothing to one) and InputDeviceHub
                                #   (one thread for the Agent, only while a session has a view). Read from OUTSIDE the
                                #   game, both tiers; `capture.input_devices`, on by default.
-                               #   Controllers and input (0.1.0-beta.50, owner decisions D155-D163, docs/21_INPUT_DEVICES):
-                               #   Input/ - InputReader (a slice ten times a second over the port IInputBackend),
-                               #   InputTickAccumulator (one session's slices into a reading a tick), InputTerms (the
-                               #   reading waits for Privacy Policy 2.22, D156), the ports IInputDevices /
-                               #   IInputActivitySource; Recording/InputSessionBuilder (totals, the controllers as JSON,
-                               #   the input.* series; schema 0024). Domain/Input holds the arithmetic and the two
-                               #   parsers (an XInput state, a DualSense report). Infrastructure/Input is the Windows
-                               #   side: Win32InputBackend (raw input for joysticks and gamepads, three XInput getters,
-                               #   GetLastInputInfo - it opens no device and sends nothing to one) and InputDeviceHub
-                               #   (one thread for the Agent, only while a session has a view). Read from OUTSIDE the
-                               #   game, both tiers; `capture.input_devices`, on by default.
+                               #   The App shows it since the same release: Services/InputPresentation (a session's
+                               #   "Played with", from the stored row), Controls/ShareBar with InputShareBar and FgMixBar,
+                               #   Charts/InputSeries with two charts and the controller marks on FrametimeChart,
+                               #   Services/ControllerEvidence (a game's page: three pieces of evidence, no verdict, D163).
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,
@@ -254,6 +247,7 @@ guide/                         # the user guide (beta.12, D44): ~~eight~~ short 
                                #   App (Help > User guide); README.md is its contents. docs/ is for developers.
                                #   (twelve since beta.17, D54: the screens, every setting, troubleshooting, a glossary;
                                #   and the guide is the wiki's End-user part)
+                               #   (since 0.1.0-beta.50 also 13-controllers.md, Controllers and input)
 wiki/                          # the wiki's own pages (beta.17, D53): Home, _Sidebar, the developer pages. wiki.yml
                                #   publishes them with guide/, LIMITATIONS.md and ACCESSIBILITY.md to the Wiki tab at a release;
                                #   tools/wiki-build.ps1 assembles and checks them (build.ps1 wiki-check)

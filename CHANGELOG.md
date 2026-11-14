@@ -35,106 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **A session's summary says what it was played with** (owner decisions D155-D163): **Played with** — a bar and a table
-  of the time the game was in front that was played with a controller, with the keyboard and mouse, with both at once
-  and with no input; how often you changed between them; each controller of the session with its connection, the time
-  in use and connected, how often it connected and dropped, and its battery — the state it was in longest and for how
-  long, the first and last level, how fast it ran down; and each maker's share when two were used. Two charts follow:
-  **Input over the session** and **Controller battery**. On a measured session's Frametime chart, **Controller marks**
-  draws a controller's connections, drops and low batteries across the frames. For every session, measured from inside
-  or not. **Trend** has *Controller share* and *Keyboard and mouse share*, **Compare** has *Played with* and
-  *Controllers*, and a CSV export has an `# input:` line. The user guide has a page for it, *Controllers and input*.
-  Checked against synthetic sessions only: no controller had been read when this was written.
-
-- **A session records what it was played with — a controller, the keyboard and mouse, both, or neither** (D155–D163,
-  the owner's decisions of 2026-11-14; *Settings ▸ Controllers and input*, on unless you switch it off). While a game
-  is recorded, FrameLedger's agent notes — from Windows, never from the game — which game controllers are connected
-  and in use, their battery level, and whether the keyboard or mouse is in use, and the session stores how the time
-  the game was in front divides between them, how often each controller connected and dropped, and its battery. It
-  works for a game FrameLedger does not measure too. **No button, stick, key or text is kept; nothing is sent to a
-  controller; and nothing is read until you have accepted the Privacy Policy that describes it** — after this
-  update, sessions recorded before FrameLedger has been opened once have no such figures. The screens that show the
-  figures come with the same release. Xbox-compatible controllers and the DualSense are read for use; another
-  controller is listed and never counted as in use. **None of this had been read from a real controller when it was
-  written** — it was checked against data written by hand (`LIMITATIONS.md` §Controllers and input).
-- **A game's page says what is known about controller support — three things, and no verdict** (D163). *Controller
-  support (store)*: what Steam lists for the game — full, partial, or none — read from the Steam app's own file on
-  your PC when you open the page; nothing is asked of the store, and a game that is not Steam's reads N/A. *Input
-  libraries loaded*: which of XInput, DirectInput, Windows.Gaming.Input, GameInput and SDL the game had loaded the
-  last time it was measured from inside. *Usually played with*: the share of the time in front with a controller,
-  the keyboard and mouse, both and neither, over the sessions that recorded it. English, Vietnamese, Japanese.
-- **The terms are shown once: Privacy Policy 2.22 and Disclaimer 2.18.** Both said FrameLedger never reads input.
-  They now say what is read — that a controller, or the keyboard or mouse, is in use — what is kept, and what never
-  is (`docs/legal-drift-history.md`).
-- **For developers: the arithmetic of controller statistics, with nothing reading a device yet** (D155–D163, the
-  owner's decisions of 2026-11-14; `docs/21_INPUT_DEVICES.md`, `docs/03_METRICS.md` §Input). `FrameLedger.Domain.Input`
-  says whether an XInput state or a DualSense report is a pad in use and what its battery is, adds a battery's readings
-  up, counts switches, and decides when two entries are one pad seen twice; `Application.Input` holds one session's
-  slices and turns them into a reading a second; `InputSessionBuilder` turns a session's readings into its totals, its
-  controllers as JSON and its timeline. A telemetry sample can carry a reading; none does. **Every byte and reading
-  under test was written by hand — no report from a real controller has passed through this code.**
-- **For developers: a session can store what it was played with — schema 0024** (D160; `docs/06_DATA_MODEL.md`). Nine
-  columns on `sessions` (the time in front and its four classes, the switches of method, the sources that answered,
-  the controllers as JSON) and three on `games` (what a store lists of controller support), ADD COLUMN only; the
-  `.partial` file gains chunk 11, so a session recovered after the Agent died keeps its readings; the finalizer
-  stores them for hooked and unhooked sessions alike; the input series are `sensor_blobs` rows named `input.*`, which
-  the sensors' read leaves out. Nothing produces a reading yet. **A ledger this build has opened cannot be opened by
-  0.1.0-beta.49 or earlier.**
-- **For developers: the input reader, which the Agent does not start yet** (D155, D158, D159; `docs/21_INPUT_DEVICES.md`
-  §The reader). `Application.Input.InputReader` takes a slice about ten times a second from
-  `Infrastructure.Input.Win32InputBackend` — raw input for joysticks and gamepads delivered to a window that is never
-  shown, three of XInput's getters, the time of the last keyboard or mouse input, the window in front — on the thread
-  of `InputDeviceHub`, which exists only while a session has a view of it. It opens no device, sends nothing to one,
-  and registers for no keyboard or mouse. A new gate, `tools/input-readonly-check.ps1`, holds the reader's Windows
-  calls to a committed list and refuses, on the list or off it, a call that sends to a device, injects input or reads
-  a key; no other managed source and no native source may name an input function. **With no controller at hand, what
-  the reader does with one connected is not established**: its tests use a Windows whose answers they write, and one
-  suite runs it on the real Windows of the machine and asserts only that it opens, answers and closes.
-
-### Changed
-
-- **Advanced metrics is closed: the ten readings that were "being studied" are now "not read", with the reason**
-  (D154, the owner's decision). What a game sets and asks through Streamline's own functions for a feature — DLSS
-  frame generation's options and state, the video memory DLSS estimates for itself, the options of ray
-  reconstruction, Image Scaling and Dynamic Vibrance, the PC-latency markers — is reached only by handing the game
-  a function of FrameLedger's in place of Streamline's, which is refused. The *Sources* list says so, in English,
-  Vietnamese and Japanese, and the guide no longer says a later release reads more. Nothing that was read stops
-  being read.
-
-- **The two lines of the graphics card's time say what each is, not which holds the other** (D152, the owner's
-  decision). *GPU active render (idle time excluded)* and *GPU render, start to end (idle time included)* are now
-  *GPU active render (the driver's own figure)* and *GPU render (between the driver's start and end marks)*, in
-  English, Vietnamese and Japanese, and the guide says why: in Cyberpunk 2077 without frame generation the
-  driver's active time is longer than its two marks are apart. The numbers are unchanged.
-
-- **The guide's page on Advanced metrics says what two of the driver's switches mean** (`guide/12`): the latency
-  report is there in a game that has Reflex built in, whether Reflex is on or off in its menu; `bUseGameSleep`
-  says the game calls Reflex's sleep — NVIDIA asks for that even with Reflex off — and `bLowLatencyMode` is the
-  one that says the mode is on; frame generation needs Reflex, not the reverse. From NVIDIA's Streamline guide
-  for Reflex, and from the owner's ten sessions on 0.1.0-beta.49.
-
-### Documentation
-
-- **Owner-only item 47 was run and read** (`docs/HANDOFF.md`): in Cyberpunk 2077 without frame generation the
-  driver's active GPU time is longer than its own two marks are apart on 4 917 of 5 394 frames (1 849 µs beside
-  1 571 µs) and on none of 129 900 frames in five other games — the difference is the driver's; samples without a
-  report are now confined to a game's start; a session with the option off has no latency line; and the stop of
-  D141 fired in a real game for the first time (Kingdom Come: Deliverance II, one call of 5.3 ms while it
-  started).
-- **Streamline's programming guides for Reflex and for DLSS Ray Reconstruction (2.14.16) read against the code**
-  (`docs/spike-notes/30-reflex-latency.md`, *Added 2026-11-14*). Ray reconstruction was already measured the way
-  the guide describes; two comments in the Overlay's source and one line of `17_HOOK_ENGINE` said super
-  resolution and ray reconstruction run together, and they do not. `03_METRICS` and `05_DETECTION` no longer
-  promise "PC latency as reported by Reflex" (D147). No code changed: comments only.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.50` | 2026-11-15 | [`docs/changelog/0.1.0-beta.50.md`](docs/changelog/0.1.0-beta.50.md) |
 | `0.1.0-beta.49` | 2026-11-14 | [`docs/changelog/0.1.0-beta.49.md`](docs/changelog/0.1.0-beta.49.md) |
 | `0.1.0-beta.48` | 2026-11-14 | [`docs/changelog/0.1.0-beta.48.md`](docs/changelog/0.1.0-beta.48.md) |
 | `0.1.0-beta.47` | 2026-11-14 | [`docs/changelog/0.1.0-beta.47.md`](docs/changelog/0.1.0-beta.47.md) |
