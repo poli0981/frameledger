@@ -155,8 +155,17 @@ read is and what bounds it is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls t
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.~~ **Recorded
+  2026-11-14: 0.1.0-beta.48 was released 2026-11-14T04:49:19Z** (11:49 in the owner's time zone) from the signed
+  tag on `aec1736` (#453), by run 43556901499 — green at the first attempt, one run for the one tag push. Eight
+  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed, and the portable package hashed
+  here equals its line; the five native libraries in it carry `FL_BUILD_ID v0.1.0-beta.48`, none of them
+  `-dirty`. The delta from beta.47 is 1 944 037 bytes beside a full package of 110 800 248 — "Delta processed
+  0452 files. 0024 patched, 0428 unchanged". The wiki was published by run 43558546949. The rehearsal on the
+  release branch (run 43555020289, at `0c210d0`, the released tree) had made a delta of 1 966 174 bytes with the
+  same file counts. **SonarCloud answered on `aec1736`: the quality gate passed and no issue is open on `main`. Qodana's two reports, CodeQL and `check` are green on that
+  commit**, as they were on each of #450–#453 before its merge; no advisory check found anything in this train.
 - **No real game has given the two new figures yet.** In the probe `gpuActiveRenderTimeUs` read 0; whether
   Phantom Blade Zero's is the short number the reading of 2026-11-14 expects is item 46's to say.
 - **Where the third of a second of a poll goes is not established.** Unelevated, a poll takes about a millisecond
