@@ -215,6 +215,19 @@ Overlay's flags, a report of 62 summed frames, 2 million reports × 3, twice): 3
 — **+36 ns a read**, once a second, and after the call's time has been taken, so it cannot reach the 2 ms latch.
 The present path is unchanged: one relaxed load.
 
+**Since 0.1.0-beta.49 each summed frame is also counted for the native log** (owner decisions D148, D151;
+§Native logging, `LATENCY_FRAMES`). The owner's ten sessions on beta.48 (HANDOFF, item 46) gave both of the
+driver's own times in every frame report of both games — and in Cyberpunk 2077 without frame generation the mean
+active time was **longer** than the mean span between the two GPU marks (3.17 against 2.79 ms), which the two
+means cannot explain: the span's is over every summed frame, one of no length included, the active time's over
+the frames that gave one. So the reader places each summed frame by its own two numbers (`CountGpuTimes`), after
+the frame is accepted: which frames are summed does not change, and the seven spans, the two times and their
+counts are what they were. **No new call, no further member of the report** — the two GPU marks and
+`gpuActiveRenderTimeUs` were read already — and nothing of it leaves the process: the watchdog adds each read's
+counts to a batch and writes the batch to the log. **Measured** (the same instrument: 2 million reports × 3,
+twice): 424–435 ns before, 490–499 ns after — **+65 ns a read**, once a second, after the call's time has been
+taken. `fl_reflex_summary_test "[.bench]"` is that measurement in the tree. The present path is unchanged.
+
 **The gate.** One word, four states — idle, armed, reading, off (`dllmain.cpp`, above `ReadLatencyOnce`). Only the
 watchdog arms; a presenting thread takes *armed* to *reading* by compare-exchange and owns the 15.4 KB report
 buffer (static storage, never a game thread's stack) and the read's result until it stores *idle* or *off*; the
@@ -932,6 +945,22 @@ No logging in hook bodies. A small fixed-size in-memory ring of structured event
 > `FlLatencyState`, the text what it means — and, when the module is found, two more with the end of the path
 > `nvapi64.dll` was loaded from and of the image its getters are in. Written by the watchdog; a fault in a getter
 > is a `FAULT` line from the presenting thread, as any fault is.
+> **`LATENCY_FRAMES` (0.1.0-beta.49, owner decisions D148, D151)**: the frames the driver reads summed, counted
+> for this log and nowhere else — nothing of it is published, stored or shown. Each summed frame is placed by its
+> own two numbers, the span between its two GPU marks and the driver's active render time: no start mark, a span
+> of no length, an active time with no span, a span with no active time, and — where a frame has both — *active
+> longer than the span* or *active within the span*, each with its count and both sums in microseconds. No
+> threshold: a span of one microsecond is a span. **A batch is six lines and belongs to one state of the driver's
+> sleep status** — its low-latency switch, its "the game sleeps" switch and its frame-generation multiplier —
+> because the counts mean nothing apart from it: a read in another state closes the batch first (thirty-two such
+> closings a request, after which a batch runs to its length and its first line says what it held). A batch is
+> also written after a request's tenth read, its thirtieth and every sixtieth from there, when the Agent asks for
+> a flush, at a new request and at a stop. `a` is printed in decimal and `b` in hex: *reads* and the switches
+> seen on, off (`<<8`) and the multipliers seen (`<<16`); *frames summed* and refused; *GPU span absent* and of no
+> length; *active time with no span* and span with no active time; then the two heaps, `a` their frames and `b`
+> their span sum (`<<32`) and active sum. **A game that exits by itself takes the batch in hand with it** — under
+> a minute of reads. About six lines a minute while a session with *Advanced metrics* reads the driver; none
+> otherwise.
 > **Three flush points — four since beta.42, the same note —, none on a present path:** the end of `InitThread` (so the
 > file exists from the start of the session and a crash mid-session still leaves it), the watchdog when
 > `FlControlBlock.logFlushRequested` changes (a counter the Agent bumps at session end; nothing clears it),

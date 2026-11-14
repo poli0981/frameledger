@@ -35,6 +35,20 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **The frames NVIDIA's latency report gives are counted, for the Overlay's own log** (owner decisions D148,
+  D151; nothing new is stored, shown, asked of the driver or read from its report). The owner's sessions on
+  0.1.0-beta.48 showed both of the driver's own GPU times in two games — and in Cyberpunk 2077 without frame
+  generation an *active render* time longer than the span from the card's start on a frame to its end, which the
+  two averages cannot explain: one is over every frame, one only over the frames that gave a time. While a session
+  with *Advanced metrics* reads the driver, the Overlay now places each frame by its own two numbers and writes
+  the counts to `overlay-<pid>-….log` as `LATENCY_FRAMES` lines, in batches that each belong to **one state of
+  the driver's low-latency status and its frame-generation multiplier** — the counts are read together with
+  Reflex and frame generation, never apart. About six lines a minute; a game that exits by itself loses the last
+  batch, under a minute. A bug report carries those logs, as it carried them before. Measured: 65 billionths of a
+  second more for each reading of the report, once a second; a presented frame costs what it did.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

@@ -125,6 +125,18 @@ NvAPI_Status __cdecl StubGetLatency(IUnknown* device, NV_LATENCY_RESULT_PARAMS* 
         if (mode == fl::stubnv::kModeImpossible) {
             r.presentEndTime = r.presentStartTime - 50u;
         }
+        if (mode == fl::stubnv::kModeGpuShapes) {
+            const std::uint64_t shape = id % 5u;
+            if (shape == 1u || shape == 4u) {
+                r.gpuRenderStartTime = r.gpuRenderEndTime;    // a span of no length; the frame's total is as it was
+            }
+            if (shape == 1u || shape == 3u) {
+                r.gpuActiveRenderTimeUs = 0u;
+            }
+            if (shape == 2u) {
+                r.gpuActiveRenderTimeUs = fl::stubnv::kGpuActiveLongUs;
+            }
+        }
     }
     return NVAPI_OK;
 }

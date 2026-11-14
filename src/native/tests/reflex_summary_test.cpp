@@ -12,7 +12,10 @@
 // read as a game that has stopped.
 
 #include <catch2/catch_test_macros.hpp>
+#include <chrono>
 #include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include <fl_adv_fields.h>
 #include <memory>
 
@@ -309,4 +312,235 @@ TEST_CASE("a publication carries one read, packed as fl_shm.h says, and carries 
     CHECK(untouched.latGpuActiveSumUs == 0u);
     CHECK(untouched.latGpuCounts == 0u);
     CHECK(untouched.latMultipliersSeen == 0u);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// THE COUNTS FOR THE NATIVE LOG (0.1.0-beta.49, owner decisions D148, D151).
+// ---------------------------------------------------------------------------------------------------------------------
+
+TEST_CASE("each summed frame is counted by its GPU span and the driver's active time, and what is summed does not move",
+          "[latency]") {
+    fl::adv::LatencyCursor cursor;
+    fl::adv::LatencyTally  tally;
+    auto                   report = Report(100u);    // 100..163: 100..161 are summed
+    for (std::uint32_t i = 0; i < 64u; ++i) {
+        Frame& f = report->frameReport[i];
+        switch (i % 6u) {
+        case 0u:    // a span of 3700 and an active time that is the shorter
+            f.gpuActiveRenderTimeUs = 3500u;
+            break;
+        case 1u:    // the two marks at one instant, and no active time
+            f.gpuRenderStartTime = f.gpuRenderEndTime;
+            break;
+        case 2u:    // an active time longer than the span
+            f.gpuActiveRenderTimeUs = 4000u;
+            break;
+        case 3u:    // the span, and no active time
+            break;
+        case 4u:    // the two marks at one instant, and an active time
+            f.gpuRenderStartTime = f.gpuRenderEndTime;
+            f.gpuActiveRenderTimeUs = 3500u;
+            break;
+        default:    // no start mark, and an active time
+            f.gpuRenderStartTime = 0u;
+            f.gpuActiveRenderTimeUs = 3500u;
+            break;
+        }
+    }
+    fl::adv::ObserveLatencyReport(*report, cursor, tally);
+
+    // Sixty-two frames: eleven each of the first two shapes, ten each of the other four.
+    REQUIRE(tally.frames == 62u);
+    CHECK(tally.refused == 0u);
+    CHECK(tally.gpu.withinFrames == 11u);
+    CHECK(tally.gpu.withinSpanUs == 11u * 3700u);
+    CHECK(tally.gpu.withinActiveUs == 11u * 3500u);
+    CHECK(tally.gpu.longerFrames == 10u);
+    CHECK(tally.gpu.longerSpanUs == 10u * 3700u);
+    CHECK(tally.gpu.longerActiveUs == 10u * 4000u);
+    CHECK(tally.gpu.spanZero == 11u + 10u);
+    CHECK(tally.gpu.spanAbsent == 10u);
+    CHECK(tally.gpu.spanNoActive == 10u);
+    CHECK(tally.gpu.activeNoSpan == 10u + 10u);
+    // Every summed frame is in exactly one place: the four counted here, or neither a span nor an active time -- the
+    // eleven whose two marks are one instant and that gave no time.
+    const std::uint32_t placed =
+        tally.gpu.withinFrames + tally.gpu.longerFrames + tally.gpu.spanNoActive + tally.gpu.activeNoSpan;
+    CHECK(placed + 11u == tally.frames);
+
+    // WHAT IS PUBLISHED IS WHAT IT WAS: the span over every frame that reported one, the time over those that gave one.
+    CHECK(tally.sumUs[fl::adv::kLatGpu] == (11u + 10u + 10u) * 3700u);
+    CHECK((tally.lacking & (1u << fl::adv::kLatGpu)) != 0u);
+    CHECK(tally.activeFrames == 11u + 10u + 10u + 10u);
+    CHECK(tally.activeSumUs == 31u * 3500u + 10u * 4000u);
+    CHECK(tally.sumUs[fl::adv::kLatTotal] == 62u * 7500u);
+}
+
+TEST_CASE(
+    "an active time as long as the span is not the longer; one of over a second was not given; a refused frame is "
+    "not counted",
+    "[latency]") {
+    fl::adv::LatencyGpuCounts counts;
+    fl::adv::CountGpuTimes(fl::adv::kLatSpanReported, 3700u, 3700u, counts);
+    CHECK(counts.withinFrames == 1u);
+    CHECK(counts.longerFrames == 0u);
+    fl::adv::CountGpuTimes(fl::adv::kLatSpanReported, 1u, 2u, counts);    // a span of a microsecond is a span
+    CHECK(counts.longerFrames == 1u);
+    CHECK(counts.longerSpanUs == 1u);
+    CHECK(counts.longerActiveUs == 2u);
+    CHECK(counts.spanZero == 0u);
+    fl::adv::CountGpuTimes(fl::adv::kLatSpanReported, 3700u, 1'000'001u, counts);    // no frame has such a time
+    CHECK(counts.spanNoActive == 1u);
+    CHECK(counts.longerFrames == 1u);
+
+    fl::adv::LatencyCursor cursor;
+    fl::adv::LatencyTally  tally;
+    auto                   report = Report(100u);
+    for (auto& f : report->frameReport) {
+        f.gpuActiveRenderTimeUs = 3500u;
+    }
+    report->frameReport[5].presentEndTime = report->frameReport[5].presentStartTime - 50u;    // refused whole
+    fl::adv::ObserveLatencyReport(*report, cursor, tally);
+    CHECK(tally.frames == 61u);
+    CHECK(tally.refused == 1u);
+    CHECK(tally.gpu.withinFrames == 61u);
+    CHECK(tally.gpu.withinSpanUs == 61u * 3700u);
+}
+
+TEST_CASE("a batch of the log's counts is written after ten reads, after thirty, and every sixty from there",
+          "[latency]") {
+    std::uint32_t due = 0u;
+    for (std::uint32_t reads = 1u; reads <= 400u; ++reads) {
+        const bool expected = reads == 10u || reads == 30u || reads == 90u || reads == 150u || reads == 210u ||
+                              reads == 270u || reads == 330u || reads == 390u;
+        CHECK(fl::adv::LatencyBatchDue(reads) == expected);
+        due += fl::adv::LatencyBatchDue(reads) ? 1u : 0u;
+    }
+    CHECK(due == 8u);
+    CHECK_FALSE(fl::adv::LatencyBatchDue(0u));
+}
+
+TEST_CASE("a batch belongs to one state of the sleep status: another state closes it, until a request has closed "
+          "thirty-two that way",
+          "[latency]") {
+    fl::adv::LatencyTally tally;
+    tally.frames = 10u;
+    tally.refused = 1u;
+    tally.gpu.spanZero = 2u;
+    tally.gpu.longerFrames = 3u;
+    tally.gpu.longerSpanUs = 300u;
+    tally.gpu.longerActiveUs = 450u;
+    tally.gpu.withinFrames = 4u;
+    tally.gpu.withinSpanUs = 4000u;
+    tally.gpu.withinActiveUs = 3600u;
+
+    // The state: the low-latency switch, "the game sleeps", and the multiplier -- not the other three switches.
+    const fl::adv::LatencySleep reflexTwo{1u | 8u, 2u};
+    const fl::adv::LatencySleep reflexTwoVrr{1u | 2u | 8u | 16u, 2u};
+    const fl::adv::LatencySleep overrideOne{1u, 1u};
+    const fl::adv::LatencySleep manyFrames{0u, 900u};
+    CHECK(fl::adv::LatencyStateOf(true, reflexTwo) == ((1u | 8u) | (2u << 8)));
+    CHECK(fl::adv::LatencyStateOf(true, reflexTwoVrr) == fl::adv::LatencyStateOf(true, reflexTwo));
+    CHECK(fl::adv::LatencyStateOf(true, overrideOne) != fl::adv::LatencyStateOf(true, reflexTwo));
+    CHECK(fl::adv::LatencyStateOf(false, reflexTwo) == fl::adv::kLatStateUnknown);
+    CHECK(fl::adv::LatencyStateOf(true, manyFrames) == (255u << 8));
+
+    fl::adv::LatencyBatchBook book;
+    CHECK_FALSE(fl::adv::LatencyBatchTurns(book, fl::adv::LatencyStateOf(true, reflexTwo)));    // nothing to close
+    fl::adv::LatencyBatchAdd(book, tally, true, reflexTwo);
+    fl::adv::LatencyBatchAdd(book, tally, true, reflexTwoVrr);
+    CHECK(book.okReads == 2u);
+    CHECK(book.batch.reads == 2u);
+    CHECK(book.batch.frames == 20u);
+    CHECK(book.batch.refused == 2u);
+    CHECK(book.batch.gpu.spanZero == 4u);
+    CHECK(book.batch.gpu.longerFrames == 6u);
+    CHECK(book.batch.gpu.longerActiveUs == 900u);
+    CHECK(book.batch.gpu.withinSpanUs == 8000u);
+    CHECK(book.batch.state == fl::adv::LatencyStateOf(true, reflexTwo));
+    CHECK(book.batch.sleepOn == (1u | 2u | 8u | 16u));
+    CHECK(book.batch.sleepOff == (2u | 4u | 16u));    // off in one read or the other
+    CHECK(book.batch.multipliers == (1u << 2));
+    CHECK_FALSE(fl::adv::LatencyBatchTurns(book, fl::adv::LatencyStateOf(true, reflexTwoVrr)));
+    CHECK(fl::adv::LatencyBatchTurns(book, fl::adv::LatencyStateOf(true, overrideOne)));
+    CHECK(fl::adv::LatencyBatchTurns(book, fl::adv::kLatStateUnknown));    // a read with no status is a state too
+
+    // A read with no status adds its frames and nothing to the "seen" words.
+    fl::adv::LatencyBatchAdd(book, tally, false, overrideOne);
+    CHECK(book.batch.reads == 3u);
+    CHECK(book.batch.sleepOn == (1u | 2u | 8u | 16u));
+    CHECK(book.batch.multipliers == (1u << 2));
+
+    // A status that flickers: after thirty-two closings the batch runs on, and says what it held.
+    book.closures = fl::adv::kLatStateClosures;
+    CHECK_FALSE(fl::adv::LatencyBatchTurns(book, fl::adv::LatencyStateOf(true, overrideOne)));
+    fl::adv::LatencyBatchAdd(book, tally, true, overrideOne);
+    CHECK(book.batch.state == fl::adv::LatencyStateOf(true, reflexTwo));    // its first read's
+    CHECK(book.batch.multipliers == ((1u << 1) | (1u << 2)));
+    CHECK(book.batch.sleepOff == (2u | 4u | 8u | 16u));
+
+    // A sum stops at the top of its word instead of wrapping into a small number.
+    std::uint32_t sum = 0xFFFFFFF0u;
+    fl::adv::LatencyAddStop(sum, 0x20u);
+    CHECK(sum == 0xFFFFFFFFu);
+}
+
+TEST_CASE("a batch is six lines of the log: a text that fits, a count in decimal, and a word in hex", "[latency]") {
+    fl::adv::LatencyBatch batch;
+    batch.reads = 10u;
+    batch.frames = 152u;
+    batch.refused = 3u;
+    batch.sleepOn = 1u | 8u;
+    batch.sleepOff = 2u | 4u | 16u;
+    batch.multipliers = 1u << 2;
+    batch.gpu.spanAbsent = 5u;
+    batch.gpu.spanZero = 61u;
+    batch.gpu.activeNoSpan = 30u;
+    batch.gpu.spanNoActive = 31u;
+    batch.gpu.longerFrames = 30u;
+    batch.gpu.longerSpanUs = 111000u;
+    batch.gpu.longerActiveUs = 120000u;
+    batch.gpu.withinFrames = 26u;
+    batch.gpu.withinSpanUs = 96200u;
+    batch.gpu.withinActiveUs = 91000u;
+
+    const std::uint64_t expectedB[fl::adv::kLatBatchLines] = {
+        0x41609ull, 3ull, 61ull, 31ull, (111000ull << 32) | 120000ull, (96200ull << 32) | 91000ull};
+    const std::uint32_t expectedA[fl::adv::kLatBatchLines] = {10u, 152u, 5u, 30u, 30u, 26u};
+    for (std::uint32_t line = 0; line < fl::adv::kLatBatchLines; ++line) {
+        const fl::adv::LatencyLogLine entry = fl::adv::LatencyBatchLine(batch, line);
+        INFO("line " << line << ": " << entry.text);
+        CHECK(entry.a == expectedA[line]);
+        CHECK(entry.b == expectedB[line]);
+        CHECK(std::strlen(entry.text) <= fl::adv::LatencyBatchLongestText());
+        CHECK(std::strlen(entry.text) < 72u);    // the native log's event has 72 characters of text, the last a zero
+        for (std::uint32_t other = 0; other < line; ++other) {
+            CHECK(std::strcmp(entry.text, fl::adv::LatencyBatchLine(batch, other).text) != 0);
+        }
+    }
+}
+
+// What summing one report costs: the reader runs on a game's presenting thread, once a second. Hidden -- a number
+// for a pull request, not a gate: `fl_reflex_summary_test "[.bench]"`.
+TEST_CASE("what summing one report of sixty-four frames costs", "[.bench]") {
+    auto report = Report(5000u);
+    for (auto& f : report->frameReport) {
+        f.gpuActiveRenderTimeUs = 3500u;
+        f.gpuFrameTimeUs = 4200u;
+    }
+    constexpr std::uint32_t kRuns = 2'000'000u;
+    std::uint64_t           frames = 0u;
+    for (int pass = 0; pass < 5; ++pass) {
+        const auto began = std::chrono::steady_clock::now();
+        for (std::uint32_t run = 0; run < kRuns; ++run) {
+            fl::adv::LatencyCursor cursor;    // every run sums the report's sixty-two frames anew
+            fl::adv::LatencyTally  tally;
+            fl::adv::ObserveLatencyReport(*report, cursor, tally);
+            frames += tally.frames + tally.gpu.withinFrames;
+        }
+        const auto nanos =
+            std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - began).count();
+        std::printf("pass %d: %.1f ns a report\n", pass, static_cast<double>(nanos) / kRuns);
+    }
+    CHECK(frames == 5ull * kRuns * (62u + 62u));
 }

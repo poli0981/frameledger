@@ -25,6 +25,13 @@ enum Mode : std::uint32_t {
     kModeFault = 3,           // an access violation inside GetLatency
     kModeNoDriverSpan = 4,    // reports whose driverStartTime is zero: what the driver gives without a sleep mode
     kModeImpossible = 5,      // reports whose present ends before it starts
+    // Reports whose frames differ in their GPU span and in the driver's active time, by frameID % 5:
+    //   0  as kModeReports: a span of kGpuUs and an active time of kGpuActiveUs, which is the shorter
+    //   1  the two GPU marks at the same instant, and no active time
+    //   2  an active time of kGpuActiveLongUs, longer than the span
+    //   3  the span, and no active time
+    //   4  the two GPU marks at the same instant, and an active time
+    kModeGpuShapes = 6,
 };
 
 // One frame of kModeReports, in microseconds: every frame has these spans.
@@ -38,7 +45,8 @@ inline constexpr std::uint32_t kTotalUs = 7500u;
 // The two times a driver works out itself, of every frame: the card at work, and one frame's GPU end to the next's.
 inline constexpr std::uint32_t kGpuActiveUs = 3500u;
 inline constexpr std::uint32_t kGpuFrameUs = 4200u;
-inline constexpr std::uint32_t kFgMultiplier = 2u;    // what GetSleepStatus gives while `fgMultiplier` is zero
+inline constexpr std::uint32_t kGpuActiveLongUs = 4000u;    // kModeGpuShapes: longer than kGpuUs
+inline constexpr std::uint32_t kFgMultiplier = 2u;          // what GetSleepStatus gives while `fgMultiplier` is zero
 inline constexpr std::uint32_t kFirstFrameId = 5000u;
 inline constexpr std::uint32_t kFrameIdStep = 10u;    // how far the ids move on at each call
 

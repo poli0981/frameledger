@@ -675,11 +675,32 @@ inline void ObserveSlShutdown(Accumulators& a) noexcept {
 // ---------------------------------------------------------------------------------------------------------------------
 inline constexpr uint32_t kLatSpans =
     7u;    // simulation, submit, present, driver, OS queue, GPU, total: the region's order
+inline constexpr uint32_t kLatGpu = 5u;
 inline constexpr uint32_t kLatTotal = 6u;
 inline constexpr uint32_t kLatReportFrames = 64u;
 inline constexpr uint64_t kLatSpanLimitUs = 1000000u;
 static_assert(sizeof(NV_LATENCY_RESULT_PARAMS::frameReport) / sizeof(NV_LATENCY_RESULT_PARAMS::FrameReport) ==
               kLatReportFrames);
+
+// HOW A FRAME'S GPU SPAN AND THE DRIVER'S ACTIVE TIME STAND TO EACH OTHER (0.1.0-beta.49, owner decision D148). In one
+// real game the mean active time was LONGER than the mean span between the two GPU marks (HANDOFF, item 46), and the
+// two means cannot say why: the span's is over every summed frame, one of no length included, the active time's over
+// the frames that gave one. So each summed frame is put in one place here, by its own two numbers, and the frames
+// that have both are kept in two heaps -- the active time longer than the span, or not -- each with its count and
+// both sums. No threshold: a span of one microsecond is a span. FOR THE NATIVE LOG ONLY: nothing of it is published,
+// and which frames are summed does not depend on it.
+struct LatencyGpuCounts {
+    uint32_t spanAbsent = 0;        // no GPU start mark
+    uint32_t spanZero = 0;          // the two GPU marks are the same instant
+    uint32_t activeNoSpan = 0;      // an active time, and no span with a length
+    uint32_t spanNoActive = 0;      // a span with a length, and no active time
+    uint32_t longerFrames = 0;      // both, and the active time is the LONGER
+    uint32_t longerSpanUs = 0;      // ... their spans
+    uint32_t longerActiveUs = 0;    // ... their active times
+    uint32_t withinFrames = 0;      // both, and the active time is no longer than the span
+    uint32_t withinSpanUs = 0;
+    uint32_t withinActiveUs = 0;
+};
 
 // What one read of the report added up to.
 struct LatencyTally {
@@ -688,10 +709,11 @@ struct LatencyTally {
     uint32_t sumUs[kLatSpans]{};    // microseconds, over the frames summed
     uint32_t lacking = 0;           // bit n: a summed frame did not report span n
     // The driver's two own times, each over the summed frames that gave one: a count apiece.
-    uint32_t activeSumUs = 0;
-    uint32_t activeFrames = 0;
-    uint32_t frameTimeSumUs = 0;
-    uint32_t frameTimeFrames = 0;
+    uint32_t         activeSumUs = 0;
+    uint32_t         activeFrames = 0;
+    uint32_t         frameTimeSumUs = 0;
+    uint32_t         frameTimeFrames = 0;
+    LatencyGpuCounts gpu;    // the summed frames, each by its GPU span and its active time: the native log's
 };
 
 // Where the reader is in the game's frame ids: the newest one already summed or refused. 0 = none yet.
@@ -728,10 +750,42 @@ inline uint64_t LatencyFrameId(const NV_LATENCY_RESULT_PARAMS::FrameReport& lf) 
 // (an older driver leaves both zero, and so did the probe's frames, which had no work for the card); more than a
 // second is a time no frame can have. Neither is summed, and neither refuses the frame: which frames the spans are
 // made of does not depend on these.
+inline bool LatencyTimeGiven(uint32_t us) noexcept {
+    return us != 0u && us <= kLatSpanLimitUs;
+}
+
 inline void LatencyAddTime(uint32_t us, uint32_t& sumUs, uint32_t& frames) noexcept {
-    if (us != 0u && us <= kLatSpanLimitUs) {
+    if (LatencyTimeGiven(us)) {
         sumUs += us;
         ++frames;
+    }
+}
+
+// One summed frame's place in LatencyGpuCounts: its GPU span as LatencySpan gave it, and the driver's active time
+// of the same frame, "given" by the rule LatencyAddTime sums it by. An impossible span never comes here -- its frame
+// was refused.
+inline void CountGpuTimes(uint32_t spanKind, uint32_t spanUs, uint32_t activeUs, LatencyGpuCounts& counts) noexcept {
+    const bool span = spanKind == kLatSpanReported && spanUs != 0u;
+    const bool active = LatencyTimeGiven(activeUs);
+    if (spanKind == kLatSpanAbsent) {
+        ++counts.spanAbsent;
+    } else if (spanUs == 0u) {
+        ++counts.spanZero;
+    }
+    if (span && active) {
+        if (activeUs > spanUs) {
+            ++counts.longerFrames;
+            counts.longerSpanUs += spanUs;
+            counts.longerActiveUs += activeUs;
+        } else {
+            ++counts.withinFrames;
+            counts.withinSpanUs += spanUs;
+            counts.withinActiveUs += activeUs;
+        }
+    } else if (active) {
+        ++counts.activeNoSpan;
+    } else if (span) {
+        ++counts.spanNoActive;
     }
 }
 
@@ -764,6 +818,7 @@ inline void ObserveLatencyFrame(const NV_LATENCY_RESULT_PARAMS::FrameReport& lf,
     }
     LatencyAddTime(lf.gpuActiveRenderTimeUs, tally.activeSumUs, tally.activeFrames);
     LatencyAddTime(lf.gpuFrameTimeUs, tally.frameTimeSumUs, tally.frameTimeFrames);
+    CountGpuTimes(kind[kLatGpu], us[kLatGpu], lf.gpuActiveRenderTimeUs, tally.gpu);
 }
 
 // One report: the frames newer than the cursor, the two newest left for the next read.
@@ -823,6 +878,143 @@ inline LatencySleep ObserveSleepStatus(const NV_GET_SLEEP_STATUS_PARAMS& ls) noe
 // The bit of fl_shm.h's latMultipliersSeen for one multiplier the status gave: bit n for n, bit 31 for 31 and more.
 inline uint32_t LatencyMultiplierBit(uint32_t value) noexcept {
     return 1u << (value > 31u ? 31u : value);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// THE COUNTS, IN BATCHES, FOR THE NATIVE LOG (0.1.0-beta.49, owner decisions D148, D151). The watchdog's.
+//
+// A BATCH BELONGS TO ONE STATE of the driver's sleep status -- its low-latency switch, its "the game sleeps" switch
+// and its frame-generation multiplier -- because the counts mean nothing apart from it: the owner's games switch
+// Reflex on only with frame generation, and the low-latency switch may be the NVIDIA App's override and not the
+// game's. A read in another state closes the batch before it is added. A state that flickers would write a batch a
+// read, so after kLatStateClosures such closings a request's batches run to their length whatever the state, and the
+// "seen" words of the batch say what it held.
+//
+// A batch is also closed after the request's tenth read, its thirtieth, and every sixtieth from there: a game that
+// exits takes the watchdog with it, and what was not written by then is lost -- under a minute of it.
+// ---------------------------------------------------------------------------------------------------------------------
+inline constexpr uint32_t kLatBatchFirst = 10u;
+inline constexpr uint32_t kLatBatchSecond = 30u;
+inline constexpr uint32_t kLatBatchEvery = 60u;
+inline constexpr uint32_t kLatStateClosures = 32u;
+inline constexpr uint32_t kLatStateUnknown = 0xFFFFFFFFu;    // a read whose sleep status did not come back
+inline constexpr uint32_t kLatStateSwitches = 1u | 8u;       // bLowLatencyMode, bUseGameSleep (ObserveSleepStatus)
+
+struct LatencyBatch {
+    uint32_t         reads = 0;      // reads whose report came back, in this batch
+    uint32_t         frames = 0;     // frames they summed
+    uint32_t         refused = 0;    // frames they refused
+    LatencyGpuCounts gpu;
+    uint32_t         sleepOn = 0;                 // switches the status showed on in this batch
+    uint32_t         sleepOff = 0;                // ... and off
+    uint32_t         multipliers = 0;             // LatencyMultiplierBit of every multiplier it gave
+    uint32_t         state = kLatStateUnknown;    // LatencyStateOf its first read
+};
+
+struct LatencyBatchBook {
+    LatencyBatch batch;
+    uint32_t     okReads = 0;     // reads whose report came back, since the request
+    uint32_t     closures = 0;    // batches a change of state closed, since the request
+};
+
+inline uint32_t LatencyStateOf(bool sleepValid, const LatencySleep& sleep) noexcept {
+    if (!sleepValid) {
+        return kLatStateUnknown;
+    }
+    return (sleep.on & kLatStateSwitches) | ((sleep.multiplier > 255u ? 255u : sleep.multiplier) << 8);
+}
+
+// Whether the batch is to be written BEFORE a read in `state` is added to it.
+inline bool LatencyBatchTurns(const LatencyBatchBook& book, uint32_t state) noexcept {
+    return book.batch.reads != 0u && book.batch.state != state && book.closures < kLatStateClosures;
+}
+
+// Whether the batch is to be written AFTER the request's okReads-th read was added.
+inline bool LatencyBatchDue(uint32_t okReads) noexcept {
+    if (okReads <= kLatBatchSecond) {
+        return okReads == kLatBatchFirst || okReads == kLatBatchSecond;
+    }
+    return (okReads - kLatBatchSecond) % kLatBatchEvery == 0u;
+}
+
+// A batch is sixty reads of sixty-two frames at most, and a time is a second at most: under 2^32 microseconds. The
+// sums stop there all the same, so that a word never wraps into a small number.
+inline void LatencyAddStop(uint32_t& sum, uint32_t value) noexcept {
+    sum = value > 0xFFFFFFFFu - sum ? 0xFFFFFFFFu : sum + value;
+}
+
+inline void LatencyBatchAdd(LatencyBatchBook& book, const LatencyTally& tally, bool sleepValid,
+                            const LatencySleep& sleep) noexcept {
+    LatencyBatch& batch = book.batch;
+    if (batch.reads == 0u) {
+        batch.state = LatencyStateOf(sleepValid, sleep);
+    }
+    ++batch.reads;
+    ++book.okReads;
+    LatencyAddStop(batch.frames, tally.frames);
+    LatencyAddStop(batch.refused, tally.refused);
+    LatencyAddStop(batch.gpu.spanAbsent, tally.gpu.spanAbsent);
+    LatencyAddStop(batch.gpu.spanZero, tally.gpu.spanZero);
+    LatencyAddStop(batch.gpu.activeNoSpan, tally.gpu.activeNoSpan);
+    LatencyAddStop(batch.gpu.spanNoActive, tally.gpu.spanNoActive);
+    LatencyAddStop(batch.gpu.longerFrames, tally.gpu.longerFrames);
+    LatencyAddStop(batch.gpu.longerSpanUs, tally.gpu.longerSpanUs);
+    LatencyAddStop(batch.gpu.longerActiveUs, tally.gpu.longerActiveUs);
+    LatencyAddStop(batch.gpu.withinFrames, tally.gpu.withinFrames);
+    LatencyAddStop(batch.gpu.withinSpanUs, tally.gpu.withinSpanUs);
+    LatencyAddStop(batch.gpu.withinActiveUs, tally.gpu.withinActiveUs);
+    if (sleepValid) {
+        batch.sleepOn |= sleep.on & FL_LAT_SLEEP_BITS;
+        batch.sleepOff |= ~sleep.on & FL_LAT_SLEEP_BITS;
+        batch.multipliers |= LatencyMultiplierBit(sleep.multiplier);
+    }
+}
+
+// The batch as lines of the native log: a text, the line's `a` (printed in decimal) and its `b` (printed in hex).
+inline constexpr uint32_t kLatBatchLines = 6u;
+
+struct LatencyLogLine {
+    const char* text;
+    uint32_t    a;
+    uint64_t    b;
+};
+
+constexpr uint64_t LatencyPair(uint32_t high, uint32_t low) noexcept {
+    return (static_cast<uint64_t>(high) << 32) | low;
+}
+
+constexpr LatencyLogLine LatencyBatchLine(const LatencyBatch& batch, uint32_t line) noexcept {
+    switch (line) {
+    case 0u:
+        return {"reads / sleep switches on | off<<8 | multipliers seen<<16", batch.reads,
+                batch.sleepOn | (batch.sleepOff << 8) | (static_cast<uint64_t>(batch.multipliers) << 16)};
+    case 1u:
+        return {"frames summed / refused", batch.frames, batch.refused};
+    case 2u:
+        return {"GPU span absent / of no length", batch.gpu.spanAbsent, batch.gpu.spanZero};
+    case 3u:
+        return {"active time with no span / span with no active time", batch.gpu.activeNoSpan, batch.gpu.spanNoActive};
+    case 4u:
+        return {"active longer than span: frames / span us<<32 | active us", batch.gpu.longerFrames,
+                LatencyPair(batch.gpu.longerSpanUs, batch.gpu.longerActiveUs)};
+    default:
+        return {"active within span: frames / span us<<32 | active us", batch.gpu.withinFrames,
+                LatencyPair(batch.gpu.withinSpanUs, batch.gpu.withinActiveUs)};
+    }
+}
+
+// The longest of those texts, for whoever writes them into a line of fixed length.
+constexpr uint32_t LatencyBatchLongestText() noexcept {
+    uint32_t longest = 0u;
+    for (uint32_t line = 0u; line < kLatBatchLines; ++line) {
+        const char* text = LatencyBatchLine(LatencyBatch{}, line).text;
+        uint32_t    length = 0u;
+        while (text[length] != '\0') {
+            ++length;
+        }
+        longest = length > longest ? length : longest;
+    }
+    return longest;
 }
 
 // What the watchdog publishes of it. THE WATCHDOG'S: filled from what a read left behind while nobody is reading.
