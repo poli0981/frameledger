@@ -208,7 +208,11 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                #   the two on overlay-nvapi-allowed.txt),
                                # overlay-fields-check (D116, 2026-11-12: every member of a vendor's struct the
                                #   Overlay reads for Advanced metrics is in fl_adv_fields.h and on
-                               #   overlay-allowed-fields.txt; a camera's position, axes and matrices nowhere)
+                               #   overlay-allowed-fields.txt; a camera's position, axes and matrices nowhere),
+                               # input-readonly-check (D155-D163, 2026-11-14: every Windows function the input reader
+                               #   calls is declared in Infrastructure/Input/Win32Input.cs and on input-allowed-calls.txt;
+                               #   none sends to a device, injects input or reads a key; raw input is registered for
+                               #   joysticks and gamepads only; no native source names an input function)
                                # (six names added 2026-10-04)
                                # (PowerShell). This line used to name three, one of which
                                # — resx-audit — ~~does not exist~~ exists since 2026-09-13 with

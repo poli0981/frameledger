@@ -499,6 +499,15 @@ function Invoke-ProjectGates {
     Invoke-Checked 'overlay-fields-check (self-test)' { & $fieldsTool -SelfTest }
     Invoke-Checked 'overlay-fields-check' { & $fieldsTool -RepoRoot $repo }
 
+    # 2026-11-14 (D155-D163): what is asked of Windows about controllers, the keyboard and the mouse. The reader's
+    # calls are declared in one file and held to tools/input-allowed-calls.txt in both directions; a call that sends to
+    # a device, injects input or reads a key is red even when the list names it; no managed source outside the reader
+    # and no native source names an input function; raw input is registered for joysticks and gamepads only. Text only.
+    Write-Step 'input-readonly-check'
+    $inputTool = Join-Path $repo 'tools/input-readonly-check.ps1'
+    Invoke-Checked 'input-readonly-check (self-test)' { & $inputTool -SelfTest }
+    Invoke-Checked 'input-readonly-check' { & $inputTool -RepoRoot $repo }
+
     Write-Step 'docs-split-check'
     $splitTool = Join-Path $repo 'tools/docs-split-check.ps1'
     Invoke-Checked 'docs-split-check (self-test)' { & $splitTool -SelfTest }
