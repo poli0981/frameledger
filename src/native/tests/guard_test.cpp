@@ -8112,15 +8112,25 @@ TEST_CASE("how evenly the driver is read over ninety reads, with a quiet loader 
                 text = ReadWholeFile(log);
             }
         }
+        // The numbers of each batch's first and last line, parsed: what a file held is never printed as it stands
+        // (SonarCloud's cppsecurity:S5145 on a line of the log handed to printf).
         std::printf("%ls\n", presenting);
         std::size_t at = 0;
         while (at < text.size()) {
             std::size_t end = text.find('\n', at);
             end = end == std::string::npos ? text.size() : end;
-            const std::string line = text.substr(at, end - at);
-            if (line.find("LATENCY_FRAMES") != std::string::npos &&
-                (line.find("reads /") != std::string::npos || line.find("ms spanned") != std::string::npos)) {
-                std::printf("  %s\n", line.c_str());
+            const std::string  line = text.substr(at, end - at);
+            const std::size_t  words = line.rfind(" a=");
+            unsigned           first = 0;
+            unsigned long long second = 0;
+            if (line.find("LATENCY_FRAMES") != std::string::npos && words != std::string::npos &&
+                sscanf_s(line.c_str() + words, " a=%u b=0x%llx", &first, &second) == 2) {
+                if (line.find("reads /") != std::string::npos) {
+                    std::printf("  %u reads", first);
+                } else if (line.find("ms spanned") != std::string::npos) {
+                    std::printf(" in %u ms: %llu ticks on time, %llu woken early\n", first, second >> 32,
+                                second & 0xFFFFFFFFull);
+                }
             }
             at = end + 1;
         }
