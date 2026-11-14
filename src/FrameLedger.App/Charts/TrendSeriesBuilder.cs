@@ -96,8 +96,11 @@ public static class TrendSeriesBuilder
     public static bool Counts(SessionRow row, TrendMetric metric)
     {
         ArgumentNullException.ThrowIfNull(row);
-        return row.Tier == CaptureTier.Hooked || IsMachineMetric(metric) || IsDisplayMetric(metric);
+        return row.Tier == CaptureTier.Hooked || IsMachineMetric(metric) || IsDisplayMetric(metric) || IsInputMetric(metric);
     }
+
+    /// <summary>The input shares (0.1.0-beta.50): read from outside the game, so every session has them whatever its tier.</summary>
+    public static bool IsInputMetric(TrendMetric metric) => metric is TrendMetric.ControllerShare or TrendMetric.KeyboardMouseShare;
 
     /// <summary>The display-mode shares (beta.10).</summary>
     public static bool IsDisplayMetric(TrendMetric metric) =>
@@ -127,7 +130,8 @@ public static class TrendSeriesBuilder
         ArgumentNullException.ThrowIfNull(row);
         // A display share is the whole session's by construction (beta.10): switching between fullscreen and a window resizes
         // the swap chain, which is exactly what marks a session "settings changed" — the share is what that change was.
-        if (IsDisplayMetric(metric))
+        // An input share is the whole session's too (0.1.0-beta.50): what it was played with does not depend on its settings.
+        if (IsDisplayMetric(metric) || IsInputMetric(metric))
         {
             return false;
         }
@@ -190,6 +194,8 @@ public static class TrendSeriesBuilder
         TrendMetric.MaxGpuMemTemp => row.MaxGpuMemTemp,
         TrendMetric.PowerLimitShare => row.PowerLimitPct,
         TrendMetric.Efficiency => row.AppFramesPerJoule,
+        TrendMetric.ControllerShare => row.InputSharePercent(row.InputControllerMs),
+        TrendMetric.KeyboardMouseShare => row.InputSharePercent(row.InputKeyboardMouseMs),
         _ => null,
     };
 

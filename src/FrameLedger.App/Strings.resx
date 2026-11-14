@@ -3395,6 +3395,231 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="GameDetail_Controller_Played_Unknown" xml:space="preserve">
     <value>N/A - no session has recorded it yet</value>
   </data>
+  <data name="Input_Header" xml:space="preserve">
+    <value>Played with</value>
+  </data>
+  <data name="Input_Limits_Note" xml:space="preserve">
+    <value>Read from Windows, outside the game: it says a controller, or the keyboard or mouse, was in use while the game was in front - never which button or key, and not what the game did with it. Keyboard and mouse are one class.</value>
+  </data>
+  <data name="Input_Context_Format" xml:space="preserve">
+    <value>Read for {0}; the game was in front for {1}. The shares are of the time in front.</value>
+  </data>
+  <data name="Input_Class_Controller" xml:space="preserve">
+    <value>Controller</value>
+  </data>
+  <data name="Input_Class_KeyboardMouse" xml:space="preserve">
+    <value>Keyboard and mouse</value>
+  </data>
+  <data name="Input_Class_Both" xml:space="preserve">
+    <value>Both at once</value>
+  </data>
+  <data name="Input_Class_None" xml:space="preserve">
+    <value>No input</value>
+  </data>
+  <data name="Input_Col_Method" xml:space="preserve">
+    <value>Input</value>
+  </data>
+  <data name="Input_Bar_Name_Format" xml:space="preserve">
+    <value>Share of the time in front by what the game was played with: {0}</value>
+  </data>
+  <data name="Input_Switches_Format" xml:space="preserve">
+    <value>Changes between a controller and the keyboard and mouse: {0}</value>
+  </data>
+  <data name="Input_Controllers_Header" xml:space="preserve">
+    <value>Controllers</value>
+  </data>
+  <data name="Input_Controllers_NoneSeen" xml:space="preserve">
+    <value>No controller was connected during this session.</value>
+  </data>
+  <data name="Input_Controllers_None" xml:space="preserve">
+    <value>none</value>
+  </data>
+  <data name="Input_Col_Controller" xml:space="preserve">
+    <value>Controller</value>
+  </data>
+  <data name="Input_Col_Connection" xml:space="preserve">
+    <value>Connection</value>
+  </data>
+  <data name="Input_Col_InUse" xml:space="preserve">
+    <value>In use</value>
+  </data>
+  <data name="Input_Col_Connected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="Input_Col_Events" xml:space="preserve">
+    <value>Connected / dropped</value>
+  </data>
+  <data name="Input_Col_Battery" xml:space="preserve">
+    <value>Battery</value>
+  </data>
+  <data name="Input_Events_Format" xml:space="preserve">
+    <value>{0} / {1}</value>
+  </data>
+  <data name="Input_Controller_Unnamed_Format" xml:space="preserve">
+    <value>{0} controller</value>
+  </data>
+  <data name="Input_Controller_Virtual_Format" xml:space="preserve">
+    <value>{0} (a virtual pad a program presents)</value>
+  </data>
+  <data name="Input_Controller_Remapped_Format" xml:space="preserve">
+    <value>{0} (also shown to games as an Xbox pad)</value>
+  </data>
+  <data name="Input_Family_Xbox" xml:space="preserve">
+    <value>Xbox</value>
+  </data>
+  <data name="Input_Family_PlayStation" xml:space="preserve">
+    <value>PlayStation</value>
+  </data>
+  <data name="Input_Family_Nintendo" xml:space="preserve">
+    <value>Nintendo</value>
+  </data>
+  <data name="Input_Family_Other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="Input_Connection_Usb" xml:space="preserve">
+    <value>USB</value>
+  </data>
+  <data name="Input_Connection_Bluetooth" xml:space="preserve">
+    <value>Bluetooth</value>
+  </data>
+  <data name="Input_Connection_Wireless" xml:space="preserve">
+    <value>Wireless adapter</value>
+  </data>
+  <data name="Input_Connection_Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Input_Battery_NotRead" xml:space="preserve">
+    <value>N/A - no battery level was read</value>
+  </data>
+  <data name="Input_Battery_Longest_Format" xml:space="preserve">
+    <value>Longest: {0} for {1}</value>
+  </data>
+  <data name="Input_Battery_Span_Format" xml:space="preserve">
+    <value>{0} → {1}</value>
+  </data>
+  <data name="Input_Battery_Drain_Format" xml:space="preserve">
+    <value>{0:0.0}% an hour</value>
+  </data>
+  <data name="Input_Battery_State_Wired" xml:space="preserve">
+    <value>wired</value>
+  </data>
+  <data name="Input_Battery_State_Full" xml:space="preserve">
+    <value>full</value>
+  </data>
+  <data name="Input_Battery_State_Charging" xml:space="preserve">
+    <value>charging</value>
+  </data>
+  <data name="Input_Battery_State_Charging_Format" xml:space="preserve">
+    <value>charging at {0}</value>
+  </data>
+  <data name="Input_Battery_State_Discharging" xml:space="preserve">
+    <value>on battery</value>
+  </data>
+  <data name="Input_Battery_State_Discharging_Format" xml:space="preserve">
+    <value>on battery at {0}</value>
+  </data>
+  <data name="Input_Battery_State_Unknown" xml:space="preserve">
+    <value>state unknown</value>
+  </data>
+  <data name="Input_Battery_Level_Empty" xml:space="preserve">
+    <value>empty</value>
+  </data>
+  <data name="Input_Battery_Level_Low" xml:space="preserve">
+    <value>low</value>
+  </data>
+  <data name="Input_Battery_Level_Medium" xml:space="preserve">
+    <value>medium</value>
+  </data>
+  <data name="Input_Battery_Level_Full" xml:space="preserve">
+    <value>full</value>
+  </data>
+  <data name="Input_Makers_Format" xml:space="preserve">
+    <value>By maker, of the time controllers were in use: {0}. Changes of maker: {1}.</value>
+  </data>
+  <data name="Input_Note_VirtualPad" xml:space="preserve">
+    <value>Steam Input, or another remapper, presented a controller to games as a virtual Xbox pad in this session; a controller and the pad that stood for it are counted once.</value>
+  </data>
+  <data name="Input_Note_NoRawInput" xml:space="preserve">
+    <value>Windows did not accept the registration for controller reports in this session, so only Xbox-compatible controllers were seen.</value>
+  </data>
+  <data name="Input_Note_NoXInput" xml:space="preserve">
+    <value>XInput could not be read in this session, so Xbox-compatible controllers were seen only through their reports and have no battery level.</value>
+  </data>
+  <data name="Input_Note_NoLastInput" xml:space="preserve">
+    <value>Windows did not report the time of the last keyboard or mouse input in this session, so keyboard and mouse use was not seen.</value>
+  </data>
+  <data name="Input_Note_Faults_Format" xml:space="preserve">
+    <value>The reader faulted {0} time(s) in this session; the figures cover what it read.</value>
+  </data>
+  <data name="Input_Missing_Terms" xml:space="preserve">
+    <value>Not read in this session: the Privacy Policy that describes this reading had not been accepted on this PC yet.</value>
+  </data>
+  <data name="Input_Missing_NeverInFront" xml:space="preserve">
+    <value>Read, but the game's window was never in front while it was, so there is no share to show.</value>
+  </data>
+  <data name="Input_Missing_NotRecorded" xml:space="preserve">
+    <value>Not recorded for this session: Settings ▸ Controllers and input was off, or the session is from before 0.1.0-beta.50.</value>
+  </data>
+  <data name="Input_Shares_Format" xml:space="preserve">
+    <value>Controller {0} · keyboard and mouse {1} · both {2} · no input {3}</value>
+  </data>
+  <data name="Input_Timeline_Header" xml:space="preserve">
+    <value>Input over the session</value>
+  </data>
+  <data name="Input_Battery_Header" xml:space="preserve">
+    <value>Controller battery</value>
+  </data>
+  <data name="Summary_Show_InputEvents" xml:space="preserve">
+    <value>Controller marks</value>
+  </data>
+  <data name="Chart_Axis_Battery" xml:space="preserve">
+    <value>Battery (%)</value>
+  </data>
+  <data name="Chart_Input_Event_Connected" xml:space="preserve">
+    <value>Controller connected</value>
+  </data>
+  <data name="Chart_Input_Event_Disconnected" xml:space="preserve">
+    <value>Controller disconnected</value>
+  </data>
+  <data name="Chart_Input_Event_BatteryLow" xml:space="preserve">
+    <value>Controller battery low</value>
+  </data>
+  <data name="Chart_Input_Device_Format" xml:space="preserve">
+    <value>Controller {0}</value>
+  </data>
+  <data name="Chart_Input_FourLevels" xml:space="preserve">
+    <value>(four levels)</value>
+  </data>
+  <data name="Chart_Input_NotStored" xml:space="preserve">
+    <value>This session stored no input series.</value>
+  </data>
+  <data name="Chart_InputBattery_NotRead" xml:space="preserve">
+    <value>No controller reported a battery level in this session.</value>
+  </data>
+  <data name="Chart_Note_GapsClosed_Marks_Format" xml:space="preserve">
+    <value>The time axis closes up {0} gap(s) — a pause, or records that were lost — so the controller marks run ahead of the frames after each.</value>
+  </data>
+  <data name="A11y_Chart_InputTimeline" xml:space="preserve">
+    <value>Input over the session chart</value>
+  </data>
+  <data name="A11y_Chart_InputBattery" xml:space="preserve">
+    <value>Controller battery chart</value>
+  </data>
+  <data name="A11y_ChartData_Input" xml:space="preserve">
+    <value>The Played with tables write these numbers out; the session's CSV and JSON exports carry the totals.</value>
+  </data>
+  <data name="Trend_Metric_ControllerShare" xml:space="preserve">
+    <value>Controller share</value>
+  </data>
+  <data name="Trend_Metric_KeyboardMouseShare" xml:space="preserve">
+    <value>Keyboard and mouse share</value>
+  </data>
+  <data name="Compare_Metric_PlayedWith" xml:space="preserve">
+    <value>Played with</value>
+  </data>
+  <data name="Compare_Metric_Controllers" xml:space="preserve">
+    <value>Controllers</value>
+  </data>
   <data name="GameDetail_Controller_Store_Full" xml:space="preserve">
     <value>Full - as Steam lists it</value>
   </data>

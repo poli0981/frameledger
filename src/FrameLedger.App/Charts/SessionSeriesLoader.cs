@@ -46,6 +46,14 @@ public sealed class SessionSeriesLoader
     public Task<IReadOnlyList<SensorSeries>> LoadAdvancedAsync(long sessionId, CancellationToken ct = default) =>
         Task.Run(async () => DecodeAdvanced(await _sessions.FindAdvancedSensorsAsync(sessionId, ct).ConfigureAwait(false)), ct);
 
+    /// <summary>
+    /// The session's input series (0.1.0-beta.50): what each tick was played with and each controller's activity and
+    /// battery, timed from the session's start, gaps kept. Null for a session that stored none. On the thread pool, as
+    /// <see cref="LoadAsync"/>.
+    /// </summary>
+    public Task<InputSeries?> LoadInputAsync(long sessionId, CancellationToken ct = default) =>
+        Task.Run(async () => InputSeries.Decode(await _sessions.FindInputSensorsAsync(sessionId, ct).ConfigureAwait(false)), ct);
+
     /// <summary>The advanced blobs decoded: <c>t_ms</c> is their clock, NaN is "no reading".</summary>
     public static IReadOnlyList<SensorSeries> DecodeAdvanced(IReadOnlyList<SensorBlob> blobs)
     {
@@ -145,6 +153,7 @@ public sealed class SessionSeriesLoader
             Segments = MapSegments([.. segments.Where(s => swapchain is null || s.SwapchainId == swapchain.Value)], times, frameIndex),
             Sensors = DecodeSensors(sensors, offsetS ?? 0),
             SensorsAligned = offsetS is not null,
+            SensorOffsetS = offsetS,
             Digest = SeriesDigest.Of(appFrameTimesMs, times, frametimes, generated, gap, noApplicationFrames),
         };
     }

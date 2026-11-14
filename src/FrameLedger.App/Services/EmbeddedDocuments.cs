@@ -42,6 +42,7 @@ public static class EmbeddedDocuments
         "guide/10-glossary.md",
         "guide/11-alpha-builds.md",
         "guide/12-advanced-metrics.md",
+        "guide/13-controllers.md",
         "guide/terms-in-plain-words.md",
     ];
 

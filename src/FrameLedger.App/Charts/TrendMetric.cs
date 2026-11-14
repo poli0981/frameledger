@@ -93,4 +93,13 @@ public enum TrendMetric
 
     /// <summary>Application frames per watt of the card's power — never displayed frames (rule 6).</summary>
     Efficiency,
+
+    /// <summary>
+    /// The two below are 0.1.0-beta.50's (<c>03_METRICS</c> §Input): the share of the time the game was in front that a
+    /// controller alone, or the keyboard and mouse alone, was in use - every session whatever its tier, read from outside
+    /// the game. A session that recorded nothing, or whose game was never in front, has no point.
+    /// </summary>
+    ControllerShare,
+
+    KeyboardMouseShare,
 }

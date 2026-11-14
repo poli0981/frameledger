@@ -437,6 +437,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
         new(TrendMetric.DisplayExclusiveShare, Strings.Trend_Metric_DisplayExclusive),
         new(TrendMetric.DisplayBorderlessShare, Strings.Trend_Metric_DisplayBorderless),
         new(TrendMetric.DisplayWindowedShare, Strings.Trend_Metric_DisplayWindowed),
+        new(TrendMetric.ControllerShare, Strings.Trend_Metric_ControllerShare),
+        new(TrendMetric.KeyboardMouseShare, Strings.Trend_Metric_KeyboardMouseShare),
         new(TrendMetric.TimeBelow60, Strings.Trend_Metric_TimeBelow60),
         new(TrendMetric.TimeBelowRefresh, Strings.Trend_Metric_TimeBelowRefresh),
         new(TrendMetric.FrameToFrame, Strings.Trend_Metric_FrameToFrame),

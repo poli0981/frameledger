@@ -66,6 +66,8 @@ correct it by hand — your correction is labelled as yours.
   upscaling), and when it changed.
 - **Sensors** — temperatures, load and power; video memory; memory; and the card's clocks and fan, with the moments it
   was held back shaded. The game's own line and the whole card's or the whole PC's are drawn separately.
+- **Input over the session** and **Controller battery** — what each second was played with, and each controller's
+  battery level ([Controllers and input](13-controllers.md)).
 - **Trend** (on the game's page) — one point per session over time, for example before and after a driver update.
   Each day your graphics driver, graphics card, processor, display or Windows changed is a dashed line with a number
   above the chart, 1 for the oldest; the list under the chart says what changed that day, and pointing at the line

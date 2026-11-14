@@ -3390,6 +3390,231 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="GameDetail_Controller_Played_Unknown" xml:space="preserve">
     <value>N/A - chưa có phiên nào ghi lại</value>
   </data>
+  <data name="Input_Header" xml:space="preserve">
+    <value>Chơi bằng</value>
+  </data>
+  <data name="Input_Limits_Note" xml:space="preserve">
+    <value>Đọc từ Windows, bên ngoài game: chỉ cho biết tay cầm, hoặc bàn phím hay chuột, đang được dùng khi game ở phía trước - không bao giờ là nút hay phím nào, và không phải game đã làm gì với nó. Bàn phím và chuột là một loại.</value>
+  </data>
+  <data name="Input_Context_Format" xml:space="preserve">
+    <value>Đã đọc trong {0}; game ở phía trước trong {1}. Tỉ lệ tính trên thời gian game ở phía trước.</value>
+  </data>
+  <data name="Input_Class_Controller" xml:space="preserve">
+    <value>Tay cầm</value>
+  </data>
+  <data name="Input_Class_KeyboardMouse" xml:space="preserve">
+    <value>Bàn phím và chuột</value>
+  </data>
+  <data name="Input_Class_Both" xml:space="preserve">
+    <value>Cả hai cùng lúc</value>
+  </data>
+  <data name="Input_Class_None" xml:space="preserve">
+    <value>Không thao tác</value>
+  </data>
+  <data name="Input_Col_Method" xml:space="preserve">
+    <value>Thiết bị nhập</value>
+  </data>
+  <data name="Input_Bar_Name_Format" xml:space="preserve">
+    <value>Tỉ lệ thời gian game ở phía trước theo thiết bị dùng để chơi: {0}</value>
+  </data>
+  <data name="Input_Switches_Format" xml:space="preserve">
+    <value>Số lần đổi giữa tay cầm và bàn phím-chuột: {0}</value>
+  </data>
+  <data name="Input_Controllers_Header" xml:space="preserve">
+    <value>Tay cầm</value>
+  </data>
+  <data name="Input_Controllers_NoneSeen" xml:space="preserve">
+    <value>Không có tay cầm nào được kết nối trong phiên này.</value>
+  </data>
+  <data name="Input_Controllers_None" xml:space="preserve">
+    <value>không có</value>
+  </data>
+  <data name="Input_Col_Controller" xml:space="preserve">
+    <value>Tay cầm</value>
+  </data>
+  <data name="Input_Col_Connection" xml:space="preserve">
+    <value>Kết nối</value>
+  </data>
+  <data name="Input_Col_InUse" xml:space="preserve">
+    <value>Đang dùng</value>
+  </data>
+  <data name="Input_Col_Connected" xml:space="preserve">
+    <value>Đã kết nối</value>
+  </data>
+  <data name="Input_Col_Events" xml:space="preserve">
+    <value>Kết nối / ngắt</value>
+  </data>
+  <data name="Input_Col_Battery" xml:space="preserve">
+    <value>Pin</value>
+  </data>
+  <data name="Input_Events_Format" xml:space="preserve">
+    <value>{0} / {1}</value>
+  </data>
+  <data name="Input_Controller_Unnamed_Format" xml:space="preserve">
+    <value>Tay cầm {0}</value>
+  </data>
+  <data name="Input_Controller_Virtual_Format" xml:space="preserve">
+    <value>{0} (tay cầm ảo do một chương trình tạo ra)</value>
+  </data>
+  <data name="Input_Controller_Remapped_Format" xml:space="preserve">
+    <value>{0} (cũng được trình cho game như một tay cầm Xbox)</value>
+  </data>
+  <data name="Input_Family_Xbox" xml:space="preserve">
+    <value>Xbox</value>
+  </data>
+  <data name="Input_Family_PlayStation" xml:space="preserve">
+    <value>PlayStation</value>
+  </data>
+  <data name="Input_Family_Nintendo" xml:space="preserve">
+    <value>Nintendo</value>
+  </data>
+  <data name="Input_Family_Other" xml:space="preserve">
+    <value>Khác</value>
+  </data>
+  <data name="Input_Connection_Usb" xml:space="preserve">
+    <value>USB</value>
+  </data>
+  <data name="Input_Connection_Bluetooth" xml:space="preserve">
+    <value>Bluetooth</value>
+  </data>
+  <data name="Input_Connection_Wireless" xml:space="preserve">
+    <value>Bộ thu không dây</value>
+  </data>
+  <data name="Input_Connection_Unknown" xml:space="preserve">
+    <value>Không rõ</value>
+  </data>
+  <data name="Input_Battery_NotRead" xml:space="preserve">
+    <value>N/A - không đọc được mức pin</value>
+  </data>
+  <data name="Input_Battery_Longest_Format" xml:space="preserve">
+    <value>Lâu nhất: {0} trong {1}</value>
+  </data>
+  <data name="Input_Battery_Span_Format" xml:space="preserve">
+    <value>{0} → {1}</value>
+  </data>
+  <data name="Input_Battery_Drain_Format" xml:space="preserve">
+    <value>{0:0.0}% mỗi giờ</value>
+  </data>
+  <data name="Input_Battery_State_Wired" xml:space="preserve">
+    <value>có dây</value>
+  </data>
+  <data name="Input_Battery_State_Full" xml:space="preserve">
+    <value>đầy</value>
+  </data>
+  <data name="Input_Battery_State_Charging" xml:space="preserve">
+    <value>đang sạc</value>
+  </data>
+  <data name="Input_Battery_State_Charging_Format" xml:space="preserve">
+    <value>đang sạc ở mức {0}</value>
+  </data>
+  <data name="Input_Battery_State_Discharging" xml:space="preserve">
+    <value>dùng pin</value>
+  </data>
+  <data name="Input_Battery_State_Discharging_Format" xml:space="preserve">
+    <value>dùng pin ở mức {0}</value>
+  </data>
+  <data name="Input_Battery_State_Unknown" xml:space="preserve">
+    <value>không rõ trạng thái</value>
+  </data>
+  <data name="Input_Battery_Level_Empty" xml:space="preserve">
+    <value>cạn</value>
+  </data>
+  <data name="Input_Battery_Level_Low" xml:space="preserve">
+    <value>thấp</value>
+  </data>
+  <data name="Input_Battery_Level_Medium" xml:space="preserve">
+    <value>vừa</value>
+  </data>
+  <data name="Input_Battery_Level_Full" xml:space="preserve">
+    <value>đầy</value>
+  </data>
+  <data name="Input_Makers_Format" xml:space="preserve">
+    <value>Theo hãng, trên thời gian tay cầm được dùng: {0}. Số lần đổi hãng: {1}.</value>
+  </data>
+  <data name="Input_Note_VirtualPad" xml:space="preserve">
+    <value>Trong phiên này Steam Input, hoặc một phần mềm ánh xạ khác, đã trình một tay cầm cho game dưới dạng tay cầm Xbox ảo; tay cầm thật và tay cầm ảo thay cho nó chỉ được tính một lần.</value>
+  </data>
+  <data name="Input_Note_NoRawInput" xml:space="preserve">
+    <value>Windows không chấp nhận việc đăng ký nhận báo cáo của tay cầm trong phiên này, nên chỉ thấy được các tay cầm tương thích Xbox.</value>
+  </data>
+  <data name="Input_Note_NoXInput" xml:space="preserve">
+    <value>Không đọc được XInput trong phiên này, nên tay cầm tương thích Xbox chỉ được thấy qua báo cáo của chúng và không có mức pin.</value>
+  </data>
+  <data name="Input_Note_NoLastInput" xml:space="preserve">
+    <value>Windows không báo thời điểm thao tác bàn phím hay chuột gần nhất trong phiên này, nên không thấy được việc dùng bàn phím và chuột.</value>
+  </data>
+  <data name="Input_Note_Faults_Format" xml:space="preserve">
+    <value>Bộ đọc gặp lỗi {0} lần trong phiên này; các con số chỉ gồm những gì nó đọc được.</value>
+  </data>
+  <data name="Input_Missing_Terms" xml:space="preserve">
+    <value>Không đọc trong phiên này: Chính sách quyền riêng tư mô tả việc đọc này chưa được chấp nhận trên máy này.</value>
+  </data>
+  <data name="Input_Missing_NeverInFront" xml:space="preserve">
+    <value>Đã đọc, nhưng cửa sổ game chưa lần nào ở phía trước trong lúc đó, nên không có tỉ lệ để hiển thị.</value>
+  </data>
+  <data name="Input_Missing_NotRecorded" xml:space="preserve">
+    <value>Không được ghi cho phiên này: mục Cài đặt ▸ Tay cầm và thiết bị nhập đang tắt, hoặc phiên có từ trước bản 0.1.0-beta.50.</value>
+  </data>
+  <data name="Input_Shares_Format" xml:space="preserve">
+    <value>Tay cầm {0} · bàn phím và chuột {1} · cả hai {2} · không thao tác {3}</value>
+  </data>
+  <data name="Input_Timeline_Header" xml:space="preserve">
+    <value>Thiết bị nhập theo thời gian</value>
+  </data>
+  <data name="Input_Battery_Header" xml:space="preserve">
+    <value>Pin tay cầm</value>
+  </data>
+  <data name="Summary_Show_InputEvents" xml:space="preserve">
+    <value>Mốc tay cầm</value>
+  </data>
+  <data name="Chart_Axis_Battery" xml:space="preserve">
+    <value>Pin (%)</value>
+  </data>
+  <data name="Chart_Input_Event_Connected" xml:space="preserve">
+    <value>Tay cầm kết nối</value>
+  </data>
+  <data name="Chart_Input_Event_Disconnected" xml:space="preserve">
+    <value>Tay cầm ngắt kết nối</value>
+  </data>
+  <data name="Chart_Input_Event_BatteryLow" xml:space="preserve">
+    <value>Pin tay cầm thấp</value>
+  </data>
+  <data name="Chart_Input_Device_Format" xml:space="preserve">
+    <value>Tay cầm {0}</value>
+  </data>
+  <data name="Chart_Input_FourLevels" xml:space="preserve">
+    <value>(bốn mức)</value>
+  </data>
+  <data name="Chart_Input_NotStored" xml:space="preserve">
+    <value>Phiên này không lưu chuỗi dữ liệu thiết bị nhập nào.</value>
+  </data>
+  <data name="Chart_InputBattery_NotRead" xml:space="preserve">
+    <value>Không tay cầm nào báo mức pin trong phiên này.</value>
+  </data>
+  <data name="Chart_Note_GapsClosed_Marks_Format" xml:space="preserve">
+    <value>Trục thời gian khép lại {0} khoảng trống — một lần tạm dừng, hoặc bản ghi bị mất — nên các mốc tay cầm chạy trước các khung hình sau mỗi khoảng.</value>
+  </data>
+  <data name="A11y_Chart_InputTimeline" xml:space="preserve">
+    <value>Biểu đồ thiết bị nhập theo thời gian</value>
+  </data>
+  <data name="A11y_Chart_InputBattery" xml:space="preserve">
+    <value>Biểu đồ pin tay cầm</value>
+  </data>
+  <data name="A11y_ChartData_Input" xml:space="preserve">
+    <value>Các bảng trong mục Chơi bằng ghi rõ những con số này; file xuất CSV và JSON của phiên chứa các tổng.</value>
+  </data>
+  <data name="Trend_Metric_ControllerShare" xml:space="preserve">
+    <value>Tỉ lệ dùng tay cầm</value>
+  </data>
+  <data name="Trend_Metric_KeyboardMouseShare" xml:space="preserve">
+    <value>Tỉ lệ dùng bàn phím và chuột</value>
+  </data>
+  <data name="Compare_Metric_PlayedWith" xml:space="preserve">
+    <value>Chơi bằng</value>
+  </data>
+  <data name="Compare_Metric_Controllers" xml:space="preserve">
+    <value>Tay cầm</value>
+  </data>
   <data name="GameDetail_Controller_Store_Full" xml:space="preserve">
     <value>Đầy đủ - theo Steam ghi</value>
   </data>
