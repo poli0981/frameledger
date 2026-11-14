@@ -175,3 +175,57 @@ route.
 
 The spike is [`spike-notes` §31](31-reflex-route-d-harness.md), run on 2026-11-13: none of the stop conditions
 above fired on the harness, and it ends in the question of one real title.
+
+### Added 2026-11-14: Streamline's two programming guides, read against this note and the code
+
+`docs/ProgrammingGuideReflex.md` and `docs/ProgrammingGuideDLSS_RR.md` of NVIDIA's Streamline repository, both
+"Version 2.14.16", fetched as text and read whole — at the owner's request. What they add, and what they change.
+
+**Reflex**
+
+- **Low latency and frame generation: the dependency runs one way.** The guide lists the plugin's parts as
+  "distinct to each other without any cross-dependencies", wants Reflex's default to be *On*, and its checklist
+  tests *Reflex On* with frame generation **off**. Frame generation is what needs Reflex. The owner's "without
+  frame generation the game cannot switch Reflex on" is true of some of the owner's games' menus, not of Reflex.
+  The sessions of 2026-11-14 agree (HANDOFF, item 47): low-latency mode on at a multiplier of 1 in four games;
+  Phantom Blade Zero switches it on with frame generation; Clair Obscur without frame generation has it off.
+- **The sleep and the markers are sent whatever the mode.** "`slReflexSleep` and `slPCLSetMarker` must always be
+  called even when Reflex Low Latency mode is Off"; the verification overlay's *App Called Sleep* stays 1 with
+  Reflex off. So `bUseGameSleep` says the game calls the sleep, **not** that Reflex is on, and a report exists
+  with Reflex off — which is what the sessions on 0.1.0-beta.48 showed (HANDOFF, item 46). Phantom Blade Zero
+  without frame generation is exactly this: the game sleeps, low-latency mode off, 1 062 reads.
+- **`slReflexSetOptions` is called once, and again only when an option changes.** A hook on it would see nothing
+  in most sessions even if it could be placed: `nvapi.reflex.mode` stays refused for a second reason.
+- **The markers are the report.** `slPCLSetMarker` replaces `NvAPI_D3D_SetLatencyMarker`, and the times the
+  markers carry (simulation, render submit, present) are the ones the driver hands back in the report this
+  product already reads (route D). `sl.pcl.markers` would add a count of calls, the ping and the flash trigger —
+  nothing a player reads. **Recommended to the owner: leave Reflex and PCL out of train D.**
+- **PC latency is not in the report, and NVIDIA takes it from outside the game**: its PCL statistics, read by
+  tools started from an administrator's prompt (route E here). D147 stands on that; two design tables that still
+  promised "PC latency as reported by Reflex" were corrected today (`03_METRICS`, `05_DETECTION`).
+- **The stages, in NVIDIA's words** (the verification overlay's table): *driver* is from the first buffer
+  submission to the last present submission; *OS queue* from the first significant buffer submission to the end
+  of the GPU's work; *GPU* from where its rendering starts to where it ends; *total render time* is "time spent
+  by GPU rendering". With frame generation the test's own columns split the GPU's part at "DLSS FG start". **Not
+  reconciled with what is stored**: an OS queue that ends with the GPU's work should not be shorter than the
+  GPU's span, and in Phantom Blade Zero it is (12.9 ms beside 16.4 ms). The guide's table describes an overlay,
+  not the fields of `NV_LATENCY_RESULT_PARAMS`; nothing is concluded from it, and no label was changed on it.
+- **Where Reflex helps**, by the guide: GPU-bound, or V-Sync with variable refresh; not CPU-bound. FrameLedger
+  shows the driver's switches and draws no conclusion about benefit.
+
+**DLSS Ray Reconstruction**
+
+- **The code already has it right, and two comments had the reason wrong.** The guide: "When DLSS-RR is switched
+  on, it completely overrides DLSS (Super Resolution)", in the quality mode set for DLSS, through
+  `slEvaluateFeature(sl::kFeatureDLSS_RR, …)`. That is the present detour's RR arm (upscaler DLSS, the RR fact
+  beside it), measured on Cyberpunk 2077 on 2026-08-15. `fl_shm.h` and `dllmain.cpp` still said super resolution
+  and RR "run together" / "in the SAME frame"; they do not, and the comments now say what is true.
+- **Off is a mode, not a release**: "set `sl::DLSSDOptions.mode` to `sl::DLSSDMode::eOff`, note that this does
+  NOT release any resources". So *loaded* and *allocated* (the Advanced tables of 0.1.0-beta.45) are not *in
+  use*; the RR verdict is taken from evaluations and from nothing else, which is why it is right.
+- **If `sl.dlssd.options` is ever read** (it is a spike entry, set through a call no hook sees): the structure
+  carries `worldToCameraView` and `cameraViewToWorld` — camera matrices, never read (rule 4) — and RR ignores the
+  DLSS options `sharpness` and `useAutoExposure`, so a session's DLSS rows do not describe RR on those two.
+  What the entry would add is RR's preset for each mode and how normals and roughness are packed. Little.
+- **No dynamic resolution under RR**: a change of input size re-initialises the denoiser. Nothing here depends
+  on it.

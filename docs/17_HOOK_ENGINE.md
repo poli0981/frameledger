@@ -657,9 +657,11 @@ static_assert(sizeof(FlFrameRecord) == 64);
 > v3 makes it safe by CONSTRUCTION. Every enum's 0 is now `NOT_REPORTED`, and
 > `rtFlags`' polarity is flipped so its bits mean *observed*.
 >
-> Four answers items 4/6/7 owe had no home and now do: DLSS-SR **and** Ray
-> Reconstruction concurrently (`featureFlags`, since RR was a mutually exclusive
-> `upscaler` value), `upscalerSharpness`, and — in `FlWriterState`, because they
+> Four answers items 4/6/7 owe had no home and now do: DLSS **with** Ray
+> Reconstruction (`featureFlags`, since RR was a mutually exclusive
+> `upscaler` value — *corrected 2026-11-14: this said "DLSS-SR and Ray
+> Reconstruction concurrently"; RR runs instead of super resolution, it is still
+> DLSS*), `upscalerSharpness`, and — in `FlWriterState`, because they
 > are session facts and not per-frame — the device **RT tier** without which
 > `03_METRICS`' definite RT `No` had no producer at all, plus `rtStateObjectsCreated`
 > and `rasterPsoCreated`.

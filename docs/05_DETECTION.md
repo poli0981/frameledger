@@ -22,8 +22,8 @@ Derived in the Agent from the record stream; the mapping is in `03_METRICS`. Sum
 | Render resolution vs output resolution (incl. mid-session changes) | upscaler parameter reads + `ResizeBuffers` |
 | Frame Generation mode + factor | NGX/SL/FFX FG feature evaluation, then cadence — **Tier 1 only**. ~~then (Tier 2 only) PresentMon `FrameType`~~ retired (§S31 row P2), and Tier 2 no longer produces frames to run cadence over either |
 | Ray Tracing active | AS builds + `DispatchRays` (both, to catch inline RayQuery) |
-| Ray Reconstruction | NGX `RayReconstruction` feature evaluated |
-| Reflex on + PC latency | NVAPI Reflex hooks |
+| Ray Reconstruction | ~~NGX `RayReconstruction` feature evaluated~~ Streamline's `slEvaluateFeature(kFeatureDLSS_RR)` — it runs **instead of** super resolution, in DLSS's own quality mode (Streamline's guide; measured 2026-08-15), so the upscaler is DLSS and this is a yes/no beside it. A game that calls NGX directly reads N/A (`03_METRICS` §RT/PT/RR) *(corrected 2026-11-14)* |
+| ~~Reflex on + PC latency~~ The driver's latency report and sleep status (0.1.0-beta.47, Advanced metrics only) | ~~NVAPI Reflex hooks~~ two read-only getters of the driver, called by the Overlay (`17_HOOK_ENGINE` §Calls the Overlay makes into a driver). **PC latency — input to display — is not read** (D147): the report ends where the GPU's work ends, and NVIDIA's own figure is taken from outside the game (`spike-notes` §30, route E) *(corrected 2026-11-14)* |
 | Per-process VRAM | `QueryVideoMemoryInfo` |
 | PSO compilation events | pipeline-creation hooks |
 | Display mode — exclusive fullscreen / borderless / windowed / minimised, with the window, back buffer and monitor (beta.10) | `GetFullscreenState` + `GetDesc` polled on the presenting chain (≤ 2 Hz, shared-memory region 4), and the window's geometry read by the Agent **out of process** — so this row is **both tiers**: a Tier-2 session has the window alone, and never splits exclusive from borderless (`03_METRICS` §Display mode) |

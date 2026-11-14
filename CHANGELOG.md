@@ -35,6 +35,28 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **The guide's page on Advanced metrics says what two of the driver's switches mean** (`guide/12`): the latency
+  report is there in a game that has Reflex built in, whether Reflex is on or off in its menu; `bUseGameSleep`
+  says the game calls Reflex's sleep — NVIDIA asks for that even with Reflex off — and `bLowLatencyMode` is the
+  one that says the mode is on; frame generation needs Reflex, not the reverse. From NVIDIA's Streamline guide
+  for Reflex, and from the owner's ten sessions on 0.1.0-beta.49.
+
+### Documentation
+
+- **Owner-only item 47 was run and read** (`docs/HANDOFF.md`): in Cyberpunk 2077 without frame generation the
+  driver's active GPU time is longer than its own two marks are apart on 4 917 of 5 394 frames (1 849 µs beside
+  1 571 µs) and on none of 129 900 frames in five other games — the difference is the driver's; samples without a
+  report are now confined to a game's start; a session with the option off has no latency line; and the stop of
+  D141 fired in a real game for the first time (Kingdom Come: Deliverance II, one call of 5.3 ms while it
+  started).
+- **Streamline's programming guides for Reflex and for DLSS Ray Reconstruction (2.14.16) read against the code**
+  (`docs/spike-notes/30-reflex-latency.md`, *Added 2026-11-14*). Ray reconstruction was already measured the way
+  the guide describes; two comments in the Overlay's source and one line of `17_HOOK_ENGINE` said super
+  resolution and ray reconstruction run together, and they do not. `03_METRICS` and `05_DETECTION` no longer
+  promise "PC latency as reported by Reflex" (D147). No code changed: comments only.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

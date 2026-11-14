@@ -85,8 +85,9 @@ under which of the three happened to each.
 
 ### What NVIDIA's driver says about each frame's stages
 
-On an NVIDIA card, in a **Direct3D 12** game that uses **NVIDIA Reflex**, a session with Advanced metrics on also
-stores the driver's own latency report: how long the driver says each stage of a frame took — *simulation*,
+On an NVIDIA card, in a **Direct3D 12** game that has **NVIDIA Reflex** built in, a session with Advanced metrics
+on also stores the driver's own latency report — whether Reflex is on or off in the game's menu, because a game
+with Reflex marks its frames either way: how long the driver says each stage of a frame took — *simulation*,
 *render submit*, *present*, *driver*, *operating system's render queue*, *GPU render*, and the *total* from the start
 of simulation to the end of the graphics card's work. They are seven lines under **Latency**, one point about every
 second, each the average of the frames of one reading, in microseconds. A table beside them shows the driver's
@@ -95,8 +96,10 @@ low-latency state as five switches, by NVIDIA's own names, each *On*, *Off* or *
 generated frames at ×2 for part of it). **They are the driver's switches, not the game's menu.** `bLowLatencyMode`
 is on when the game switched Reflex on *and* when **Low Latency Mode** is set for that game in the NVIDIA App —
 an override there shows here, and can read *On at times, off at others* in a game whose own setting never
-changed. `bUseGameSleep` says whether the game itself is pacing its frames through Reflex; some games do that
-only while frame generation is on, so read the two together.
+changed. `bUseGameSleep` says whether the game calls Reflex's sleep each frame. NVIDIA asks games to call it even
+while Reflex is off, so *On* there does not say Reflex is on — `bLowLatencyMode` does; some games call it only
+while frame generation is on. Frame generation needs Reflex and not the other way round: the mode can be on
+with `fgMultiplier` at 1.
 
 **The stages overlap; they are not parts that add up to the total.** And *GPU render, start to end* includes the
 time the card spent waiting between pieces of work — in one game it is longer than the whole frame. So a second
