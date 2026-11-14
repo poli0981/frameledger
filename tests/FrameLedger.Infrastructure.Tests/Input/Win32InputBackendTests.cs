@@ -40,8 +40,12 @@ public sealed class Win32InputBackendTests
 
         if (backend.TryReadLastInputTick(out uint tick))
         {
-            // The same clock as Environment.TickCount, and never ahead of it by more than a moment.
-            unchecked((int)((uint)Environment.TickCount - tick)).Should().BeGreaterThan(-60_000);
+            // What the reader relies on: asked again, the time has not gone back. It is NOT compared with
+            // Environment.TickCount, and nothing may be: measured 2026-11-15 on a PC that had slept for five hours,
+            // the two were five hours apart - Windows' tick counts the sleep and .NET's does not. The reader only ever
+            // asks whether the time changed since its last slice (InputReader), which no sleep can spoil.
+            backend.TryReadLastInputTick(out uint again).Should().BeTrue();
+            unchecked((int)(again - tick)).Should().BeGreaterThanOrEqualTo(0);
         }
 
         uint front = backend.ForegroundProcessId();

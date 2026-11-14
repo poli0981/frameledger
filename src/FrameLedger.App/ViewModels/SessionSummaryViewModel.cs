@@ -593,7 +593,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         HasInputControllers = InputControllers.Count > 0;
         InputNoControllers = row.InputObservedMs is > 0 && !HasInputControllers ? Strings.Input_Controllers_NoneSeen : null;
         InputMakers = InputPresentation.Makers(InputDevices);
-        IReadOnlyList<string> notes = InputPresentation.Notes(row, InputDevices);
+        IReadOnlyList<string> notes = InputPresentation.Notes(InputDevices);
         InputNotes = notes.Count > 0 ? string.Join(Environment.NewLine, notes) : null;
 
         InputEvents = InputSeries?.Events(InputDevices) ?? [];

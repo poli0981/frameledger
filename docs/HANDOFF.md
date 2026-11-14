@@ -88,6 +88,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.46`, what the owner's five sessions on beta.46 showed (item 44), the design of the train that followed as the plan's review left it (`§The train after 0.1.0-beta.46`), that release's facts, the traps of that train | [`handoff/history/0.1.0-beta.46.md`](handoff/history/0.1.0-beta.46.md) |
 | `§beta.47`, what that release decided beyond D136–D141, what item 44's last part showed, that release's facts, the traps of that train, its NEXT as the owner's sessions of 2026-11-14 changed it | [`handoff/history/0.1.0-beta.47.md`](handoff/history/0.1.0-beta.47.md) |
 | `§beta.48`, what that release decided beyond D142–D147, that release's facts, the traps of that train, its NEXT and its "Left open" as item 46 changed them | [`handoff/history/0.1.0-beta.48.md`](handoff/history/0.1.0-beta.48.md) |
+| `§beta.49`, what that release decided beyond D148–D151, that release's facts, the traps of that train, its NEXT and its "Left open" as item 47 and D152–D154 changed them | [`handoff/history/0.1.0-beta.49.md`](handoff/history/0.1.0-beta.49.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19, 38, 39) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -95,126 +96,125 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-14, 0.1.0-beta.49: item 46 read; the frames counted for the log, Reflex and frame generation together; a read a second on a grid; the Agent keeps the reading that waits
+## **START HERE** — 2026-11-15, 0.1.0-beta.50: what a session was played with — controllers and input, read from outside the game, and built without a controller
 
-*Status is `docs/changelog/0.1.0-beta.49.md`; this is what no other file carries.* The owner ran item 46 on
-beta.48 the afternoon it was released — ten sessions, then eight more — and said: check (#455, and item 46's last
-paragraphs, below). The read works, the samples are a second apart, both games give both of the driver's own
-times, the multipliers are listed, off means off, **and the owner's word: no hitch**. Two things were left, the
-owner said *do both*, and four answers given while planning made the train (D148–D151): #456 (the Overlay counts
-each summed frame for its log), #457 (the watchdog's periodic tick on a grid), #458 (the Agent keeps the reading
-that waits; the guide on whose switches the table shows), and this release. **beta.48's own section, its traps
-and its release facts are [`handoff/history/0.1.0-beta.48.md`](handoff/history/0.1.0-beta.48.md).**
+*Status is `docs/changelog/0.1.0-beta.50.md`; this is what no other file carries.* On 2026-11-14 the owner asked
+for nine things about controllers: whether a game supports them, on the game's page; which interfaces and
+libraries; the share of a session played with a controller and with the keyboard; connections and drops; the
+battery state that lasted longest; all of it stored and charted; changes between makers and each one's share; Xbox
+controllers and the DualSense first; and whatever rounds it out. Nine answers given while planning made the
+train (D155–D163, `21_INPUT_DEVICES` §The owner's request and decisions): #464 (the arithmetic), #466 (schema
+0024 and the `.partial` file's chunk 11), #467 (the reader), #468 (the Agent, the switch, Privacy Policy 2.22
+and Disclaimer 2.18, Tier 2's definition), #469 (what a store lists, the input libraries, the game's page),
+#470 (the session's summary, the charts, Trend, Compare, the export, the guide's page), and this release — which
+also carries D152 and D154 from `[Unreleased]`. **beta.49's own section, its traps, its release facts and its
+"Left open" are [`handoff/history/0.1.0-beta.49.md`](handoff/history/0.1.0-beta.49.md).**
 
-### What this release decided, beyond D148–D151
+### The one thing to know: nothing here has met a controller
 
-- **The counts are of each frame's own two numbers, with sums, and no threshold.** The draft counted spans of no
-  length; a sample whose mean span is half a microsecond says spans of one or two microseconds exist, and a count
-  of exact zeros would have read "the driver's" where it was "ours". So the frames that have both a span and an
-  active time are kept in two heaps — active longer than the span, or not — each with its count and both sums.
-- **A batch's state is three things**: the driver's low-latency switch, its "the game sleeps" switch
-  (`bUseGameSleep`: NVAPI's "is `NvAPI_D3D_Sleep()` being called") and its frame-generation multiplier. The second
-  was added on the owner's word — Reflex goes with frame generation in the owner's games, and the low-latency
-  switch can be the NVIDIA App's override — and Clair Obscur's two sessions read exactly that: `bUseGameSleep`
-  off throughout without frame generation, on with ×3.
-- **Only the driver read and the publication are the periodic tick's.** The request is still followed on every
-  tick, so the hooks a session asks for go in on the tick the loader woke — a game that has just loaded
-  Streamline calls it at once. A draft that moved the whole block would have missed those calls.
-- **One read is armed at every periodic tick, and the grid is what keeps two apart**: half a second at the least,
-  after a tick that ran that late. "At most once a second" is no longer said anywhere.
-- **A session's first publication may hold a moment's worth.** A request seen on a woken tick is published by the
-  periodic tick that follows, however soon. One test read a single publication as complete and had to stop.
-- **The Agent keeps two sets, and an empty one does not wait.** A reading can stand at the sample after the one it
-  would have ridden — a second later. With the sensor interval above a second the oldest is still pushed out.
-- **No legal text changed (D149)**, although a bug report carries the Overlay's logs and so these lines: the
-  owner was told and chose it. The Privacy Policy names the logs of the component loaded into games.
-- **The plan was reviewed against the source by a second reader before the owner saw it, and sixteen things in
-  the draft were wrong** — among them the three above, and the whole of the Agent's half, which the draft did not
-  have.
+**The developer has no controller, and the owner chose to build without a probe run first (D157).** So:
+
+- **Checked against a real Windows, with no controller connected**: `Win32InputBackendTests` (the registration is
+  accepted, the window drains, the reader reports "no controller"); the shipped Agent in a scratch data folder
+  (`tools/agent-cost.ps1 -Keep`) stored `input_observed_ms` 29 826 of a 30.9 s session, `input_source`
+  `rawinput+xinput+lastinput`, the `input.class` series and the reader's counters, and stored nothing with the
+  option off or the terms not accepted; the Agent's cost per second of session was inside the run-to-run noise
+  (2.06 % of a core without, 1.54 % with — `20_OPEN_QUESTIONS` §M17).
+- **Checked against the owner's own file**: the Steam app's `appinfo.vdf` on the developer PC parsed to 3 581
+  records — 1 284 full, 440 partial, 1 857 with no entry.
+- **Checked against bytes and sessions written by hand, and against nothing else**: every DualSense report
+  layout, XInput's states and battery words, a background program being given a controller's reports at all,
+  Steam's virtual pad and the fold that makes one controller of two, the battery arithmetic, the marks, every
+  share the App shows, and the reader's cost with a controller connected.
+
+`LIMITATIONS.md`, the accuracy statement, the guide's page and the release's notes all say so. **Item 48 is where
+it meets the owner's Xbox controller and DualSense.**
+
+### What this release decided, beyond D155–D163
+
+- **Only Xbox-compatible controllers (through XInput) and the DualSense (through its own reports) are read for
+  use.** Any other controller is listed with its connections and is never "in use": the reader parses no other
+  report, and `LIMITATIONS.md` says so. Adding one is a parser in `Domain/Input` and bytes to test it with.
+- **A DualSense's transport decides how its report is read, not the report's length**: Windows pads the short
+  Bluetooth report to the device's longest, so `DualSenseReport.TryRead` takes the transport.
+- **"Both at once" is a class of its own**, in the table, the bar and the series. Trend's *Controller share* and
+  *Keyboard and mouse share* are the two exclusive classes; neither includes "both".
+- **A mark is made from the series**: a controller's `input.dev.N.active` going from no value to a value is a
+  connection; a battery "fell to low" where its level crossed XInput's *low*, or 10 %, downwards. The row's
+  `connects` decides whether the first rise was the session's start. Sixty marks a chart at most.
+- **Steam's `appinfo.vdf` is read in format 41 only**; another format is refused with the reason, and the game's
+  page says N/A.
+- **`InputTerms.MinimumPrivacyVersion` is `2.22` and is compared as "at least"**: a later Privacy Policy does not
+  stop the reading, and the next change to what is read raises the number in the same pull request.
+- **No chart colour was added**: the four classes use roles the palette has. Under a Windows contrast theme two
+  of them share a colour; `ACCESSIBILITY.md` §Known limitations says what tells them apart.
+- **`ShareBar`** is the base of `FgMixBar` and `InputShareBar`.
 
 ### Traps this train left
 
-- **A cause I offered and then counted away**: "the holes are the sensor library's fifth tick" — 25 of 134 fell on
-  one. The pattern that was there (46 of 134 exactly five samples apart) was the Agent's own attach rule, found
-  by reading `SessionRecorder`, not by looking harder at the Overlay.
-- **A fixture that proved nothing**: the case for a woken watchdog first churned `sl.common.dll`, which wakes
-  nobody — it is in neither the inventory nor the census — and passed. It was caught only because the case
-  asserts, from the log, that the watchdog *was* woken (0 early ticks). **A test of a mechanism asserts that the
-  mechanism ran.** `opengl32.dll` is the wake that unloads nothing under a hook.
-- **Qodana's native report reads the tests**: `static_cast<unsigned long long>(a * b)` is
-  `bugprone-implicit-widening-of-multiplication-result`. Widen an operand, not the product.
-- **A here-document with an apostrophe in it failed again.** Edit scripts are files.
-- **No edit while a gate runs still holds when CI asks for one**: the Qodana fix went into a second worktree of
-  the lower branch, and reached the upper one by a merge.
-- **The item's own text said "nothing is lost by it" of the holes**, on a reading of the Overlay alone. A reading
-  was lost at every return to step. Say what was looked at.
+- **A stack of pull requests that are squash-merged**: when the lower one merges, GitHub deletes its branch and
+  retargets the upper one to `main`, which then conflicts with itself. Check `git diff origin/main <the lower
+  branch's last tip>` is empty, then `git merge -S -s ours origin/main` on the upper branch, and merge that up
+  the stack. **Look at `gh pr view` before pushing to a lower branch**: a push to a branch GitHub deleted
+  re-creates it (it happened once here, and the branch was deleted again).
+- **An edit script that is run twice must change nothing the second time.** Two of this train's were not: the
+  guide's settings page listed *Controllers and input* twice (#468; fixed in #469) and `CLAUDE.md`'s layout said
+  the input types twice (#468; fixed in this pull request).
+- **A picture of a window from a test does not show its charts**: ScottPlot's control does not draw through a
+  `VisualBrush`. Save each plot with `Plot.SavePng`. The picture is how two legends that covered their charts
+  were found; the test is not in the tree.
+- **`MarkdownRendererTests` counts the embedded documents**: a new guide page is one more.
+- **`plot.Add.Scatter([..], [..])` does not compile** — two overloads fit a collection expression; name the arrays.
+- **A test cannot call `ChartPalette.For`**: it needs the App's resources. Parse the palette's XAML, as
+  `ChartMathTests` does.
+- **FluentAssertions' `OnlyContain` fails on an empty collection** — which is what the real backend returns on a
+  PC with no controller.
+- **A stored session of the test ledger with frames takes its own sensor blobs now** (`SessionWithFramesAsync`'s
+  `sensors`), with their own `t_ms`.
+- **`GetLastInputInfo`'s time is not on `Environment.TickCount`'s clock once the PC has slept**: five hours apart
+  on the developer PC after a sleep of five hours. The reader never compares the two; a test of #467 did, passed
+  on every runner (they do not sleep) and failed the local gate before this release — fixed here
+  (`21_INPUT_DEVICES` §What is read). **The time actually played, next on the roadmap, must not make the same
+  assumption.**
+- **Auto-merge does not wait for Qodana: it is advisory.** #470 merged with one notice of Qodana's on `main` (a
+  parameter used only for its null check) — a notice counts against the gate of zero, and the script that read the
+  local inspection's SARIF skipped notices. Fixed in this pull request, and the script counts them now. With
+  auto-merge on, read Qodana's report **before** the required checks finish, or enable auto-merge after it.
+- **`dotnet format --verify-no-changes` through a pipe that counts lines says nothing when it fails** — print its
+  exit code. #470's first push carried a naming violation in a test fixture that way; `check` and the first
+  rehearsal (run 43646963371) caught it, and the second rehearsal is of the fixed tree.
 
 ### NEXT
 
-1. ~~**The owner runs item 47**~~ **Run and read 2026-11-14** (item 47, *Run 2026-11-14*): the difference in
-   Cyberpunk 2077 is the driver's, the holes are gone from steady play, off means off, and the stop fired once.
-2. **The two GPU labels were reworded on the owner's word** (D152, 2026-11-14; strings in three languages, the
-   guide — in `[Unreleased]`, not in a release yet). **D141's stop stays as it is, and nothing more of Reflex is read** (D153, the owner
-   the same evening: "it only has to tell whether the game has it or not; Kingdom Come: Deliverance II has no
-   Reflex in its settings" — so that session lost nothing to the stop). (f) and (g) are said: the App's *Low
-   Latency Mode* is off, and no hitch.
-3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
-4. ~~**Train D**~~ **Advanced metrics is closed (D154, 2026-11-14): train D is not built.** The owner was shown
-   the catalog — 140 entries, 110 read — and what the ten entries of reach `Spike` hold (Streamline's own headers,
-   2.14.16: DLSS frame generation's options and state, the video-memory estimates, ray reconstruction's, Image
-   Scaling's and Dynamic Vibrance's options, the PCL markers), with what reading them takes: a function of ours
-   handed to the game in place of Streamline's (rule 4), which a game that fetched its functions before the
-   attach never calls. The owner: "Đóng luôn". The ten are `RefusedRoute` now, the guide no longer says a later
-   release reads more, and §M15 is decided. **What is next is the controller feature**, planned in a session of
-   its own.
+1. **The owner runs item 48** and says *check*; a copy of the ledger and the Agent's log are read. What it shows
+   comes first: a route that failed is said in `LIMITATIONS.md`, a layout that is wrong is a parser fix with the
+   owner's bytes as its test, and the accuracy statement's sentence about controllers is the owner's to reword
+   once they have been read.
+2. **Then the order the owner set on 2026-11-14: [`15_ROADMAP.md`](15_ROADMAP.md) §After the controller train.**
+   It is not repeated here. Its first item uses what this train stores.
 
 ### Left open by this session
 
-- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.~~ **Recorded
-  2026-11-14: 0.1.0-beta.49 was released 2026-11-14T11:12:44Z** (18:12 in the owner's time zone) from the signed
-  tag on `afe4984` (#459), by run 43587336452 — green at the first attempt, one run for the one tag push. Eight
-  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed, and the portable package hashed
-  here equals its line; the five native libraries in it carry `FL_BUILD_ID v0.1.0-beta.49`, none of them
-  `-dirty`. The delta from beta.48 is 1 100 211 bytes beside a full package of 110 803 443 — "Delta processed
-  0452 files. 0023 patched, 0429 unchanged". The wiki was published by run 43588972123. **Two rehearsals on the
-  release branch**: run 43580081466 at `1ab2809`, and — after a test-only fix reached the branch — run
-  43581734484 at `9f94356`, whose tree is the released one (a delta of 1 134 949 bytes, the same file counts).
-  **SonarCloud analysed `afe4984`: the quality gate passed and no issue is open on `main`. Qodana's two reports,
-  CodeQL and `check` are green on that commit.** On the way two advisory checks did find something, each in a
-  test of this train and each fixed before its pull request merged: Qodana's native report on #456 (two
-  products widened after the multiplication), SonarCloud on #457 (a line of the log handed to `printf`). **The
-  train stopped once for the owner**: two signed merges timed out at the passphrase prompt after #457; it went on
-  when the owner had unlocked the key. The tag's message reads `FrameLedger 0.1.0-beta.49` where the tags before
-  it read the bare version — nothing reads it, and a pushed tag is not moved.
-- **Why Cyberpunk 2077's active render is longer than its span without frame generation** — item 47's to say. A
-  third session that afternoon repeated it (233: 3.40 against 3.13 ms at 292 of 296 samples) and a session of
-  menus did not (232: 0 of 126).
-- **The Agent's half of the holes is read from the code and fits the ledger; it is not measured.** And with both
-  sides on a second a slip of phase can still leave a sample without a report: item 47 counts them.
-- **A game that exits by itself loses the batch of counts in hand** — under a minute. Not changed: nothing runs
-  at a process's exit.
-- **Where the third of a second of a poll goes is not established** (the history file of beta.48 has what is
-  known). Not looked at in this train.
-- **With the sensor interval above one second, some readings of the driver's report are not stored** — the oldest
-  of the two that wait is pushed out. Said in the guide; not changed.
-- **No test runs the whole path through the real Agent**: the injected tests stop at the shared memory, the
-  sampler's and the pending queue's start from it.
-- **Two install batches of beta.46 took 0.61 s and 1.26 s and nothing explains them.** Item 46's ten sessions had none
-  above 191 ms.
-- **The Japanese strings are unreviewed**, as every `ja` string is; this release added none.
-- **(c) and (h) of item 43**, which only the owner sees, are still not exercised.
-- **Valor Mortis's crash at 51 s** (twice, beta.40 and beta.44) **and Black Myth: Wukong's fault in Steam's crash
-  handler at every exit** are not explained. One session of each with hooking off is the comparison that is missing.
-- **What item 41 left unexercised**: a configure through the FidelityFX 2.3 loader (Cyberpunk 2077 with FSR frame
-  generation), a game with neither library.
-- **A fault while a game is closing is not seen by a hooked session** (D127: written down, not changed).
-- **`docs/LIST_GAME_TESTED.md` is as of 2026-11-06**: refreshing it is a new copy of the ledger and the owner's review.
-- **Item 40 (d)** was not exercised and the owner has not said item 40 passed. **Items 36 (d) and 37 are still open.**
-- **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
-  sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
+- **This release's own facts** — the tag's run, the digests, the delta, what SonarCloud and Qodana said of the
+  released commit — are not in any file yet: the release is cut after this text. Record them in the next pull
+  request.
+- **The reader's cost with a controller connected is not measured** (`20_OPEN_QUESTIONS` §M17 f). With none it is
+  inside the noise.
+- **A game run as administrator under an Agent that is not** has not been tried: Windows may not report input
+  into it. Item 48 (j).
+- **Only Steam is read for what a store lists.** GOG, Epic, the Xbox app and itch read N/A.
+- **The new block was looked at as pictures, in the dark and the light theme, not used by hand**; its rendering
+  under a contrast theme was reasoned from the palette, not looked at.
+- **The Japanese strings are unreviewed**, as every `ja` string is; this train added about a hundred.
+- **A session that was read while its game was never in front shows its controllers and no share** — by design;
+  whether that reads well is the owner's to say.
+- **Carried from beta.49, unchanged** (its history file has each in full): the two long install batches of
+  beta.46; Valor Mortis's crash at 51 s and Black Myth: Wukong's fault at exit; what item 41 left unexercised;
+  item 40 (d), items 36 (d) and 37; (c) and (h) of item 43; `docs/LIST_GAME_TESTED.md` is as of 2026-11-06;
+  `LIMITATIONS.md` and the accuracy statement on the processor's, memory's and motherboard's sensors are the
+  owner's to reword; the alpha line rests (D98).
 
-**Owner-only:** item 47; one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41
+**Owner-only:** item 48; one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41
 left unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
@@ -1011,6 +1011,65 @@ left unexercised; item 40 (d).
    Latency: On**, V-Sync off, borderless at 2560×1440, 378 FPS on the game's counter. So the driver's
    `bLowLatencyMode` on, at a multiplier of 1, is the game's menu, seen from both sides. **The owner's**: the wording of the two GPU labels — *idle time excluded /
    included* does not describe a game whose active time is the longer.
+48. **beta.50 — what a session was played with, read from real controllers** (D155–D163). **Everything this
+   release shows of controllers was built and checked against data written by hand: the developer has no
+   controller** (D157). This batch is the first time any of it meets one. **Not first on a game under the
+   user-mode exception's trial** (D38). Then say *check*; a copy of the ledger and the Agent's log are read.
+   (a) **The update shows the terms window once** (Privacy Policy 2.22, Disclaimer 2.18): accept it. If a game was
+   recorded after the update and before FrameLedger was opened, its summary says *Not read in this session* —
+   that is the terms being waited for (D156), not a fault.
+   (b) **The Xbox controller**: one session on its cable, one on Bluetooth, one on the wireless adapter if there
+   is one. Five minutes each, played with the controller.
+   (c) **The DualSense**: one session on its cable, one on Bluetooth.
+   (d) **Steam Input**: the DualSense in a Steam game with Steam Input on for it, and the same game with Steam
+   Input off.
+   (e) **One session, in this order, about two minutes each**: only the controller; only the keyboard and mouse;
+   hands off both; then Alt+Tab to another window and type there for a minute; then back to the game.
+   (f) **Unplug the controller and plug it back twice in one session** (or switch it off and on), noting roughly
+   when.
+   (g) **One session that starts on the Xbox controller, changes to the DualSense, and changes back.**
+   (h) **A game played with the keyboard and mouse only, no controller connected.**
+   (i) **A game that is not measured from inside** (hooking off, or refused) played with a controller.
+   (j) **A game run as administrator** while FrameLedger's Agent is not — if one is at hand.
+   (k) **One session with Settings ▸ Controllers and input off**; switch it back on afterwards.
+   (l) **A Steam game's page and a page of a game from another store**: the three rows at the end of *Details*.
+   (m) **How the games felt** — the reader looks ten times a second; a hitch at that rhythm, or when a controller
+   connects, is what to listen for.
+   **What each outcome means, written before the run.**
+   *(e): the three stretches read near two minutes each in their own class, and the minute typed elsewhere is in
+   no class — the time in front is a minute shorter than the time read* — the definitions hold on real input.
+   *The minute typed elsewhere is counted as keyboard and mouse* — the test for "the game is in front" is wrong
+   for that game (a window owned by another process, a launcher): say the game; `LIMITATIONS.md` names the case.
+   *The controller-only stretch reads as "both"* — something makes keyboard or mouse input while the controller
+   is used: Steam Input mapping it, the pad moving the pointer. Say which session; with Steam Input off (d) it
+   should read "controller".
+   *A controller was played with and is never "in use"* — look at the session's sources and the Agent's line
+   `input: run ended`: no reports with the registration accepted means Windows did not deliver a background
+   program that controller's reports on this PC; XInput silent means XInput answers only the program in front.
+   Either is a route that failed, said with its counters — and the App said N/A or "not in use", never a made-up
+   share.
+   *The Xbox controller reads "wired" on its cable, and four levels or nothing on Bluetooth; the DualSense reads
+   steps of ten per cent on its cable, and on Bluetooth a level only if something else had switched its full
+   reports on* — as `LIMITATIONS.md` says. Anything else is recorded and that page reworded.
+   *Steam Input on: one controller is listed, marked "also shown to games as an Xbox pad"* — the fold works. *Two
+   are listed, the DualSense and an Xbox pad* — it missed: give both rows' times in use.
+   *(f): the connections and drops equal the times it was done, and the marks sit where it was done* — the counts
+   are right. *More* — the connection flaps, or a controller that sleeps is counted as dropped: say the counts.
+   *(g): "By maker" shows both with two changes* — the owner's seventh point holds.
+   *(h): "No controller was connected during this session", and the keyboard and mouse have nearly all the time
+   in front.* *(i): the block is there in a session that was not hooked.*
+   *(j): every share is "no input" though the game was played* — Windows does not tell a program that is not
+   elevated about input into one that is: say so, and it goes into `LIMITATIONS.md` as measured.
+   *(k): the summary says "Not recorded for this session" and the row has no input figures* — off means off.
+   *(l): the Steam game says full, partial or "lists none"; the other says N/A; "Input libraries loaded" names a
+   library after a measured session.*
+   *The Agent's `input: run ended` lines*: the thread's processor time over the session's length. NFR-2 leaves
+   0.46 % of a core; a session with a controller is the first measurement of this (`20_OPEN_QUESTIONS` §M17 f).
+   Above that, say the number.
+   **A hitch every tenth of a second, a stutter when a controller connects or drops, a game that loses the
+   controller while FrameLedger records, or a fault**: switch *Controllers and input* off, say so, and send the
+   Agent's log. FrameLedger opens no controller and sends nothing to one (D159) — a controller that misbehaves
+   only while it records would contradict that and is the most important thing this batch could find.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI

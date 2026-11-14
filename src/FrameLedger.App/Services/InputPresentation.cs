@@ -210,9 +210,8 @@ public static class InputPresentation
     /// What the reader could not do in this session and what Windows showed twice, one sentence each: nothing that would
     /// leave a figure looking more complete than it is goes unsaid. Empty for a session with nothing to add.
     /// </summary>
-    public static IReadOnlyList<string> Notes(SessionRow row, InputDevicesRecord? record)
+    public static IReadOnlyList<string> Notes(InputDevicesRecord? record)
     {
-        ArgumentNullException.ThrowIfNull(row);
         var notes = new List<string>();
         if (record is null)
         {

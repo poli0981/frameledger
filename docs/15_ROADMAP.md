@@ -334,7 +334,8 @@ CI/CD with the native build (`release.yml` exists since P4 PR-5, 2026-09-14 — 
 
 ## After the controller train — the owner's order (2026-11-14)
 
-Advanced metrics is closed (D154) and the controller feature is being built as 0.1.0-beta.50's train. Asked what
+Advanced metrics is closed (D154) and the controller feature ~~is being built as 0.1.0-beta.50's train~~ **was
+released as 0.1.0-beta.50 (2026-11-15), unproven on a real controller until owner-only item 48**. Asked what
 comes after, the owner was shown six directions and chose four of them, and added distribution. **This is the
 order of work after the controller train; each begins with a plan of its own and the owner's approval.** Nothing
 here is designed yet, and what is marked *to verify* is a lead, not a finding.
