@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using FrameLedger.Application.Advanced;
 using FrameLedger.Application.Telemetry;
 
@@ -205,12 +206,34 @@ public sealed class TelemetryPoller : ITelemetryPoller
         }
     }
 
+    /// <summary>
+    /// How long to wait for the next tick of a fixed period (owner decision D146): ticks are due at whole intervals
+    /// from the loop's start, so the answer is what is left of the interval now running - more than nothing, at most
+    /// a whole interval. A poll that overran one or more periods is followed by the next tick still to come: the
+    /// ticks it missed are skipped, never run in a burst.
+    /// </summary>
+    /// <remarks>
+    /// Until 0.1.0-beta.48 the loop waited the whole interval AFTER a poll's work. In the owner's ledger nearly
+    /// every session has its samples 1.32 s apart under a setting of one second - so the part inside a game, which
+    /// reads the driver's latency report once a second, had a quarter of its reads fall between two samples. What
+    /// takes the third of a second is not established (06_DATA_MODEL §sensor_blobs): unelevated, a poll takes about
+    /// a millisecond. Whatever a poll costs, the period no longer depends on it.
+    /// </remarks>
+    public static TimeSpan UntilNextTick(TimeSpan elapsed, TimeSpan interval)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(interval, TimeSpan.Zero);
+        long into = elapsed <= TimeSpan.Zero ? 0 : elapsed.Ticks % interval.Ticks;
+        return TimeSpan.FromTicks(interval.Ticks - into);
+    }
+
     private void Loop()
     {
+        // The stopwatch, not the injected clock: this is about waiting, and a test's clock stands still.
+        long started = Stopwatch.GetTimestamp();
         do
         {
             PollOnce();
         }
-        while (!_stop.Wait(_options.Interval));
+        while (!_stop.Wait(UntilNextTick(Stopwatch.GetElapsedTime(started), _options.Interval)));
     }
 }

@@ -204,8 +204,17 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
   brought up to date with the next release, as beta.46's pages were.
 - **In Phantom Blade Zero the driver's *GPU render* span is longer than its total** (item 45): shown as reported,
   not explained. In Cyberpunk 2077 it is not. The owner's answer: read the driver's active time (NEXT 2).
-- **The Agent's samples are 1.32 s apart while `sensor_blobs.hz` says 1.0** (seen 2026-11-14 in the `t_ms` series,
-  in sessions back to beta.42). Not looked into: whether anything reads `hz` as the spacing.
+- ~~**The Agent's samples are 1.32 s apart while `sensor_blobs.hz` says 1.0**~~ (seen 2026-11-14 in the `t_ms`
+  series). **Looked into the same day (D146)**: the poller waited its whole interval after a poll's work; only
+  the App's series loader reads `hz`, and only where a row has no `t_ms`, so no chart was wrong. The poller now
+  keeps a fixed period and `hz` is measured from the samples (`06_DATA_MODEL` §sensor_blobs) — in no release yet.
+- **Where the third of a second goes is not established.** Unelevated, a poll takes about a millisecond (the
+  layers composed as the Agent composes them, each read under a stopwatch). In the owner's ledger 180 of 186
+  sessions are 1.32 s apart and six are 1.0 s: the two with no `cpu_temp` series (an Agent not elevated) are among
+  the six — which points at the sensor library's processor update, run on the poll's thread as administrator
+  with PawnIO — **but four sessions that have the series kept one second** (22, 72, 73, 136). **Not measured**:
+  that call itself (it needs elevation), and whether it is processor time or waiting. Not changed; the period no
+  longer depends on it. The owner's to say whether it is worth timing on their PC and moving off the poll's thread.
 - **No test runs the whole path through the real Agent**: the injected tests stop at the shared memory and the
   sampler's start from it; no end-to-end case loads the stand-in module under an Agent session.
 - **Two install batches of beta.46 took 0.61 s and 1.26 s and nothing explains them** (Hogwarts Legacy, Cyberpunk

@@ -59,7 +59,8 @@ public sealed class SessionFinalizer
 
         // Advanced metrics (D102), both tiers: they are read by the Agent, not by a hook, so a session that was not
         // hooked has them all the same. Nothing when the option was off - no series, no row.
-        (IReadOnlyList<SensorBlob> advancedBlobs, AdvancedSessionRow? advanced) = AdvancedSessionBuilder.Build(input.Sensors, input.Advanced, _codec);
+        double hz = SampleRate(input.Sensors, row.QpcFrequency);
+        (IReadOnlyList<SensorBlob> advancedBlobs, AdvancedSessionRow? advanced) = AdvancedSessionBuilder.Build(input.Sensors, input.Advanced, _codec, hz);
         if (input.Hooked is null)
         {
             // A Tier-2 row has no frames and every sensor the machine provided (2026-09-22): the same averages a
@@ -67,7 +68,7 @@ public sealed class SessionFinalizer
             return new FinalizedSession
             {
                 Row = SessionAggregator.WithSensorAggregates(row with { Tier = CaptureTier.NotHooked }, input.Sensors),
-                Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency), .. advancedBlobs],
+                Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency, hz), .. advancedBlobs],
                 Advanced = advanced,
             };
         }
@@ -82,9 +83,30 @@ public sealed class SessionFinalizer
             {
                 FirstPresentMs = FirstPresentMs(r.Dominant, row.QpcEpoch, row.QpcFrequency),
             },
-            Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency), .. advancedBlobs],
+            Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency, hz), .. advancedBlobs],
             Advanced = advanced,
         };
+    }
+
+    /// <summary>
+    /// The rate the session's samples had, a second (owner decision D146): the gaps between the first and the last
+    /// over the time between them, to a thousandth. 1 where there are fewer than two samples or no time between them.
+    /// </summary>
+    /// <remarks>
+    /// Measured, not the configured interval: it is then right for a session recovered from a <c>.partial</c> file,
+    /// which never knew the setting, and for one whose poller could not keep its period. It is the FALLBACK for a
+    /// reader: every series is stored beside <c>t_ms</c>, which carries each sample's own time.
+    /// </remarks>
+    public static double SampleRate(IReadOnlyList<TelemetrySample> sensors, long qpcFrequency)
+    {
+        ArgumentNullException.ThrowIfNull(sensors);
+        if (sensors.Count < 2 || qpcFrequency <= 0)
+        {
+            return 1;
+        }
+
+        long span = sensors[^1].QpcTicks - sensors[0].QpcTicks;
+        return span <= 0 ? 1 : Math.Round((sensors.Count - 1) * (double)qpcFrequency / span, 3);
     }
 
     /// <summary>
@@ -248,7 +270,7 @@ public sealed class SessionFinalizer
     }
 
     /// <summary><c>t_ms</c> plus one series per field any sample carried, aligned to <c>t_ms</c>, −1 where a tick had no reading.</summary>
-    private List<SensorBlob> EncodeSensors(IReadOnlyList<TelemetrySample> sensors, ulong qpcEpoch, long qpcFrequency)
+    private List<SensorBlob> EncodeSensors(IReadOnlyList<TelemetrySample> sensors, ulong qpcEpoch, long qpcFrequency, double hz)
     {
         if (sensors.Count == 0)
         {
@@ -257,34 +279,34 @@ public sealed class SessionFinalizer
 
         var blobs = new List<SensorBlob>
         {
-            Blob("t_ms", sensors, s => (float)((s.QpcTicks - (long)qpcEpoch) * 1000.0 / qpcFrequency)),
+            Blob("t_ms", sensors, hz, s => (float)((s.QpcTicks - (long)qpcEpoch) * 1000.0 / qpcFrequency)),
         };
         // One list (SensorSeriesCatalog) for the blobs and for sensor_stats_json; the game process's memory joined it in
         // beta.12 (D43) — five series, MiB, both tiers.
         foreach ((string name, Func<TelemetrySample, double?> select) in SensorSeriesCatalog.All)
         {
-            AddIfAny(blobs, name, sensors, select);
+            AddIfAny(blobs, name, sensors, hz, select);
         }
 
         return blobs;
     }
 
-    private void AddIfAny(List<SensorBlob> into, string series, IReadOnlyList<TelemetrySample> sensors, Func<TelemetrySample, double?> field)
+    private void AddIfAny(List<SensorBlob> into, string series, IReadOnlyList<TelemetrySample> sensors, double hz, Func<TelemetrySample, double?> field)
     {
         if (sensors.Any(s => field(s) is not null))
         {
-            into.Add(Blob(series, sensors, s => field(s) is { } v ? (float)v : SensorMissing));
+            into.Add(Blob(series, sensors, hz, s => field(s) is { } v ? (float)v : SensorMissing));
         }
     }
 
-    private SensorBlob Blob(string series, IReadOnlyList<TelemetrySample> sensors, Func<TelemetrySample, float> value) => new()
+    private SensorBlob Blob(string series, IReadOnlyList<TelemetrySample> sensors, double hz, Func<TelemetrySample, float> value) => new()
     {
         Series = series,
 
-        // Nominal: the poller ticks once a second by default (TelemetryPollerOptions). The t_ms series stored beside every
-        // series carries each tick's real time, and that is what the App draws against; Hz is only its fallback for a row
-        // written without t_ms (06_DATA_MODEL §sensor_blobs).
-        Hz = 1,
+        // The rate the samples had (SampleRate; it was the constant 1 until 0.1.0-beta.48, whatever the samples did).
+        // The t_ms series stored beside every series carries each tick's real time, and that is what the App draws
+        // against; Hz is only its fallback for a row written without t_ms (06_DATA_MODEL §sensor_blobs).
+        Hz = hz,
         Codec = _codec.Tag,
         Data = _codec.EncodeFloat32([.. sensors.Select(value)]),
     };

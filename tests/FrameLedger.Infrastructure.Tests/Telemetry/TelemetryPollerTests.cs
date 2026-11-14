@@ -232,6 +232,56 @@ public sealed class TelemetryPollerTests
     }
 
     [Fact]
+    public void TheNextTickIsDueAtAWholeIntervalFromTheStartHoweverLongThePollTook()
+    {
+        TimeSpan second = TimeSpan.FromSeconds(1);
+
+        // D146: a poll that took 320 ms is followed 680 ms later, not a whole second later.
+        TelemetryPoller.UntilNextTick(TimeSpan.FromMilliseconds(320), second).Should().Be(TimeSpan.FromMilliseconds(680));
+        TelemetryPoller.UntilNextTick(TimeSpan.FromMilliseconds(5320), second).Should().Be(TimeSpan.FromMilliseconds(680));
+
+        // A poll that overran two periods: the next tick still to come, and the two it missed are not made up.
+        TelemetryPoller.UntilNextTick(TimeSpan.FromMilliseconds(2500), second).Should().Be(TimeSpan.FromMilliseconds(500));
+
+        // On the boundary, and before any time has passed: a whole interval - never nothing, never more.
+        TelemetryPoller.UntilNextTick(second, second).Should().Be(second);
+        TelemetryPoller.UntilNextTick(TimeSpan.Zero, second).Should().Be(second);
+        TelemetryPoller.UntilNextTick(TimeSpan.FromSeconds(-3), second).Should().Be(second);
+        for (int ms = 0; ms < 5000; ms += 37)
+        {
+            TelemetryPoller.UntilNextTick(TimeSpan.FromMilliseconds(ms), TimeSpan.FromMilliseconds(500))
+                .Should().BeGreaterThan(TimeSpan.Zero).And.BeLessThanOrEqualTo(TimeSpan.FromMilliseconds(500));
+        }
+
+        Action none = () => TelemetryPoller.UntilNextTick(second, TimeSpan.Zero);
+        none.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public void TheThreadKeepsItsPeriodWhenAPollTakesTime()
+    {
+        // A layer that takes 300 ms to answer, polled every 500 ms: the samples are 500 ms apart, where waiting the
+        // whole interval after the work made them 800 ms apart.
+        using var layer = new FakeLayer(TelemetryLayer.Lhm);
+        GpuSample sample = layer.Sample(_t0, load: 1);
+        layer.Script(() =>
+        {
+            Thread.Sleep(300);
+            return sample;
+        });
+        var poller = new TelemetryPoller(layer, new TelemetryPollerOptions { Interval = TelemetryPollerOptions.MinimumInterval }, TimeProvider.System);
+
+        poller.Start();
+        SpinWait.SpinUntil(() => poller.Queued >= 7, TimeSpan.FromSeconds(20)).Should().BeTrue("seven ticks, half a second apart");
+        poller.Dispose();
+
+        var samples = new List<TelemetrySample>();
+        poller.Drain(samples);
+        double apart = TimeProvider.System.GetElapsedTime(samples[0].QpcTicks, samples[6].QpcTicks).TotalMilliseconds / 6;
+        apart.Should().BeLessThan(700, "the period is the interval (500 ms), not the interval plus the work (800 ms)");
+    }
+
+    [Fact]
     public void TheThreadPollsAtItsIntervalAndReturnsOnDispose()
     {
         using var layer = new FakeLayer(TelemetryLayer.Lhm);

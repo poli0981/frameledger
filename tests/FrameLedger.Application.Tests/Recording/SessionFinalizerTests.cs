@@ -119,6 +119,32 @@ public sealed class SessionFinalizerTests
     }
 
     [Fact]
+    public void TheRateStoredWithASeriesIsTheOneTheSamplesHad()
+    {
+        // D146: it was the constant 1. Samples 1.32 s apart - what a poller that waited its whole interval after its
+        // work made of "once a second" - are 0.758 a second, and are stored as that.
+        SessionFinalizer.SampleRate(SessionFixtures.Sensors(3), SessionFixtures.QpcFrequency).Should().Be(1);
+        List<Application.Telemetry.TelemetrySample> slow = SessionFixtures.Sensors(5);
+        for (int i = 0; i < slow.Count; i++)
+        {
+            slow[i] = slow[i] with { QpcTicks = (long)SessionFixtures.QpcEpoch + (i * SessionFixtures.QpcFrequency * 132 / 100) };
+        }
+
+        SessionFinalizer.SampleRate(slow, SessionFixtures.QpcFrequency).Should().Be(0.758);
+
+        (SessionFinalizer finalizer, _) = Make();
+        FinalizedSession built = finalizer.Build(new FinalizeInput { Skeleton = SessionFixtures.Skeleton(tier: CaptureTier.NotHooked), Sensors = slow });
+        built.Sensors.Should().NotBeEmpty();
+        built.Sensors.Should().AllSatisfy(s => s.Hz.Should().Be(0.758));
+
+        // Fewer than two samples, or no time between them, have no rate to measure: 1, as before.
+        SessionFinalizer.SampleRate([], SessionFixtures.QpcFrequency).Should().Be(1);
+        SessionFinalizer.SampleRate(SessionFixtures.Sensors(1), SessionFixtures.QpcFrequency).Should().Be(1);
+        SessionFinalizer.SampleRate([slow[0], slow[0]], SessionFixtures.QpcFrequency).Should().Be(1);
+        SessionFinalizer.SampleRate(slow, 0).Should().Be(1);
+    }
+
+    [Fact]
     public void TheMachinesReadingsBecomeTheCpuAndMemorySeriesTheSchemaAlwaysAllowed()
     {
         (SessionFinalizer finalizer, _) = Make();

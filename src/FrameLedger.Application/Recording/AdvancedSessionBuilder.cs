@@ -33,7 +33,12 @@ public static class AdvancedSessionBuilder
     /// </summary>
     public const int MaxSeries = 256;
 
-    public static (IReadOnlyList<SensorBlob> Blobs, AdvancedSessionRow? Row) Build(IReadOnlyList<TelemetrySample> sensors, AdvancedSessionData? data, ISeriesCodec codec)
+    /// <summary>The session's advanced series as blobs, and its <c>session_advanced</c> row — nothing when there is neither a series nor data.</summary>
+    /// <param name="sensors">The session's samples, in order.</param>
+    /// <param name="data">What the session knew of the machine and itself, or null when the option was off.</param>
+    /// <param name="codec">How a series is encoded.</param>
+    /// <param name="hz">The rate the samples had (<see cref="SessionFinalizer.SampleRate"/>): stored with each series as the fallback for a reader with no <c>t_ms</c>.</param>
+    public static (IReadOnlyList<SensorBlob> Blobs, AdvancedSessionRow? Row) Build(IReadOnlyList<TelemetrySample> sensors, AdvancedSessionData? data, ISeriesCodec codec, double hz = 1)
     {
         ArgumentNullException.ThrowIfNull(sensors);
         ArgumentNullException.ThrowIfNull(codec);
@@ -48,7 +53,7 @@ public static class AdvancedSessionBuilder
         var stats = new Dictionary<string, SensorSeriesStats>(StringComparer.Ordinal);
         for (int s = 0; s < names.Count; s++)
         {
-            blobs.Add(new SensorBlob { Series = names[s], Hz = 1, Codec = codec.Tag, Data = codec.EncodeSparseFloat32(columns[s]) });
+            blobs.Add(new SensorBlob { Series = names[s], Hz = hz, Codec = codec.Tag, Data = codec.EncodeSparseFloat32(columns[s]) });
             SeriesAggregates aggregates = SeriesAggregates.Of(columns[s].Select(static v => float.IsNaN(v) ? (double?)null : v));
             if (aggregates.Count > 0)
             {
