@@ -114,6 +114,21 @@ public sealed record ChartPalette(
     };
 
     /// <summary>
+    /// The colour of what a session was played with (0.1.0-beta.50): a controller the first series colour, the keyboard or
+    /// mouse the second, both at once the sensors' green, no input the mix's grey - roles the palette already has, so the
+    /// contrast table of <c>08_UI</c> §Accessibility covers them. Under a Windows contrast theme two of the four share a
+    /// colour (the theme has few): the bar draws them apart with a gap and never next to each other, the charts give each
+    /// its own row or marker, and every number is in the table in text.
+    /// </summary>
+    public Color InputFill(Domain.Input.InputClass input) => input switch
+    {
+        Domain.Input.InputClass.Controller => Native,
+        Domain.Input.InputClass.KeyboardMouse => Displayed,
+        Domain.Input.InputClass.Both => Sensor,
+        _ => MixNone,
+    };
+
+    /// <summary>
     /// The fill of a frame-generation mix segment (beta.24, D62): a state by its multiplier, so ×4 reads the same colour in
     /// every session — the series colours, never the stutter reds —, and no frame generation and the time no state claims
     /// each a colour of their own.

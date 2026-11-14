@@ -117,6 +117,10 @@ public sealed class SessionExporter
         // beta.12 (D43, 03_METRICS §Game process memory): the game's own memory, both tiers, MiB — a header line for the same
         // reason as the display: it is the session's, read once a second, not a frame's.
         w.WriteLine("# game_memory: " + GameMemoryText.ExportLine(row));
+
+        // 0.1.0-beta.50 (D160, 03_METRICS §Input): what the session was played with and its controllers, both tiers - what
+        // Privacy Policy §3A says an export carries. Never a button, a key, a serial number or an address: the row has none.
+        w.WriteLine("# input: " + InputPresentation.ExportLine(row));
         w.WriteLine("# hardware: " + (hardware is null ? "N/A" : string.Join("; ", new[] { hardware.CpuName, hardware.GpuName, hardware.GpuDriver, hardware.OsBuild, hardware.DisplayRes }.Where(static s => !string.IsNullOrEmpty(s)))));
         w.WriteLine("# rt: " + row.RtFlag + " (" + (row.RtSource ?? "n/a") + "); pt: " + row.PtFlag + " (" + (row.PtSource ?? "n/a") + "); rr: " + row.RrFlag + " (" + (row.RrSource ?? "n/a") + ")");
         // beta.24 (D63): the session's quality mode and whose it is: the NVIDIA App's override the driver reported applied

@@ -166,6 +166,61 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private string? _fgMixMissing;
 
+    /// <summary>0.1.0-beta.50: the session stored what it was played with and the game was in front, so the block is shown.</summary>
+    [ObservableProperty]
+    private bool _hasInput;
+
+    /// <summary>The four classes as the bar draws them, in the table's order.</summary>
+    [ObservableProperty]
+    private IReadOnlyList<InputShareSegment> _inputSegments = [];
+
+    /// <summary>The bar's spoken name: every class with its share.</summary>
+    [ObservableProperty]
+    private string _inputName = string.Empty;
+
+    /// <summary>How long the session was read and how long the game was in front - what the shares are shares of.</summary>
+    [ObservableProperty]
+    private string? _inputContext;
+
+    /// <summary>How often the session went from a controller to the keyboard and mouse or back.</summary>
+    [ObservableProperty]
+    private string? _inputSwitches;
+
+    /// <summary>The session had a controller, so their table is shown.</summary>
+    [ObservableProperty]
+    private bool _hasInputControllers;
+
+    /// <summary>That no controller was connected, for a session that was read and saw none; null otherwise.</summary>
+    [ObservableProperty]
+    private string? _inputNoControllers;
+
+    /// <summary>Each maker's share of the controllers' time and how often the maker changed; null with fewer than two makers.</summary>
+    [ObservableProperty]
+    private string? _inputMakers;
+
+    /// <summary>What the reader could not do in this session and what Windows showed twice, a sentence a line; null with nothing to add.</summary>
+    [ObservableProperty]
+    private string? _inputNotes;
+
+    /// <summary>Why the session shows no "Played with" (<see cref="InputPresentation.Missing"/>); null when it does.</summary>
+    [ObservableProperty]
+    private string? _inputMissing;
+
+    /// <summary>The session stored its input series, so the timeline is drawn.</summary>
+    [ObservableProperty]
+    private bool _hasInputCharts;
+
+    /// <summary>A controller of the session reported a battery, so its chart is drawn.</summary>
+    [ObservableProperty]
+    private bool _hasInputBattery;
+
+    /// <summary>The frame-time chart can carry the controller marks: there are some, and the frames' place on the sensors' clock is known.</summary>
+    [ObservableProperty]
+    private bool _hasInputEvents;
+
+    [ObservableProperty]
+    private bool _showInputEvents = true;
+
     [ObservableProperty]
     private string _tags = string.Empty;
 
@@ -238,6 +293,32 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
 
     public static string FgMixTimeHeader => Strings.FgMix_Col_Time;
 
+    public static string InputHeader => Strings.Input_Header;
+
+    public static string InputLimitsNote => Strings.Input_Limits_Note;
+
+    public static string InputMethodHeader => Strings.Input_Col_Method;
+
+    public static string InputControllersHeader => Strings.Input_Controllers_Header;
+
+    public static string InputControllerHeader => Strings.Input_Col_Controller;
+
+    public static string InputConnectionHeader => Strings.Input_Col_Connection;
+
+    public static string InputInUseHeader => Strings.Input_Col_InUse;
+
+    public static string InputConnectedHeader => Strings.Input_Col_Connected;
+
+    public static string InputEventsHeader => Strings.Input_Col_Events;
+
+    public static string InputBatteryColumnHeader => Strings.Input_Col_Battery;
+
+    public static string InputTimelineHeader => Strings.Input_Timeline_Header;
+
+    public static string InputBatteryHeader => Strings.Input_Battery_Header;
+
+    public static string ShowInputEventsText => Strings.Summary_Show_InputEvents;
+
     public static string AnnotationsHeader => Strings.Summary_Annotations_Header;
 
     public static string TagsPlaceholder => Strings.Summary_Tags_Placeholder;
@@ -268,6 +349,21 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
 
     /// <summary>What the Sensors section draws: <see cref="Series"/> for a hooked session, the sensors alone for one that was not.</summary>
     public SessionSeries? SensorSeries { get; private set; }
+
+    /// <summary>The session's input series (0.1.0-beta.50) for the two charts; null for a session that stored none.</summary>
+    public InputSeries? InputSeries { get; private set; }
+
+    /// <summary>The session's controllers as stored (<c>sessions.input_devices</c>); null for a session with none.</summary>
+    public Application.Recording.InputDevicesRecord? InputDevices { get; private set; }
+
+    /// <summary>The controllers' connections, drops and low batteries, on the sensors' clock - the charts' marks.</summary>
+    public IReadOnlyList<InputEvent> InputEvents { get; private set; } = [];
+
+    /// <summary>What the session was played with, a row a class.</summary>
+    public ObservableCollection<InputClassRowModel> InputRows { get; } = [];
+
+    /// <summary>The session's controllers, a row each.</summary>
+    public ObservableCollection<InputControllerRowModel> InputControllers { get; } = [];
 
     public ObservableCollection<StatCardModel> Stats { get; } = [];
 
@@ -303,6 +399,9 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         _snapshot = await _hardware.FindAsync(Row.SnapshotId, ct).ConfigureAwait(true);
         Series = Row.Tier == CaptureTier.Hooked ? await _loader.LoadAsync(sessionId, ct).ConfigureAwait(true) : null;
         SensorSeries = Series ?? (await _loader.LoadSensorsAsync(sessionId, ct).ConfigureAwait(true) is { Count: > 0 } sensors ? SessionSeries.SensorsOnly(sensors) : null);
+
+        // Both tiers (0.1.0-beta.50): what it was played with is read from outside the game.
+        InputSeries = Row.InputObservedMs is > 0 ? await _loader.LoadInputAsync(sessionId, ct).ConfigureAwait(true) : null;
         Present();
     }
 
@@ -458,8 +557,49 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         DecimationNote = Series is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.Chart_Decimated_Format, Series.Presents, Math.Min(Series.Presents, Decimator.DefaultBuckets * 2));
         PresentStats(row);
         PresentFgMix(row);
+        PresentInput(row);
         PresentChips();
         Presented?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// 0.1.0-beta.50 (D155-D163): what the session was played with - the stored totals as a bar and a table, the controllers,
+    /// the makers, what the reader could not do - and why a session has none. Read from the row, never recomputed.
+    /// </summary>
+    private void PresentInput(SessionRow row)
+    {
+        IReadOnlyList<InputClassRowModel> rows = InputPresentation.Rows(row);
+        InputRows.Clear();
+        foreach (InputClassRowModel line in rows)
+        {
+            InputRows.Add(line);
+        }
+
+        HasInput = rows.Count > 0;
+        InputSegments = [.. rows.Select(static r => r.Segment)];
+        InputName = HasInput ? InputPresentation.AccessibleName(rows) : string.Empty;
+        InputContext = HasInput ? InputPresentation.Context(row) : null;
+        InputSwitches = InputPresentation.Switches(row);
+        InputMissing = InputPresentation.Missing(row);
+
+        // The controllers are shown for any session that was read, in front or not: a pad that sat connected is a fact too.
+        InputDevices = row.InputObservedMs is > 0 ? Application.Recording.InputDevicesRecord.Parse(row.InputDevicesJson) : null;
+        InputControllers.Clear();
+        foreach (InputControllerRowModel line in InputPresentation.Controllers(InputDevices))
+        {
+            InputControllers.Add(line);
+        }
+
+        HasInputControllers = InputControllers.Count > 0;
+        InputNoControllers = row.InputObservedMs is > 0 && !HasInputControllers ? Strings.Input_Controllers_NoneSeen : null;
+        InputMakers = InputPresentation.Makers(InputDevices);
+        IReadOnlyList<string> notes = InputPresentation.Notes(row, InputDevices);
+        InputNotes = notes.Count > 0 ? string.Join(Environment.NewLine, notes) : null;
+
+        InputEvents = InputSeries?.Events(InputDevices) ?? [];
+        HasInputCharts = InputSeries is { TimesS.Length: > 0 };
+        HasInputBattery = InputSeries is { } series && series.Devices.Any(static d => d.Battery is not null);
+        HasInputEvents = IsHooked && InputEvents.Count > 0 && Series?.SensorOffsetS is not null;
     }
 
     /// <summary>beta.24 (D62): the stored mix as rows and a bar, the setting that framed it, and why a session has none.</summary>

@@ -90,7 +90,9 @@ stopped, hooking turned off — each with one button that only says you have rea
   Read [Anti-cheat and safety](04-anti-cheat-and-safety.md) before you do.
 - **Anti-cheat** — shown in its place when anti-cheat was found: what was found, and where. **User-mode exception**
   appears when the game qualifies for the one exception.
-- **Supports** and **Details** — what the game's own files contain, as far as FrameLedger can tell.
+- **Supports** and **Details** — what the game's own files contain, as far as FrameLedger can tell. **Details** ends
+  with three rows about controllers — what the store lists, which input libraries the game loaded, and how you have
+  played it ([Controllers and input](13-controllers.md)).
 - **Tabs:** **Sessions** (every session: double-click a row or press **Open**; **Delete all sessions…** at the top),
   **Frametime**, **Distribution**, **Trend** (one point per session for a figure you choose; each day your hardware,
   driver, display or Windows changed is numbered on the chart and listed under it), **Sensors**, and **Latency** when
@@ -106,6 +108,10 @@ It opens from a session row, from the Dashboard, and from the notice when a sess
 - The figures, the charts and **Statistics per series** — [Read your results](03-read-your-results.md) explains each.
 - **Frame generation in this session** — a bar and a table of every frame-generation state the session held, when it
   held more than one, with how frame generation was set.
+- **Played with** — what the session was played with: a bar and a table of the time with a controller, with the
+  keyboard and mouse, with both and with no input; the session's controllers with their connections and batteries;
+  and two charts over the session ([Controllers and input](13-controllers.md)). Above the Frametime chart,
+  **Controller marks** draws a controller's connections, drops and low batteries across the frames.
 - **Tags and notes** with **Save**, and **Export CSV**, **Export JSON**, **Export PNG**.
 - **Advanced metrics…**, for a session recorded with Advanced metrics on: it opens that session on the Advanced page.
 

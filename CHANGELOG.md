@@ -37,6 +37,17 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Added
 
+- **A session's summary says what it was played with** (owner decisions D155-D163): **Played with** — a bar and a table
+  of the time the game was in front that was played with a controller, with the keyboard and mouse, with both at once
+  and with no input; how often you changed between them; each controller of the session with its connection, the time
+  in use and connected, how often it connected and dropped, and its battery — the state it was in longest and for how
+  long, the first and last level, how fast it ran down; and each maker's share when two were used. Two charts follow:
+  **Input over the session** and **Controller battery**. On a measured session's Frametime chart, **Controller marks**
+  draws a controller's connections, drops and low batteries across the frames. For every session, measured from inside
+  or not. **Trend** has *Controller share* and *Keyboard and mouse share*, **Compare** has *Played with* and
+  *Controllers*, and a CSV export has an `# input:` line. The user guide has a page for it, *Controllers and input*.
+  Checked against synthetic sessions only: no controller had been read when this was written.
+
 - **A session records what it was played with — a controller, the keyboard and mouse, both, or neither** (D155–D163,
   the owner's decisions of 2026-11-14; *Settings ▸ Controllers and input*, on unless you switch it off). While a game
   is recorded, FrameLedger's agent notes — from Windows, never from the game — which game controllers are connected

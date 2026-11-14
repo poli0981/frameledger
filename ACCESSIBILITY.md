@@ -79,7 +79,10 @@ The same keys are in the user guide, [The screens](guide/07-screens.md#keyboard-
 - Labels such as *Hooking on* and *Not installed*, and the ray-tracing chips, always carry their words; a chip that reads
   *N/A* is also drawn with a dashed edge.
 - **No chart tells two series apart by colour alone**: its lines are solid, dashed or dotted, its points circles,
-  triangles or squares, its shaded stretches striped or dotted.
+  triangles or squares, its shaded stretches striped or dotted. The chart of what a session was played with puts each
+  way of playing on a row of its own, named on the axis.
+- **A bar of shares** — frame generation, what a session was played with — is announced with every share in its
+  name, and the table beside it has every number in text, each row with a swatch of its colour.
 
 ### Languages
 
@@ -113,6 +116,9 @@ Each one with what to do instead. A barrier that is not on this list is worth re
 - **A chart's points cannot be read one by one.** A screen reader hears the chart's name and where its numbers are:
   a session's figures and *Statistics per series* in its summary, the table under the Compare chart, the Sessions table
   and the list of changes under a trend chart, and **File ▸ Export ▸ Session CSV** or **Session JSON**.
+- **Under a Windows contrast theme, two of the four parts of the "Played with" bar share a colour** — a contrast
+  theme has few colours. They are never next to each other, a gap separates every part, and the table under the bar
+  names each with its share.
 - **In the user guide and the other documents the app shows, headings are read as ordinary text**: Windows' document
   view gives them no heading role. Their links and their order work as on any page.
 - **The short messages at the bottom of the window close after four seconds**, and cannot be read again once closed. A

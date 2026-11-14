@@ -24,6 +24,8 @@ public partial class FrametimeChart : UserControl
     private SessionSeries? _series;
     private bool _displayed;
     private bool _sensors;
+    private IReadOnlyList<InputEvent> _inputEvents = [];
+    private bool _showInputEvents;
 
     public FrametimeChart()
     {
@@ -61,11 +63,31 @@ public partial class FrametimeChart : UserControl
     }
 
     /// <summary>
+    /// The session's controller marks (0.1.0-beta.50): a connection, a drop, a battery that fell to low, as lines across
+    /// the frames - drawn only where the frames' place on the sensors' clock is known, as the sensor overlay is.
+    /// </summary>
+    public void SetInputEvents(IReadOnlyList<InputEvent> events, bool show)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+        if (ReferenceEquals(_inputEvents, events) && _showInputEvents == show)
+        {
+            return;   // the same marks, shown the same way: a second draw of every frame would say nothing new
+        }
+
+        _inputEvents = events;
+        _showInputEvents = show;
+        Redraw();
+    }
+
+    /// <summary>The controller marks the last draw put on the axes.</summary>
+    public int DrawnInputEvents { get; private set; }
+
+    /// <summary>
     /// What the lines are not, when that is not obvious (beta.8): a session whose presents were all generated is charted as
     /// presents; every present is timed at submission, which is not the display's cadence; and the overlay's sensors run ahead
     /// of the frames past every gap the time axis closes up.
     /// </summary>
-    internal static string NoteFor(SessionSeries? series, bool displayed, bool sensors)
+    internal static string NoteFor(SessionSeries? series, bool displayed, bool sensors, bool marks = false)
     {
         if (series is null || series.Presents == 0)
         {
@@ -87,6 +109,11 @@ public partial class FrametimeChart : UserControl
         {
             lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.Chart_Note_GapsClosed_Format, gaps));
         }
+        else if (marks && series.SensorsAligned && gaps > 0)
+        {
+            // The marks are on the same clock as the sensors: past a gap the axis closed up, they run ahead of the frames too.
+            lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.Chart_Note_GapsClosed_Marks_Format, gaps));
+        }
 
         return string.Join(Environment.NewLine, lines);
     }
@@ -96,10 +123,12 @@ public partial class FrametimeChart : UserControl
         Plot plot = Plot.Plot;
         plot.Clear();
         DrawnPoints = 0;
+        DrawnInputEvents = 0;
         ChartTheme.Apply(plot);
         plot.XLabel(Strings.Chart_Axis_Time);
         plot.YLabel(Strings.Chart_Axis_Frametime);
-        Note.Text = NoteFor(_series, _displayed, _sensors);
+        bool marks = _showInputEvents && _series?.SensorOffsetS is { } first && _inputEvents.Any(e => e.TimeS >= first && e.TimeS - first <= _series.DurationS);
+        Note.Text = NoteFor(_series, _displayed, _sensors, marks);
         Note.Visibility = Note.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         if (_series is null || _series.Presents == 0)
         {
@@ -123,6 +152,12 @@ public partial class FrametimeChart : UserControl
         }
 
         plot.Axes.AutoScale();
+        if (marks)
+        {
+            // After the scale: a line across the whole height must not be what the axes are fitted to.
+            DrawnInputEvents = InputEventLines.Draw(plot, _inputEvents, p, _series.SensorOffsetS!.Value, _series.DurationS);
+        }
+
         LabelSegments(plot, p);
         plot.ShowLegend(Alignment.UpperRight);
         Plot.Refresh();

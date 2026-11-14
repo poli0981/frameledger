@@ -82,6 +82,12 @@ public sealed record SessionSeries
     public bool SensorsAligned { get; init; }
 
     /// <summary>
+    /// Where the first present sits on the sensors' clock, in seconds (schema 0013): what turns a time from the session's
+    /// start - a controller's connection (0.1.0-beta.50) - into a place on the frames' axis. Null where the blob did not say.
+    /// </summary>
+    public double? SensorOffsetS { get; init; }
+
+    /// <summary>
     /// What the charts derive from the whole session, worked out where it was decoded (beta.23); null on a series built by
     /// hand, whose charts compute it themselves.
     /// </summary>

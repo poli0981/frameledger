@@ -4513,6 +4513,306 @@
     <value>N/A - まだ記録したセッションがありません</value>
     <comment>review</comment>
   </data>
+  <data name="Input_Header" xml:space="preserve">
+    <value>プレイ方法</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Limits_Note" xml:space="preserve">
+    <value>ゲームの外側で Windows から読み取ります。ゲームが前面にある間にコントローラー、またはキーボードかマウスが使われていたことだけを示し、どのボタンやキーかは決して記録せず、ゲームがそれをどう扱ったかも示しません。キーボードとマウスは一つの区分です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Context_Format" xml:space="preserve">
+    <value>読み取り時間 {0}、ゲームが前面にあった時間 {1}。割合は前面にあった時間に対するものです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Class_Controller" xml:space="preserve">
+    <value>コントローラー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Class_KeyboardMouse" xml:space="preserve">
+    <value>キーボードとマウス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Class_Both" xml:space="preserve">
+    <value>両方同時</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Class_None" xml:space="preserve">
+    <value>入力なし</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Col_Method" xml:space="preserve">
+    <value>入力</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Bar_Name_Format" xml:space="preserve">
+    <value>前面にあった時間に占める割合(プレイ方法別): {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Switches_Format" xml:space="preserve">
+    <value>コントローラーとキーボード・マウスの切り替え回数: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Controllers_Header" xml:space="preserve">
+    <value>コントローラー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Controllers_NoneSeen" xml:space="preserve">
+    <value>このセッション中に接続されたコントローラーはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Controllers_None" xml:space="preserve">
+    <value>なし</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Col_Controller" xml:space="preserve">
+    <value>コントローラー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Col_Connection" xml:space="preserve">
+    <value>接続</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Col_InUse" xml:space="preserve">
+    <value>使用時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Col_Connected" xml:space="preserve">
+    <value>接続時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Col_Events" xml:space="preserve">
+    <value>接続 / 切断</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Col_Battery" xml:space="preserve">
+    <value>バッテリー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Events_Format" xml:space="preserve">
+    <value>{0} / {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Controller_Unnamed_Format" xml:space="preserve">
+    <value>{0} コントローラー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Controller_Virtual_Format" xml:space="preserve">
+    <value>{0}(プログラムが提示する仮想パッド)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Controller_Remapped_Format" xml:space="preserve">
+    <value>{0}(ゲームには Xbox パッドとしても提示)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Family_Xbox" xml:space="preserve">
+    <value>Xbox</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Family_PlayStation" xml:space="preserve">
+    <value>PlayStation</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Family_Nintendo" xml:space="preserve">
+    <value>Nintendo</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Family_Other" xml:space="preserve">
+    <value>その他</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Connection_Usb" xml:space="preserve">
+    <value>USB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Connection_Bluetooth" xml:space="preserve">
+    <value>Bluetooth</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Connection_Wireless" xml:space="preserve">
+    <value>ワイヤレスアダプター</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Connection_Unknown" xml:space="preserve">
+    <value>不明</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_NotRead" xml:space="preserve">
+    <value>N/A - バッテリー残量は読み取れませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_Longest_Format" xml:space="preserve">
+    <value>最長: {0}({1})</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_Span_Format" xml:space="preserve">
+    <value>{0} → {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_Drain_Format" xml:space="preserve">
+    <value>1 時間あたり {0:0.0}%</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_State_Wired" xml:space="preserve">
+    <value>有線</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_State_Full" xml:space="preserve">
+    <value>満充電</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_State_Charging" xml:space="preserve">
+    <value>充電中</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_State_Charging_Format" xml:space="preserve">
+    <value>充電中({0})</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_State_Discharging" xml:space="preserve">
+    <value>バッテリー駆動</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_State_Discharging_Format" xml:space="preserve">
+    <value>バッテリー駆動({0})</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_State_Unknown" xml:space="preserve">
+    <value>状態不明</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_Level_Empty" xml:space="preserve">
+    <value>空</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_Level_Low" xml:space="preserve">
+    <value>低</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_Level_Medium" xml:space="preserve">
+    <value>中</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_Level_Full" xml:space="preserve">
+    <value>満</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Makers_Format" xml:space="preserve">
+    <value>メーカー別(コントローラー使用時間に対して): {0}。メーカーの切り替え回数: {1}。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Note_VirtualPad" xml:space="preserve">
+    <value>このセッションでは Steam Input または別のリマップソフトが、コントローラーを仮想 Xbox パッドとしてゲームに提示しました。コントローラーとその代わりのパッドは一つとして数えています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Note_NoRawInput" xml:space="preserve">
+    <value>このセッションでは Windows がコントローラーのレポートの登録を受け付けなかったため、Xbox 互換のコントローラーしか確認できませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Note_NoXInput" xml:space="preserve">
+    <value>このセッションでは XInput を読み取れなかったため、Xbox 互換のコントローラーはレポートを通じてのみ確認され、バッテリー残量はありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Note_NoLastInput" xml:space="preserve">
+    <value>このセッションでは Windows が最後のキーボードまたはマウス入力の時刻を報告しなかったため、キーボードとマウスの使用は確認できませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Note_Faults_Format" xml:space="preserve">
+    <value>このセッションで読み取りが {0} 回失敗しました。数値は読み取れた分のみです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Missing_Terms" xml:space="preserve">
+    <value>このセッションでは読み取っていません。この読み取りを説明するプライバシーポリシーが、この PC でまだ承諾されていませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Missing_NeverInFront" xml:space="preserve">
+    <value>読み取りましたが、その間ゲームのウィンドウが前面になかったため、表示できる割合がありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Missing_NotRecorded" xml:space="preserve">
+    <value>このセッションでは記録されていません。設定 ▸ コントローラーと入力がオフだったか、0.1.0-beta.50 より前のセッションです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Shares_Format" xml:space="preserve">
+    <value>コントローラー {0} · キーボードとマウス {1} · 両方 {2} · 入力なし {3}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Timeline_Header" xml:space="preserve">
+    <value>セッション中の入力</value>
+    <comment>review</comment>
+  </data>
+  <data name="Input_Battery_Header" xml:space="preserve">
+    <value>コントローラーのバッテリー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Show_InputEvents" xml:space="preserve">
+    <value>コントローラーのマーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Axis_Battery" xml:space="preserve">
+    <value>バッテリー (%)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Input_Event_Connected" xml:space="preserve">
+    <value>コントローラー接続</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Input_Event_Disconnected" xml:space="preserve">
+    <value>コントローラー切断</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Input_Event_BatteryLow" xml:space="preserve">
+    <value>コントローラーのバッテリー低下</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Input_Device_Format" xml:space="preserve">
+    <value>コントローラー {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Input_FourLevels" xml:space="preserve">
+    <value>(4 段階)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Input_NotStored" xml:space="preserve">
+    <value>このセッションには入力の系列が保存されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_InputBattery_NotRead" xml:space="preserve">
+    <value>このセッションでバッテリー残量を報告したコントローラーはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Note_GapsClosed_Marks_Format" xml:space="preserve">
+    <value>時間軸は {0} 個の空白(一時停止、または失われた記録)を詰めているため、それ以降はコントローラーのマークがフレームより先に進みます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_InputTimeline" xml:space="preserve">
+    <value>セッション中の入力のグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_InputBattery" xml:space="preserve">
+    <value>コントローラーのバッテリーのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Input" xml:space="preserve">
+    <value>これらの数値は「プレイ方法」の表に記載されています。セッションの CSV と JSON のエクスポートに合計が含まれます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_ControllerShare" xml:space="preserve">
+    <value>コントローラーの割合</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_KeyboardMouseShare" xml:space="preserve">
+    <value>キーボードとマウスの割合</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_PlayedWith" xml:space="preserve">
+    <value>プレイ方法</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Controllers" xml:space="preserve">
+    <value>コントローラー</value>
+    <comment>review</comment>
+  </data>
   <data name="GameDetail_Controller_Store_Full" xml:space="preserve">
     <value>フル対応 - Steam の記載</value>
     <comment>review</comment>

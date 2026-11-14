@@ -1,0 +1,17 @@
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<!-- Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE -->
+
+<UserControl x:Class="FrameLedger.App.Charts.InputTimelineChart"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:res="clr-namespace:FrameLedger.App"
+             xmlns:charts="clr-namespace:FrameLedger.App.Charts">
+    <!-- 08_UI §Session summary (0.1.0-beta.50): what each second of the session was played with, one row a class - the row
+         names the class, the marker's shape differs too - and the controllers' connections, drops and low batteries as lines. -->
+    <Grid>
+        <charts:ChartPlot x:Name="Plot" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_InputTimeline}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Input}" />
+        <ui:TextBlock x:Name="NotRead" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
+                      Text="{x:Static res:Strings.Chart_Input_NotStored}" Visibility="Collapsed" />
+    </Grid>
+</UserControl>

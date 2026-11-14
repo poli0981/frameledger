@@ -167,3 +167,26 @@ registration, how many reports came and how many could not be read, whether XInp
 states it returned, how often a controller's own reports said *in use* while XInput said nothing, whether the time of
 the last input could be read, how many slices were taken and how much processor time the reader's thread used. Counts
 and yes-or-no answers; nothing in it names a device.
+
+## In the App
+
+`08_UI` §Session summary has the detail; the short of it (0.1.0-beta.50):
+
+| Where | What | From |
+|---|---|---|
+| A session's summary, **Played with** | the four classes as a bar and a table, the changes between a controller and the keyboard and mouse, the controllers with their batteries, the makers' shares, what the reader could not do; why a session has none | the row's `input_*` columns and `input_devices` (`Services.InputPresentation`) |
+| The same, two charts | what each second was played with; each controller's battery | the `input.*` series (`Charts.InputSeries`) |
+| The frame-time chart, **Controller marks** | a connection, a drop, a battery that fell to low, as lines across the frames | the same series, placed by `frame_blobs.first_present_ms`; hooked sessions only |
+| A game's page, **Details** | what the store lists, the input libraries loaded, how it was played | `05_DETECTION` §Does a game support controllers |
+| **Trend** | Controller share, Keyboard and mouse share | the row, every tier |
+| **Compare** | Played with, Controllers | the row, never ranked |
+| The CSV export | `# input:` - the milliseconds, the switches, the sources, each controller | `03_METRICS` §Export schema |
+| The JSON export, the bug report | the row's columns as they are | Privacy Policy 3A |
+
+A mark is drawn from the series, not from the row: a controller's `input.dev.N.active` goes from no value to a value
+where it connected and back where it dropped, and the row's `connects` says whether the first of them was the
+session's start. A battery "fell to low" where its level went from above XInput's *low*, or above 10 %, to at or
+under it - a falling level is a battery running down, and the state is not in the series.
+
+**Everything in this table has been drawn from synthetic sessions only.** What a real controller's series look like -
+how often a Bluetooth pad flaps, whether a DualSense's battery steps as the fixture's does - is owner-only item 48.

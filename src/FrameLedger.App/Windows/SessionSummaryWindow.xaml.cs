@@ -54,6 +54,9 @@ public partial class SessionSummaryWindow : FluentWindow
             case nameof(SessionSummaryViewModel.ShowSensors):
                 Frametime.SetSensors(ViewModel.ShowSensors);
                 break;
+            case nameof(SessionSummaryViewModel.ShowInputEvents):
+                Frametime.SetInputEvents(ViewModel.InputEvents, ViewModel.ShowInputEvents);
+                break;
             default:
                 break;
         }
@@ -61,10 +64,14 @@ public partial class SessionSummaryWindow : FluentWindow
 
     private void Redraw()
     {
+        // The marks first: set before the frames are drawn, they cost no second draw of them.
+        Frametime.SetInputEvents(ViewModel.InputEvents, ViewModel.ShowInputEvents);
         Frametime.Show(ViewModel.Series, ViewModel.ShowDisplayed, ViewModel.ShowSensors);
         Distribution.Show(ViewModel.Series);
         RenderScale.Show(ViewModel.Series, ViewModel.Row);
         Sensors.Show(ViewModel.SensorSeries);
+        InputTimeline.Show(ViewModel.InputSeries, ViewModel.InputEvents);
+        InputBattery.Show(ViewModel.InputSeries, ViewModel.InputDevices);
     }
 
     private void OnExportPng(object sender, RoutedEventArgs e) => _ = ViewModel.ExportPngAsync(Frametime.ScottPlot);

@@ -93,7 +93,9 @@ internal sealed class ScratchLedger : IAsyncDisposable
     ]);
 
     /// <summary>A hooked session WITH blobs: <paramref name="frames"/> presents at 60 fps, a 4× spike every <paramref name="spikeEvery"/> frames, one segment, a gpu_temp series.</summary>
-    public async Task<long> SessionWithFramesAsync(long gameId, DateTimeOffset startedAt, int frames, int spikeEvery, Func<SessionRow, SessionRow>? shape = null)
+    /// <param name="sensors">The session's sensor blobs instead of the three ticks of <c>gpu_temp</c> - its own <c>t_ms</c> included.</param>
+    public async Task<long> SessionWithFramesAsync(long gameId, DateTimeOffset startedAt, int frames, int spikeEvery, Func<SessionRow, SessionRow>? shape = null,
+        IReadOnlyList<SensorBlob>? sensors = null)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, startedAt, TestContext.Current.CancellationToken).ConfigureAwait(false);
         float[] frametimes = new float[frames];
@@ -122,7 +124,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
                 FrameIndex = Infrastructure.Blobs.SeriesCodec.EncodeUInt32(index),
                 FirstPresentMs = 0,    // schema 0013: the frames and the sensors share a zero, so the overlay is drawn
             },
-            Sensors =
+            Sensors = sensors ??
             [
                 new SensorBlob { Series = "t_ms", Hz = 1, Codec = Infrastructure.Blobs.SeriesCodec.Tag, Data = Infrastructure.Blobs.SeriesCodec.EncodeFloat32([0, 1000, 2000]) },
                 new SensorBlob { Series = "gpu_temp", Hz = 1, Codec = Infrastructure.Blobs.SeriesCodec.Tag, Data = Infrastructure.Blobs.SeriesCodec.EncodeFloat32([60, 61, 62]) },

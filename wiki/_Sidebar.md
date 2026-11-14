@@ -15,6 +15,7 @@
 - [Words FrameLedger uses](../guide/10-glossary.md)
 - [Alpha builds](../guide/11-alpha-builds.md)
 - [Advanced metrics](../guide/12-advanced-metrics.md)
+- [Controllers and input](../guide/13-controllers.md)
 - [The terms, in plain words](../guide/terms-in-plain-words.md)
 - [Limitations](../LIMITATIONS.md)
 - [Accessibility](../ACCESSIBILITY.md)

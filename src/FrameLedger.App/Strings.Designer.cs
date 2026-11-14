@@ -40,6 +40,8 @@ public static class Strings
         nameof(A11y_Chart_ControlType),
         nameof(A11y_Chart_Frametime),
         nameof(A11y_Chart_Histogram),
+        nameof(A11y_Chart_InputBattery),
+        nameof(A11y_Chart_InputTimeline),
         nameof(A11y_Chart_Keys),
         nameof(A11y_Chart_Latency),
         nameof(A11y_Chart_Percentiles),
@@ -50,6 +52,7 @@ public static class Strings
         nameof(A11y_Chart_Vram),
         nameof(A11y_ChartData_Advanced),
         nameof(A11y_ChartData_Compare),
+        nameof(A11y_ChartData_Input),
         nameof(A11y_ChartData_Latency),
         nameof(A11y_ChartData_Sessions),
         nameof(A11y_ChartData_Summary),
@@ -457,6 +460,7 @@ public static class Strings
         nameof(ChangeExe_Done_Format),
         nameof(ChangeExe_Taken_Format),
         nameof(ChangeExe_Unreadable_Format),
+        nameof(Chart_Axis_Battery),
         nameof(Chart_Axis_Count),
         nameof(Chart_Axis_Fps),
         nameof(Chart_Axis_Frametime),
@@ -467,7 +471,15 @@ public static class Strings
         nameof(Chart_Axis_TimeFromFirstFrame),
         nameof(Chart_Axis_TimeFromStart),
         nameof(Chart_Decimated_Format),
+        nameof(Chart_Input_Device_Format),
+        nameof(Chart_Input_Event_BatteryLow),
+        nameof(Chart_Input_Event_Connected),
+        nameof(Chart_Input_Event_Disconnected),
+        nameof(Chart_Input_FourLevels),
+        nameof(Chart_Input_NotStored),
+        nameof(Chart_InputBattery_NotRead),
         nameof(Chart_Note_GapsClosed_Format),
+        nameof(Chart_Note_GapsClosed_Marks_Format),
         nameof(Chart_Note_NoApplicationFrames),
         nameof(Chart_Note_OutsideRange_Format),
         nameof(Chart_Note_PresentsTiming),
@@ -520,6 +532,7 @@ public static class Strings
         nameof(Compare_Legend_Format),
         nameof(Compare_Metric_AvgCpuLoad),
         nameof(Compare_Metric_AvgGpuLoad),
+        nameof(Compare_Metric_Controllers),
         nameof(Compare_Metric_Display),
         nameof(Compare_Metric_Displayed),
         nameof(Compare_Metric_Duration),
@@ -538,6 +551,7 @@ public static class Strings
         nameof(Compare_Metric_Native),
         nameof(Compare_Metric_P01Low),
         nameof(Compare_Metric_P1Low),
+        nameof(Compare_Metric_PlayedWith),
         nameof(Compare_Metric_PowerLimit),
         nameof(Compare_Metric_Presented),
         nameof(Compare_Metric_RenderScale),
@@ -1022,6 +1036,64 @@ public static class Strings
         nameof(Import_SelectNone),
         nameof(Import_ShowExisting_Format),
         nameof(Import_Title),
+        nameof(Input_Bar_Name_Format),
+        nameof(Input_Battery_Drain_Format),
+        nameof(Input_Battery_Header),
+        nameof(Input_Battery_Level_Empty),
+        nameof(Input_Battery_Level_Full),
+        nameof(Input_Battery_Level_Low),
+        nameof(Input_Battery_Level_Medium),
+        nameof(Input_Battery_Longest_Format),
+        nameof(Input_Battery_NotRead),
+        nameof(Input_Battery_Span_Format),
+        nameof(Input_Battery_State_Charging),
+        nameof(Input_Battery_State_Charging_Format),
+        nameof(Input_Battery_State_Discharging),
+        nameof(Input_Battery_State_Discharging_Format),
+        nameof(Input_Battery_State_Full),
+        nameof(Input_Battery_State_Unknown),
+        nameof(Input_Battery_State_Wired),
+        nameof(Input_Class_Both),
+        nameof(Input_Class_Controller),
+        nameof(Input_Class_KeyboardMouse),
+        nameof(Input_Class_None),
+        nameof(Input_Col_Battery),
+        nameof(Input_Col_Connected),
+        nameof(Input_Col_Connection),
+        nameof(Input_Col_Controller),
+        nameof(Input_Col_Events),
+        nameof(Input_Col_InUse),
+        nameof(Input_Col_Method),
+        nameof(Input_Connection_Bluetooth),
+        nameof(Input_Connection_Unknown),
+        nameof(Input_Connection_Usb),
+        nameof(Input_Connection_Wireless),
+        nameof(Input_Context_Format),
+        nameof(Input_Controller_Remapped_Format),
+        nameof(Input_Controller_Unnamed_Format),
+        nameof(Input_Controller_Virtual_Format),
+        nameof(Input_Controllers_Header),
+        nameof(Input_Controllers_None),
+        nameof(Input_Controllers_NoneSeen),
+        nameof(Input_Events_Format),
+        nameof(Input_Family_Nintendo),
+        nameof(Input_Family_Other),
+        nameof(Input_Family_PlayStation),
+        nameof(Input_Family_Xbox),
+        nameof(Input_Header),
+        nameof(Input_Limits_Note),
+        nameof(Input_Makers_Format),
+        nameof(Input_Missing_NeverInFront),
+        nameof(Input_Missing_NotRecorded),
+        nameof(Input_Missing_Terms),
+        nameof(Input_Note_Faults_Format),
+        nameof(Input_Note_NoLastInput),
+        nameof(Input_Note_NoRawInput),
+        nameof(Input_Note_NoXInput),
+        nameof(Input_Note_VirtualPad),
+        nameof(Input_Shares_Format),
+        nameof(Input_Switches_Format),
+        nameof(Input_Timeline_Header),
         nameof(Latency_Avg),
         nameof(Latency_Axis),
         nameof(Latency_Empty),
@@ -1395,6 +1467,7 @@ public static class Strings
         nameof(Summary_Save),
         nameof(Summary_Saved),
         nameof(Summary_Show_Displayed),
+        nameof(Summary_Show_InputEvents),
         nameof(Summary_Show_Sensors),
         nameof(Summary_Stat_Avg),
         nameof(Summary_Stat_Below30_Format),
@@ -1500,6 +1573,7 @@ public static class Strings
         nameof(Trend_Metric_AvgGpuLoad),
         nameof(Trend_Metric_AvgGpuPower),
         nameof(Trend_Metric_AvgRam),
+        nameof(Trend_Metric_ControllerShare),
         nameof(Trend_Metric_DisplayBorderless),
         nameof(Trend_Metric_Displayed),
         nameof(Trend_Metric_DisplayExclusive),
@@ -1512,6 +1586,7 @@ public static class Strings
         nameof(Trend_Metric_GameVramMedian),
         nameof(Trend_Metric_GameVramPeak),
         nameof(Trend_Metric_GpuCoreClock),
+        nameof(Trend_Metric_KeyboardMouseShare),
         nameof(Trend_Metric_Label),
         nameof(Trend_Metric_MaxCpuTemp),
         nameof(Trend_Metric_MaxGpuMemTemp),
@@ -1598,6 +1673,10 @@ public static class Strings
 
     public static string A11y_Chart_Histogram => ResourceManager.GetString(nameof(A11y_Chart_Histogram), Culture) ?? nameof(A11y_Chart_Histogram);
 
+    public static string A11y_Chart_InputBattery => ResourceManager.GetString(nameof(A11y_Chart_InputBattery), Culture) ?? nameof(A11y_Chart_InputBattery);
+
+    public static string A11y_Chart_InputTimeline => ResourceManager.GetString(nameof(A11y_Chart_InputTimeline), Culture) ?? nameof(A11y_Chart_InputTimeline);
+
     public static string A11y_Chart_Keys => ResourceManager.GetString(nameof(A11y_Chart_Keys), Culture) ?? nameof(A11y_Chart_Keys);
 
     public static string A11y_Chart_Latency => ResourceManager.GetString(nameof(A11y_Chart_Latency), Culture) ?? nameof(A11y_Chart_Latency);
@@ -1617,6 +1696,8 @@ public static class Strings
     public static string A11y_ChartData_Advanced => ResourceManager.GetString(nameof(A11y_ChartData_Advanced), Culture) ?? nameof(A11y_ChartData_Advanced);
 
     public static string A11y_ChartData_Compare => ResourceManager.GetString(nameof(A11y_ChartData_Compare), Culture) ?? nameof(A11y_ChartData_Compare);
+
+    public static string A11y_ChartData_Input => ResourceManager.GetString(nameof(A11y_ChartData_Input), Culture) ?? nameof(A11y_ChartData_Input);
 
     public static string A11y_ChartData_Latency => ResourceManager.GetString(nameof(A11y_ChartData_Latency), Culture) ?? nameof(A11y_ChartData_Latency);
 
@@ -2432,6 +2513,8 @@ public static class Strings
 
     public static string ChangeExe_Unreadable_Format => ResourceManager.GetString(nameof(ChangeExe_Unreadable_Format), Culture) ?? nameof(ChangeExe_Unreadable_Format);
 
+    public static string Chart_Axis_Battery => ResourceManager.GetString(nameof(Chart_Axis_Battery), Culture) ?? nameof(Chart_Axis_Battery);
+
     public static string Chart_Axis_Count => ResourceManager.GetString(nameof(Chart_Axis_Count), Culture) ?? nameof(Chart_Axis_Count);
 
     public static string Chart_Axis_Fps => ResourceManager.GetString(nameof(Chart_Axis_Fps), Culture) ?? nameof(Chart_Axis_Fps);
@@ -2452,7 +2535,23 @@ public static class Strings
 
     public static string Chart_Decimated_Format => ResourceManager.GetString(nameof(Chart_Decimated_Format), Culture) ?? nameof(Chart_Decimated_Format);
 
+    public static string Chart_Input_Device_Format => ResourceManager.GetString(nameof(Chart_Input_Device_Format), Culture) ?? nameof(Chart_Input_Device_Format);
+
+    public static string Chart_Input_Event_BatteryLow => ResourceManager.GetString(nameof(Chart_Input_Event_BatteryLow), Culture) ?? nameof(Chart_Input_Event_BatteryLow);
+
+    public static string Chart_Input_Event_Connected => ResourceManager.GetString(nameof(Chart_Input_Event_Connected), Culture) ?? nameof(Chart_Input_Event_Connected);
+
+    public static string Chart_Input_Event_Disconnected => ResourceManager.GetString(nameof(Chart_Input_Event_Disconnected), Culture) ?? nameof(Chart_Input_Event_Disconnected);
+
+    public static string Chart_Input_FourLevels => ResourceManager.GetString(nameof(Chart_Input_FourLevels), Culture) ?? nameof(Chart_Input_FourLevels);
+
+    public static string Chart_Input_NotStored => ResourceManager.GetString(nameof(Chart_Input_NotStored), Culture) ?? nameof(Chart_Input_NotStored);
+
+    public static string Chart_InputBattery_NotRead => ResourceManager.GetString(nameof(Chart_InputBattery_NotRead), Culture) ?? nameof(Chart_InputBattery_NotRead);
+
     public static string Chart_Note_GapsClosed_Format => ResourceManager.GetString(nameof(Chart_Note_GapsClosed_Format), Culture) ?? nameof(Chart_Note_GapsClosed_Format);
+
+    public static string Chart_Note_GapsClosed_Marks_Format => ResourceManager.GetString(nameof(Chart_Note_GapsClosed_Marks_Format), Culture) ?? nameof(Chart_Note_GapsClosed_Marks_Format);
 
     public static string Chart_Note_NoApplicationFrames => ResourceManager.GetString(nameof(Chart_Note_NoApplicationFrames), Culture) ?? nameof(Chart_Note_NoApplicationFrames);
 
@@ -2558,6 +2657,8 @@ public static class Strings
 
     public static string Compare_Metric_AvgGpuLoad => ResourceManager.GetString(nameof(Compare_Metric_AvgGpuLoad), Culture) ?? nameof(Compare_Metric_AvgGpuLoad);
 
+    public static string Compare_Metric_Controllers => ResourceManager.GetString(nameof(Compare_Metric_Controllers), Culture) ?? nameof(Compare_Metric_Controllers);
+
     public static string Compare_Metric_Display => ResourceManager.GetString(nameof(Compare_Metric_Display), Culture) ?? nameof(Compare_Metric_Display);
 
     public static string Compare_Metric_Displayed => ResourceManager.GetString(nameof(Compare_Metric_Displayed), Culture) ?? nameof(Compare_Metric_Displayed);
@@ -2593,6 +2694,8 @@ public static class Strings
     public static string Compare_Metric_P01Low => ResourceManager.GetString(nameof(Compare_Metric_P01Low), Culture) ?? nameof(Compare_Metric_P01Low);
 
     public static string Compare_Metric_P1Low => ResourceManager.GetString(nameof(Compare_Metric_P1Low), Culture) ?? nameof(Compare_Metric_P1Low);
+
+    public static string Compare_Metric_PlayedWith => ResourceManager.GetString(nameof(Compare_Metric_PlayedWith), Culture) ?? nameof(Compare_Metric_PlayedWith);
 
     public static string Compare_Metric_PowerLimit => ResourceManager.GetString(nameof(Compare_Metric_PowerLimit), Culture) ?? nameof(Compare_Metric_PowerLimit);
 
@@ -3562,6 +3665,122 @@ public static class Strings
 
     public static string Import_Title => ResourceManager.GetString(nameof(Import_Title), Culture) ?? nameof(Import_Title);
 
+    public static string Input_Bar_Name_Format => ResourceManager.GetString(nameof(Input_Bar_Name_Format), Culture) ?? nameof(Input_Bar_Name_Format);
+
+    public static string Input_Battery_Drain_Format => ResourceManager.GetString(nameof(Input_Battery_Drain_Format), Culture) ?? nameof(Input_Battery_Drain_Format);
+
+    public static string Input_Battery_Header => ResourceManager.GetString(nameof(Input_Battery_Header), Culture) ?? nameof(Input_Battery_Header);
+
+    public static string Input_Battery_Level_Empty => ResourceManager.GetString(nameof(Input_Battery_Level_Empty), Culture) ?? nameof(Input_Battery_Level_Empty);
+
+    public static string Input_Battery_Level_Full => ResourceManager.GetString(nameof(Input_Battery_Level_Full), Culture) ?? nameof(Input_Battery_Level_Full);
+
+    public static string Input_Battery_Level_Low => ResourceManager.GetString(nameof(Input_Battery_Level_Low), Culture) ?? nameof(Input_Battery_Level_Low);
+
+    public static string Input_Battery_Level_Medium => ResourceManager.GetString(nameof(Input_Battery_Level_Medium), Culture) ?? nameof(Input_Battery_Level_Medium);
+
+    public static string Input_Battery_Longest_Format => ResourceManager.GetString(nameof(Input_Battery_Longest_Format), Culture) ?? nameof(Input_Battery_Longest_Format);
+
+    public static string Input_Battery_NotRead => ResourceManager.GetString(nameof(Input_Battery_NotRead), Culture) ?? nameof(Input_Battery_NotRead);
+
+    public static string Input_Battery_Span_Format => ResourceManager.GetString(nameof(Input_Battery_Span_Format), Culture) ?? nameof(Input_Battery_Span_Format);
+
+    public static string Input_Battery_State_Charging => ResourceManager.GetString(nameof(Input_Battery_State_Charging), Culture) ?? nameof(Input_Battery_State_Charging);
+
+    public static string Input_Battery_State_Charging_Format => ResourceManager.GetString(nameof(Input_Battery_State_Charging_Format), Culture) ?? nameof(Input_Battery_State_Charging_Format);
+
+    public static string Input_Battery_State_Discharging => ResourceManager.GetString(nameof(Input_Battery_State_Discharging), Culture) ?? nameof(Input_Battery_State_Discharging);
+
+    public static string Input_Battery_State_Discharging_Format => ResourceManager.GetString(nameof(Input_Battery_State_Discharging_Format), Culture) ?? nameof(Input_Battery_State_Discharging_Format);
+
+    public static string Input_Battery_State_Full => ResourceManager.GetString(nameof(Input_Battery_State_Full), Culture) ?? nameof(Input_Battery_State_Full);
+
+    public static string Input_Battery_State_Unknown => ResourceManager.GetString(nameof(Input_Battery_State_Unknown), Culture) ?? nameof(Input_Battery_State_Unknown);
+
+    public static string Input_Battery_State_Wired => ResourceManager.GetString(nameof(Input_Battery_State_Wired), Culture) ?? nameof(Input_Battery_State_Wired);
+
+    public static string Input_Class_Both => ResourceManager.GetString(nameof(Input_Class_Both), Culture) ?? nameof(Input_Class_Both);
+
+    public static string Input_Class_Controller => ResourceManager.GetString(nameof(Input_Class_Controller), Culture) ?? nameof(Input_Class_Controller);
+
+    public static string Input_Class_KeyboardMouse => ResourceManager.GetString(nameof(Input_Class_KeyboardMouse), Culture) ?? nameof(Input_Class_KeyboardMouse);
+
+    public static string Input_Class_None => ResourceManager.GetString(nameof(Input_Class_None), Culture) ?? nameof(Input_Class_None);
+
+    public static string Input_Col_Battery => ResourceManager.GetString(nameof(Input_Col_Battery), Culture) ?? nameof(Input_Col_Battery);
+
+    public static string Input_Col_Connected => ResourceManager.GetString(nameof(Input_Col_Connected), Culture) ?? nameof(Input_Col_Connected);
+
+    public static string Input_Col_Connection => ResourceManager.GetString(nameof(Input_Col_Connection), Culture) ?? nameof(Input_Col_Connection);
+
+    public static string Input_Col_Controller => ResourceManager.GetString(nameof(Input_Col_Controller), Culture) ?? nameof(Input_Col_Controller);
+
+    public static string Input_Col_Events => ResourceManager.GetString(nameof(Input_Col_Events), Culture) ?? nameof(Input_Col_Events);
+
+    public static string Input_Col_InUse => ResourceManager.GetString(nameof(Input_Col_InUse), Culture) ?? nameof(Input_Col_InUse);
+
+    public static string Input_Col_Method => ResourceManager.GetString(nameof(Input_Col_Method), Culture) ?? nameof(Input_Col_Method);
+
+    public static string Input_Connection_Bluetooth => ResourceManager.GetString(nameof(Input_Connection_Bluetooth), Culture) ?? nameof(Input_Connection_Bluetooth);
+
+    public static string Input_Connection_Unknown => ResourceManager.GetString(nameof(Input_Connection_Unknown), Culture) ?? nameof(Input_Connection_Unknown);
+
+    public static string Input_Connection_Usb => ResourceManager.GetString(nameof(Input_Connection_Usb), Culture) ?? nameof(Input_Connection_Usb);
+
+    public static string Input_Connection_Wireless => ResourceManager.GetString(nameof(Input_Connection_Wireless), Culture) ?? nameof(Input_Connection_Wireless);
+
+    public static string Input_Context_Format => ResourceManager.GetString(nameof(Input_Context_Format), Culture) ?? nameof(Input_Context_Format);
+
+    public static string Input_Controller_Remapped_Format => ResourceManager.GetString(nameof(Input_Controller_Remapped_Format), Culture) ?? nameof(Input_Controller_Remapped_Format);
+
+    public static string Input_Controller_Unnamed_Format => ResourceManager.GetString(nameof(Input_Controller_Unnamed_Format), Culture) ?? nameof(Input_Controller_Unnamed_Format);
+
+    public static string Input_Controller_Virtual_Format => ResourceManager.GetString(nameof(Input_Controller_Virtual_Format), Culture) ?? nameof(Input_Controller_Virtual_Format);
+
+    public static string Input_Controllers_Header => ResourceManager.GetString(nameof(Input_Controllers_Header), Culture) ?? nameof(Input_Controllers_Header);
+
+    public static string Input_Controllers_None => ResourceManager.GetString(nameof(Input_Controllers_None), Culture) ?? nameof(Input_Controllers_None);
+
+    public static string Input_Controllers_NoneSeen => ResourceManager.GetString(nameof(Input_Controllers_NoneSeen), Culture) ?? nameof(Input_Controllers_NoneSeen);
+
+    public static string Input_Events_Format => ResourceManager.GetString(nameof(Input_Events_Format), Culture) ?? nameof(Input_Events_Format);
+
+    public static string Input_Family_Nintendo => ResourceManager.GetString(nameof(Input_Family_Nintendo), Culture) ?? nameof(Input_Family_Nintendo);
+
+    public static string Input_Family_Other => ResourceManager.GetString(nameof(Input_Family_Other), Culture) ?? nameof(Input_Family_Other);
+
+    public static string Input_Family_PlayStation => ResourceManager.GetString(nameof(Input_Family_PlayStation), Culture) ?? nameof(Input_Family_PlayStation);
+
+    public static string Input_Family_Xbox => ResourceManager.GetString(nameof(Input_Family_Xbox), Culture) ?? nameof(Input_Family_Xbox);
+
+    public static string Input_Header => ResourceManager.GetString(nameof(Input_Header), Culture) ?? nameof(Input_Header);
+
+    public static string Input_Limits_Note => ResourceManager.GetString(nameof(Input_Limits_Note), Culture) ?? nameof(Input_Limits_Note);
+
+    public static string Input_Makers_Format => ResourceManager.GetString(nameof(Input_Makers_Format), Culture) ?? nameof(Input_Makers_Format);
+
+    public static string Input_Missing_NeverInFront => ResourceManager.GetString(nameof(Input_Missing_NeverInFront), Culture) ?? nameof(Input_Missing_NeverInFront);
+
+    public static string Input_Missing_NotRecorded => ResourceManager.GetString(nameof(Input_Missing_NotRecorded), Culture) ?? nameof(Input_Missing_NotRecorded);
+
+    public static string Input_Missing_Terms => ResourceManager.GetString(nameof(Input_Missing_Terms), Culture) ?? nameof(Input_Missing_Terms);
+
+    public static string Input_Note_Faults_Format => ResourceManager.GetString(nameof(Input_Note_Faults_Format), Culture) ?? nameof(Input_Note_Faults_Format);
+
+    public static string Input_Note_NoLastInput => ResourceManager.GetString(nameof(Input_Note_NoLastInput), Culture) ?? nameof(Input_Note_NoLastInput);
+
+    public static string Input_Note_NoRawInput => ResourceManager.GetString(nameof(Input_Note_NoRawInput), Culture) ?? nameof(Input_Note_NoRawInput);
+
+    public static string Input_Note_NoXInput => ResourceManager.GetString(nameof(Input_Note_NoXInput), Culture) ?? nameof(Input_Note_NoXInput);
+
+    public static string Input_Note_VirtualPad => ResourceManager.GetString(nameof(Input_Note_VirtualPad), Culture) ?? nameof(Input_Note_VirtualPad);
+
+    public static string Input_Shares_Format => ResourceManager.GetString(nameof(Input_Shares_Format), Culture) ?? nameof(Input_Shares_Format);
+
+    public static string Input_Switches_Format => ResourceManager.GetString(nameof(Input_Switches_Format), Culture) ?? nameof(Input_Switches_Format);
+
+    public static string Input_Timeline_Header => ResourceManager.GetString(nameof(Input_Timeline_Header), Culture) ?? nameof(Input_Timeline_Header);
+
     public static string Latency_Avg => ResourceManager.GetString(nameof(Latency_Avg), Culture) ?? nameof(Latency_Avg);
 
     public static string Latency_Axis => ResourceManager.GetString(nameof(Latency_Axis), Culture) ?? nameof(Latency_Axis);
@@ -4308,6 +4527,8 @@ public static class Strings
 
     public static string Summary_Show_Displayed => ResourceManager.GetString(nameof(Summary_Show_Displayed), Culture) ?? nameof(Summary_Show_Displayed);
 
+    public static string Summary_Show_InputEvents => ResourceManager.GetString(nameof(Summary_Show_InputEvents), Culture) ?? nameof(Summary_Show_InputEvents);
+
     public static string Summary_Show_Sensors => ResourceManager.GetString(nameof(Summary_Show_Sensors), Culture) ?? nameof(Summary_Show_Sensors);
 
     public static string Summary_Stat_Avg => ResourceManager.GetString(nameof(Summary_Stat_Avg), Culture) ?? nameof(Summary_Stat_Avg);
@@ -4518,6 +4739,8 @@ public static class Strings
 
     public static string Trend_Metric_AvgRam => ResourceManager.GetString(nameof(Trend_Metric_AvgRam), Culture) ?? nameof(Trend_Metric_AvgRam);
 
+    public static string Trend_Metric_ControllerShare => ResourceManager.GetString(nameof(Trend_Metric_ControllerShare), Culture) ?? nameof(Trend_Metric_ControllerShare);
+
     public static string Trend_Metric_DisplayBorderless => ResourceManager.GetString(nameof(Trend_Metric_DisplayBorderless), Culture) ?? nameof(Trend_Metric_DisplayBorderless);
 
     public static string Trend_Metric_Displayed => ResourceManager.GetString(nameof(Trend_Metric_Displayed), Culture) ?? nameof(Trend_Metric_Displayed);
@@ -4541,6 +4764,8 @@ public static class Strings
     public static string Trend_Metric_GameVramPeak => ResourceManager.GetString(nameof(Trend_Metric_GameVramPeak), Culture) ?? nameof(Trend_Metric_GameVramPeak);
 
     public static string Trend_Metric_GpuCoreClock => ResourceManager.GetString(nameof(Trend_Metric_GpuCoreClock), Culture) ?? nameof(Trend_Metric_GpuCoreClock);
+
+    public static string Trend_Metric_KeyboardMouseShare => ResourceManager.GetString(nameof(Trend_Metric_KeyboardMouseShare), Culture) ?? nameof(Trend_Metric_KeyboardMouseShare);
 
     public static string Trend_Metric_Label => ResourceManager.GetString(nameof(Trend_Metric_Label), Culture) ?? nameof(Trend_Metric_Label);
 

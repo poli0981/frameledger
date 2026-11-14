@@ -86,7 +86,10 @@ public sealed partial class PagesLoadTests
             ]))!;
             // Advanced metrics (D101): a session recorded with the option on, so the page's Session tab has facts, statistics and a chart.
             await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-2), sensors: AdvancedFixtures.Blobs(), advanced: AdvancedFixtures.Row()).ConfigureAwait(false);
-            long withFrames = await s.SessionWithFramesAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-5), frames: 600, spikeEvery: 200, shape: r => r with { FgMixJson = mix }).ConfigureAwait(false);
+            long withFrames = await s.SessionWithFramesAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-5), frames: 600, spikeEvery: 200,
+                // 0.1.0-beta.50: and what it was played with - two controllers, their batteries - so the "Played with" block, its bar and its
+                // two charts are drawn and read in both themes too.
+                shape: r => InputFixtures.With(r with { FgMixJson = mix }), sensors: InputFixtures.BlobsWithSensors()).ConfigureAwait(false);
             var surfaces = new Surfaces(s);
             await surfaces.LoadPagesAsync(game.Id).ConfigureAwait(false);
             surfaces.Summary = new SessionSummaryViewModel(s.Sessions, s.Games, s.Annotations, new SqliteHardwareSnapshotRepository(s.Db),

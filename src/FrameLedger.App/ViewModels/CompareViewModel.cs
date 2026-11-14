@@ -297,6 +297,10 @@ public sealed partial class CompareViewModel : ObservableObject
         Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Display, [.. rows.Select(static r => new CompareCell(DisplayText.Shares(DisplayText.Of(r)), false))]));
         Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Window, [.. rows.Select(static r => new CompareCell(DisplayText.Window(DisplayText.Of(r)), false))]));
         Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Monitor, [.. rows.Select(static r => new CompareCell(DisplayText.Monitor(DisplayText.Of(r)), false))]));
+
+        // 0.1.0-beta.50: what each session was played with, both tiers. Facts again: no way of playing is the better one.
+        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_PlayedWith, [.. rows.Select(static r => new CompareCell(InputPresentation.SharesText(r), false))]));
+        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Controllers, [.. rows.Select(static r => new CompareCell(InputPresentation.ControllersText(r), false))]));
     }
 
     /// <summary>

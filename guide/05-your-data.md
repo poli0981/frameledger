@@ -42,6 +42,9 @@ An exported **CSV** or **JSON** file, and a bug report, can contain:
 - your games' names and **the paths to their files**, which include your **Windows user name** when a game is installed
   in your user folder;
 - your PC's processor, graphics card, driver and Windows version;
+- what each session was played with: the time with a controller and with the keyboard and mouse, and each
+  controller's model name, how it was connected, its battery levels and how often it connected and dropped — never a
+  button, a key, a serial number or an address ([Controllers and input](13-controllers.md));
 - your tags and notes.
 
 Look at a file before you share it. **Help ▸ Report a bug…** builds the report on your PC, shows you every file in it,
