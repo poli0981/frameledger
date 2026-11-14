@@ -176,6 +176,10 @@ it meets the owner's Xbox controller and DualSense.**
   on every runner (they do not sleep) and failed the local gate before this release — fixed here
   (`21_INPUT_DEVICES` §What is read). **The time actually played, next on the roadmap, must not make the same
   assumption.**
+- **Auto-merge does not wait for Qodana: it is advisory.** #470 merged with one notice of Qodana's on `main` (a
+  parameter used only for its null check) — a notice counts against the gate of zero, and the script that read the
+  local inspection's SARIF skipped notices. Fixed in this pull request, and the script counts them now. With
+  auto-merge on, read Qodana's report **before** the required checks finish, or enable auto-merge after it.
 - **`dotnet format --verify-no-changes` through a pipe that counts lines says nothing when it fails** — print its
   exit code. #470's first push carried a naming violation in a test fixture that way; `check` and the first
   rehearsal (run 43646963371) caught it, and the second rehearsal is of the fixed tree.
