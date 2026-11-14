@@ -189,6 +189,9 @@ public static class AdvancedMetricCatalog
         Session("nvapi.reflex.mode", Nvapi, RefusedRoute, Text, Latency, "Reflex: low-latency mode, boost, the frame-rate limit"),
         Session("nvapi.reflex.sleep_status", Nvapi, GameDriver, Table, Latency, "What the driver's low-latency state is"),
         SampledFamily("nvapi.reflex.frame_report", Nvapi, GameDriver, Microseconds, Latency, "Latency per frame: simulation, render submit, present, driver, OS queue, GPU render"),
+        // Two figures the driver works out itself, members of the same report (0.1.0-beta.48, D142): the span between
+        // its two GPU marks includes the card's idle time and was longer than a frame's whole in a real game.
+        SampledFamily("nvapi.reflex.gpu_times", Nvapi, GameDriver, Microseconds, Latency, "The graphics card's time per frame, as the driver works it out: active render, frame to frame"),
 
         // ---- Inside the game: routes a spike decides ------------------------------------------------------------
         Session("sl.dlss.optimal_settings", Streamline, Spike, Text, Upscaling, "The render size and sharpness DLSS recommends"),

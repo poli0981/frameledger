@@ -63,6 +63,20 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.21 of the Privacy Policy and 2.17 of the Disclaimer changed (0.1.0-beta.48)
+
+**Two real games had been read, and the texts still said none** (owner decisions D142–D145; the wording's main
+points approved with the plan of 2026-11-14). The accuracy statement — and so the README and the Disclaimer, which
+carry it — said the driver's report had been "read with a test program against one driver and one card; no real
+game had been read when this was written". On 2026-11-14 the owner read it in Phantom Blade Zero and Cyberpunk
+2077, and the first of them showed something the statement did not say: the stages overlap, and the graphics
+card's stage — the driver's start mark to its end mark — includes the card's waiting and was longer than the whole
+frame. So the statement now says both, names the two figures of the driver's own that are shown beside that stage
+since this release, and says a driver may give neither. The **Privacy Policy** (2.21) adds those two averages to
+what a session stores, and "its frame-generation multiplier" becomes the multipliers the driver gave during the
+session. The **Disclaimer** (2.17) changes nowhere else: the component makes no new call, so §2's paragraph on the
+one call it makes stands as written.
+
 ### What version 2.20 of the Privacy Policy and 2.16 of the Disclaimer changed (0.1.0-beta.47, train C)
 
 **The part inside a game makes a call of its own** (owner decisions D132, D136, D138–D141; the wording's main

@@ -89,9 +89,16 @@ On an NVIDIA card, in a **Direct3D 12** game that uses **NVIDIA Reflex**, a sess
 stores the driver's own latency report: how long the driver says each stage of a frame took — *simulation*,
 *render submit*, *present*, *driver*, *operating system's render queue*, *GPU render*, and the *total* from the start
 of simulation to the end of the graphics card's work. They are seven lines under **Latency**, one point about every
-second, each the average of the frames the driver reported since the point before, in microseconds. A table beside
-them shows the driver's low-latency state as five switches, by NVIDIA's own names, each *On*, *Off* or *On at times,
-off at others*.
+second, each the average of the frames of one reading, in microseconds. A table beside them shows the driver's
+low-latency state as five switches, by NVIDIA's own names, each *On*, *Off* or *On at times, off at others*, and
+`fgMultiplier`: every frame-generation multiplier the driver gave during the session (*1, 2* is a session that
+generated frames at ×2 for part of it).
+
+**The stages overlap; they are not parts that add up to the total.** And *GPU render, start to end* includes the
+time the card spent waiting between pieces of work — in one game it is longer than the whole frame. So a second
+chart, **the graphics card's time per frame, as the driver works it out**, has two lines of the driver's own
+figures: *GPU active render*, the same stage without the waiting, and *GPU frame time*, from the end of one
+frame's work to the end of the next. A driver may give neither; the chart is then not there, and nothing is wrong.
 
 Three things to know about them:
 

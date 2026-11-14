@@ -439,6 +439,33 @@ public sealed class AdvancedPresenterTests
     }
 
     [Fact]
+    public void TheDriversTwoOwnTimesAreLinesOfAnEntryOfTheirOwnSoTheSevenSpansStayLines()
+    {
+        (AdvancedMetric? metric, string label) = AdvancedPresenter.Resolve("adv.nvapi.reflex.gpu_times.active_render", []);
+
+        metric!.Id.Should().Be("nvapi.reflex.gpu_times");
+        label.Should().Be(AdvancedLabels.Member(AdvancedLabels.Of(metric), Strings.AdvToken_active_render));
+        label.Should().NotContain("active_render", "the member is one of ours and is said in words");
+
+        // Nine series, two entries: neither chart is past what it draws as lines.
+        string[] series =
+        [
+            .. InGameAdvancedSampler.LatencySpans.Select(static span => InGameAdvancedSampler.LatencySeriesStem + span),
+            .. InGameAdvancedSampler.GpuTimes.Select(static time => InGameAdvancedSampler.GpuTimesSeriesStem + time),
+        ];
+        AdvancedPresenter.Metrics(series, []).Select(static m => m.Id).Should().BeEquivalentTo("nvapi.reflex.frame_report", "nvapi.reflex.gpu_times");
+
+        // The span between the driver's two GPU marks says what it includes, in every language (D143).
+        foreach (string culture in new[] { "", "vi", "ja" })
+        {
+            string render = Strings.ResourceManager.GetString(nameof(Strings.AdvToken_gpu_render), CultureInfo.GetCultureInfo(culture))!;
+            string active = Strings.ResourceManager.GetString(nameof(Strings.AdvToken_active_render), CultureInfo.GetCultureInfo(culture))!;
+            render.Should().Contain("(", "the label carries what the span includes");
+            render.Should().NotBe(active);
+        }
+    }
+
+    [Fact]
     public void TheSevenSpansOfTheDriversReportAreSeriesOfOneEntryLabelledInWords()
     {
         (AdvancedMetric? metric, string label) = AdvancedPresenter.Resolve("adv.nvapi.reflex.frame_report.os_queue", []);

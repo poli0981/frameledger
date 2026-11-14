@@ -872,6 +872,11 @@ planning, the design reviewed against the code before it was approved.
 - **Privacy Policy 2.18** at beta.44 (approved with that release's plan): 2.17 named two further calls and what
   they give; Streamline's answers about a feature are in neither list, so they are named, with what of the answer
   is never read — the lists it points to.
+- **Privacy Policy 2.21 and Disclaimer 2.17** at beta.48 (wording approved with the plan of 2026-11-14, D145):
+  the Privacy Policy names the two further averages a session stores of the driver's report and that the
+  frame-generation multiplier is every value the session saw; the Disclaimer changes only with the accuracy
+  statement it carries, which now says two real games were read, that the stages overlap, and that the graphics
+  card's stage includes its waiting. No new call: the paragraph on the call the component makes is as it was.
 - **Privacy Policy 2.20 and Disclaimer 2.16** at beta.47, train C (wording approved with the plan of
   2026-11-13): the first thing read inside a game that is **not an argument of a call the game made**. The Privacy
   Policy names what is stored — how long each stage of a frame took, as the driver reports it, and the driver's
@@ -1089,7 +1094,13 @@ only while a session records Advanced metrics, only for a Direct3D 12 game that 
 `nvapi64.dll`. The report becomes seven series — `adv.nvapi.reflex.frame_report.` and `simulation`,
 `render_submit`, `present`, `driver`, `os_queue`, `gpu_render`, `total` — each point the mean, in microseconds, of
 the frames one read summed; the sleep status becomes one table of the driver's five switches as seen over the
-session. What the *game* asked of Reflex (`nvapi.reflex.mode`) is an argument of a function no module exports:
+session and, since 0.1.0-beta.48 (D144), every frame-generation multiplier it gave (it kept the last one, and a
+session that ended in a menu read 1). **Since 0.1.0-beta.48 (D142) two more series, an entry of their own** —
+`adv.nvapi.reflex.gpu_times.` and `active_render`, `frame_time` — the driver's `gpuActiveRenderTimeUs` and
+`gpuFrameTimeUs`, each the mean over the frames of that read that gave one. They are the driver's own figures, not
+spans between two of its marks: in Phantom Blade Zero `gpu_render` (the two GPU marks, idle time included) was
+longer than `total`, which is why its label now says what it includes (D143). An entry of their own keeps the
+seven spans within what one chart draws as lines. What the *game* asked of Reflex (`nvapi.reflex.mode`) is an argument of a function no module exports:
 reading it takes a patch at an address learned at run time, which is refused.
 
 | Id | What it is | Scope | Source | Reach | Unit |
@@ -1097,6 +1108,7 @@ reading it takes a patch at an address learned at run time, which is refused.
 | `nvapi.reflex.mode` | Reflex: low-latency mode, boost, the frame-rate limit | SessionFact | Nvapi | RefusedRoute | Text |
 | `nvapi.reflex.sleep_status` | What the driver's low-latency state is | SessionFact | Nvapi | GameDriver | Table |
 | `nvapi.reflex.frame_report` | Latency per frame: simulation, render submit, present, driver, OS queue, GPU render | Series, one per device | Nvapi | GameDriver | Microseconds |
+| `nvapi.reflex.gpu_times` | The graphics card's time per frame, as the driver works it out: active render, frame to frame | Series, one per device | Nvapi | GameDriver | Microseconds |
 
 **Inside the game: routes a spike decides**
 
