@@ -1019,7 +1019,7 @@ processor's, not the whole PC's — averaged over the session's sensor ticks. `D
 | RT active | measured per frame | not available |
 | Path tracing | heuristic, confidence-scored, never asserted | not available |
 | ~~Per-process VRAM~~ Game process memory (beta.12) | ~~exact~~ dedicated / shared GPU memory as Task Manager counts it — a known 512 MiB allocation read +512.0 MiB (`spike-notes` §16); private working set equal to Windows' own counter; read from outside the game | ~~not available~~ the same, from outside; an unpinned hold sums the executable's processes |
-| PC latency | as reported by Reflex | not available |
+| PC latency | ~~as reported by Reflex~~ **not available** (D147, *corrected 2026-11-14*): the driver's report ends at the end of the GPU's work, not at the display. The stages it does give are Advanced metrics — the driver's numbers, unchecked | not available |
 | Display mode (beta.10) | per 100 ms sample: exclusive fullscreen as the swap chain answers it (DXGI; OpenGL and Vulkan cannot say), borderless, windowed, minimised; the window's size from user32 | per 1 s sample, from the window alone: windowed, minimised, or *fullscreen or borderless* — never split |
 | GPU temp / load / power | vendor API accuracy, ±1 s sampling | same |
 | GPU clocks / fan / memory temperature (beta.14) | vendor API accuracy, ±1 s sampling | same |

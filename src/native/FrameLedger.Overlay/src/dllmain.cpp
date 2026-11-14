@@ -1547,9 +1547,11 @@ bool MayObserve() noexcept {
 // ---------------------------------------------------------------------------
 
 // Which Streamline features were evaluated since the last present. Bits, not a
-// last-writer-wins value: DLSS super-resolution and Ray Reconstruction run in
-// the SAME frame (fl_shm.h retired FL_UPSCALER_RETIRED_RAY_RECONSTRUCTION for
-// exactly that reason), so a single slot would drop one of them.
+// last-writer-wins value: a game may evaluate more than one feature between two
+// presents (several viewports, NIS after DLSS), so a single slot would drop one
+// of them. NOT because DLSS super-resolution and Ray Reconstruction run in the
+// same frame, as this said until 2026-11-14: RR runs INSTEAD of super-resolution
+// (Streamline's guide; the measurement at the RR arm of the present detour).
 // FRAME GENERATION NEEDS A COUNT, NOT A BIT, so the word is now split: features in
 // the low byte, a saturating count of kFeatureDLSS_G evaluations above them
 // (fl_sl_seen.h owns the encoding and is unit-tested without a hook). A bit

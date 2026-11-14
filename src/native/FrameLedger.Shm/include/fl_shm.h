@@ -176,9 +176,12 @@ enum FlUpscaler : uint8_t {
     FL_UPSCALER_DLSS = 1,
 
     // RETIRED, and the slot is reserved rather than reused. DLSS Ray
-    // Reconstruction was a value here, which made it MUTUALLY EXCLUSIVE with
-    // DLSS super-resolution -- but they run together, and 03_METRICS §RT/PT/RR
-    // makes RR an independent tri-state axis ("Yes / No if DLSS is active
+    // Reconstruction was a value here, which made it a technology BESIDE DLSS
+    // -- but it is DLSS: RR takes over the upscale, in DLSS's own quality mode
+    // (it does not run together with super-resolution, as this comment said
+    // until 2026-11-14: Streamline's guide has it "completely override" it, and
+    // Cyberpunk 2077 evaluated kFeatureDLSS_RR and never kFeatureDLSS). 03_METRICS
+    // §RT/PT/RR makes RR an independent tri-state axis ("Yes / No if DLSS is active
     // without it"), which is also CLAUDE.md rule 7's trio. The record was the
     // only place the two were conflated; 06_DATA_MODEL already stored them
     // apart. RR is now FL_FEAT_RAY_RECONSTRUCTION in featureFlags.

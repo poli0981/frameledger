@@ -151,13 +151,16 @@ and its release facts are [`handoff/history/0.1.0-beta.48.md`](handoff/history/0
 
 ### NEXT
 
-1. **The owner runs item 47** — pairs, frame generation off and on, and a handful of short sessions. Every
-   outcome's meaning is written there.
-2. **Then the owner's to say**: what to do about *GPU render* once the counts say whose the difference is — a
-   label, or the mean; more titles; D141 on a larger sample (the slowest call seen in a game is 123 µs).
+1. ~~**The owner runs item 47**~~ **Run and read 2026-11-14** (item 47, *Run 2026-11-14*): the difference in
+   Cyberpunk 2077 is the driver's, the holes are gone from steady play, off means off, and the stop fired once.
+2. **The owner's to say**: the wording of the two GPU labels (the mean stays — the counts say the driver's
+   active time really is the longer there); whether D141's stop should spare a game's first seconds (Kingdom
+   Come: Deliverance II lost its session's report to one call of 5.3 ms while it started); (f) and (g).
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
 4. **Train D** after it, the same way: a spike first — `sl.pcl.markers` waits for it, and §30 found its hook
-   would miss a game that fetched its functions before the attach.
+   would miss a game that fetched its functions before the attach. **Read 2026-11-14 against Streamline's own
+   guide (§30, *Added 2026-11-14*): the markers are the times the driver's report already gives**, so that entry
+   would add a count and nothing else. Recommended to the owner: leave Reflex and PCL out of train D.
 
 ### Left open by this session
 
@@ -955,6 +958,44 @@ left unexercised; item 40 (d).
    *(e) has a `LATENCY` or `LATENCY_FRAMES` line* — off does not mean off: say so at once, with the log.
    **A fault, a freeze, a game closing by itself, a hitch every second, or a session that says *stopped***: as
    item 45 says for each — say so at once.
+   **Run 2026-11-14 (sessions 236–245, ten on 0.1.0-beta.49), read the same day** from a copy of the ledger and
+   the Overlay's logs. All ten tier 1, exit code 0, no fault, nothing dropped. Phantom Blade Zero twice (236
+   without frame generation, 1 108 s; 237 with ×2, 811 s), Kingdom Come: Deliverance II (238), Clair Obscur (239),
+   Black Myth: Wukong (240), Lies of P (241, and 245 with the option off), Hogwarts Legacy (242), Dying Light: The
+   Beast (243), Cyberpunk 2077 (244). 239 and 240 ran at the same time, and so did 241, 242 and 243.
+   (a) **No new acceptance row** after the update: the terms window did not appear.
+   (b) **Cyberpunk 2077 was one session of 125 s without frame generation** (374 FPS); ×2 and the menus were not
+   run. It is enough for the question. 88 reads in one state — low-latency mode on, the game sleeping, ×1 — summed
+   5 394 frames: **4 917 in "active longer than span", mean span 1 571 µs, mean active 1 849 µs**; 96 within
+   (3 866 / 3 431 µs); 381 with a span of no length and an active time; none absent, none refused. **So the
+   difference is the driver's**: on frames that have a real span, its active time is 278 µs (18 %) longer than
+   the two marks are apart. A small part is ours as well — 7 % of the frames have a span of no length and pull the
+   span's mean down (the stored means are 1 892 and 2 138 µs). With frame generation on it is not measured on
+   this build (0.1.0-beta.48's means: never longer).
+   (c) **The count is not what is wrong**: in the six other sessions that reported (five games), **not one frame of 129 900** is
+   in "active longer", and no span is absent or of no length. Phantom Blade Zero: without frame generation
+   63 123 frames, span 16.4 ms, active 11.1 ms; with ×2 21 209 frames, span 33.2 ms, active 12.6 ms.
+   (d) **The holes**: in batches of twenty reads or more a read took 1 000.94 ms (236), 997.18 (237), 999.99 (242,
+   244), and up to 1 013 ms in the sessions that shared the PC with another game. Samples without a
+   report: 236 — 40 of 1 106, **39 of them in the first 46**, while the game started; 237 — 36 of 809, in the first 42 and
+   the last two; 244 — 9 of 123, in the first ten. Before, they were spread through a session (0.4–16 %). **D150 did what
+   it was for.** Where two or three games ran at once the holes are blocks in which the game did not present
+   (240: 103 of 477; 242: 80 of 402, 68 of them at its start; 243: 37 of 414; 239: 23 of 184): a read is taken on
+   the presenting thread, so a game that presents nothing is not read — Lies of P's log has sixty reads in 189 s.
+   (e) **Off means off**: session 245 has no `LATENCY` line and no Advanced row.
+   **The stop fired in a real game for the first time** (D141): Kingdom Come: Deliverance II, 12 s after the
+   attach, while the game was starting — the seventh read took 5 337 µs, and no further read was made; the
+   session says so (`Slow`), the game ran 287 s and closed normally. No frame had been reported in those seven
+   reads. Elsewhere the slowest call was 22–235 µs. In Lies of P the driver reported no frame at all.
+   **What the states say of Reflex and frame generation** (each batch carries its own): low-latency mode was
+   **on at a multiplier of 1** in Cyberpunk 2077 (88 reads), Black Myth: Wukong (253), Hogwarts Legacy (299) and
+   Dying Light: The Beast (345); Phantom Blade Zero without frame generation sleeps through Reflex with
+   low-latency mode **off** (1 062 reads) and switches it on with ×2; Clair Obscur without frame generation has
+   both off and still reports its frames. The logs cannot say whether a game's menu or the NVIDIA App switched
+   the mode on. NVIDIA's own guide makes frame generation need Reflex and not the reverse
+   (`spike-notes` §30, *Added 2026-11-14*). Hogwarts Legacy gave a multiplier of 6 for seventeen reads.
+   **Not said yet**: (f) and (g). **The owner's**: the wording of the two GPU labels — *idle time excluded /
+   included* does not describe a game whose active time is the longer.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
