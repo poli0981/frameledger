@@ -161,8 +161,23 @@ and its release facts are [`handoff/history/0.1.0-beta.48.md`](handoff/history/0
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.~~ **Recorded
+  2026-11-14: 0.1.0-beta.49 was released 2026-11-14T11:12:44Z** (18:12 in the owner's time zone) from the signed
+  tag on `afe4984` (#459), by run 43587336452 — green at the first attempt, one run for the one tag push. Eight
+  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed, and the portable package hashed
+  here equals its line; the five native libraries in it carry `FL_BUILD_ID v0.1.0-beta.49`, none of them
+  `-dirty`. The delta from beta.48 is 1 100 211 bytes beside a full package of 110 803 443 — "Delta processed
+  0452 files. 0023 patched, 0429 unchanged". The wiki was published by run 43588972123. **Two rehearsals on the
+  release branch**: run 43580081466 at `1ab2809`, and — after a test-only fix reached the branch — run
+  43581734484 at `9f94356`, whose tree is the released one (a delta of 1 134 949 bytes, the same file counts).
+  **SonarCloud analysed `afe4984`: the quality gate passed and no issue is open on `main`. Qodana's two reports,
+  CodeQL and `check` are green on that commit.** On the way two advisory checks did find something, each in a
+  test of this train and each fixed before its pull request merged: Qodana's native report on #456 (two
+  products widened after the multiplication), SonarCloud on #457 (a line of the log handed to `printf`). **The
+  train stopped once for the owner**: two signed merges timed out at the passphrase prompt after #457; it went on
+  when the owner had unlocked the key. The tag's message reads `FrameLedger 0.1.0-beta.49` where the tags before
+  it read the bare version — nothing reads it, and a pushed tag is not moved.
 - **Why Cyberpunk 2077's active render is longer than its span without frame generation** — item 47's to say. A
   third session that afternoon repeated it (233: 3.40 against 3.13 ms at 292 of 296 samples) and a session of
   menus did not (232: 0 of 126).
