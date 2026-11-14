@@ -61,6 +61,7 @@
 #include <fl_sl_inputs.h>
 #include <fl_sl_seen.h>
 #include <fl_tolerance.h>
+#include <fl_watchdog_tick.h>
 #include <knownfolders.h>
 #include <MinHook.h>
 #include <shlobj_core.h>
@@ -758,10 +759,12 @@ void PublishD3D12Device(ID3D12Device* device) noexcept {
 // Nothing is hooked for it and nothing is loaded for it.
 //
 // WHO DOES WHAT. The WATCHDOG finds the module and the two addresses, once for the process, and arms the gate at
-// most once a second. A PRESENTING THREAD that finds the gate armed makes the read, after its frame's record is
-// published: a call the driver holds stops the thread that made it, and the watchdog -- which supervises, installs
-// and flushes -- must never be that thread (spike-notes §31, M2). So the call delays one present a second by its own
-// length: 0.5-2.6 us measured, and one of 2 ms or more is the last one this process makes (D141).
+// each of its PERIODIC ticks -- one a second on a grid, never two within half a second (fl_watchdog_tick.h; until
+// 0.1.0-beta.49 "at most once a second", on ticks a second and their own work apart). A PRESENTING THREAD that finds
+// the gate armed makes the read, after its frame's record is published: a call the driver holds stops the thread that
+// made it, and the watchdog -- which supervises, installs and flushes -- must never be that thread (spike-notes §31,
+// M2). So the call delays one present a second by its own length: 0.5-2.6 us measured, and one of 2 ms or more is the
+// last one this process makes (D141).
 //
 // THE GATE, four states in one word, is what makes that safe without a lock:
 //     idle     nobody is reading. g_latRead is the watchdog's: it takes what the last read left, then may arm.
@@ -809,11 +812,11 @@ fl::adv::LatencyOut g_latOut;
 bool                g_latResolved = false;    // the two addresses are in g_latApi
 bool                g_latFinal = false;       // the module was looked at and will not be read; g_latOut.state says why
 bool                g_latStalled = false;
-int64_t             g_latArmedQpc = 0;
 int64_t             g_latReadingSinceQpc = 0;
 uint32_t            g_latLoggedState = FL_LAT_NONE;
 // The frame counts of the reads, for the native log only (fl_adv_fields.h; owner decisions D148, D151).
 fl::adv::LatencyBatchBook g_latBook;
+int64_t                   g_latBatchBeganQpc = 0;    // the request's start, or the batch before's writing
 
 // One read, on a presenting thread that found the gate armed. Not inlined: RecordPresent stays as small as it was.
 __declspec(noinline) void ReadLatencyOnce() noexcept {
@@ -907,19 +910,27 @@ void WriteLatencyBatch() noexcept {
     if (g_latBook.batch.reads == 0u) {
         return;
     }
+    const int64_t  now = QpcNow();
+    const uint64_t ticks = now > g_latBatchBeganQpc ? static_cast<uint64_t>(now - g_latBatchBeganQpc) : 0u;
+    const uint64_t millis = g_logQpcFreq != 0u ? ticks * 1000ull / g_logQpcFreq : 0u;
+    g_latBook.batch.spannedMs = millis > 0xFFFFFFFFull ? 0xFFFFFFFFu : static_cast<uint32_t>(millis);
     for (uint32_t line = 0; line < fl::adv::kLatBatchLines; ++line) {
         const fl::adv::LatencyLogLine entry = fl::adv::LatencyBatchLine(g_latBook.batch, line);
         LogNote(kLogLatencyFrames, entry.text, entry.a, entry.b);
     }
     g_latBook.batch = fl::adv::LatencyBatch{};
+    g_latBatchBeganQpc = now;
 }
 
-// THE WATCHDOG'S HALF, once a tick while a session asks. `now` is this tick's QPC.
+// THE WATCHDOG'S HALF, once a PERIODIC tick while a session asks -- never on a tick something woke early, so that
+// what it takes is the read its last call armed and what it arms is taken by its next (owner decision D150). `now`
+// is this tick's QPC.
 void TickLatency(bool newRequest, int64_t now) noexcept {
     if (newRequest) {
         // What the session before left of a batch is its own, written before this one's counts begin.
         WriteLatencyBatch();
         g_latBook = fl::adv::LatencyBatchBook{};
+        g_latBatchBeganQpc = now;
         // A session's counts are its own; where the read stands is the process's and stays.
         g_latOut.reads = 0u;
         g_latOut.worstUs = 0u;
@@ -1037,10 +1048,10 @@ void TickLatency(bool newRequest, int64_t now) noexcept {
             return;
         }
     }
-    if (g_latArmedQpc == 0 || static_cast<uint64_t>(now - g_latArmedQpc) >= g_logQpcFreq) {
-        g_latArmedQpc = now;
-        g_latGate.store(kLatGateArmed, std::memory_order_release);
-    }
+    // One read for each periodic tick. Until 0.1.0-beta.49 this asked that a second had passed since the last arm:
+    // a tick a moment early then armed nothing, and the publication after it carried no read. The grid is what keeps
+    // two of these apart now -- half a second at the least.
+    g_latGate.store(kLatGateArmed, std::memory_order_release);
 }
 
 // The request went off: a read that was wanted and not yet made is not made in a session that never asked.
@@ -1964,7 +1975,7 @@ PFN_LoadLibraryExW g_origLoadLibraryExW = nullptr;
 constexpr uint32_t    kLoaderInstalledBit = 0x8000u;
 constexpr uint32_t    kLoaderCountMask = 0x7FFFu;
 std::atomic<uint32_t> g_loaderSignals{0};
-// Auto-reset; the watchdog waits on it with its 1 s timeout, so a signal ends the
+// Auto-reset; the watchdog waits on it until its periodic tick is due, so a signal ends the
 // wait early and a missing event (creation failed) degrades to the plain sleep.
 HANDLE g_watchdogWake = nullptr;
 
@@ -3570,13 +3581,30 @@ bool InstallRtHooks() noexcept {
 // exists; see the block comment above for why a thread is acceptable in the
 // Overlay and was not in the Vulkan layer.
 DWORD WatchdogLoop() noexcept {
+    // THE PERIODIC TICK IS ON A GRID (fl_watchdog_tick.h; owner decision D150): one a second by the performance
+    // counter, whatever a tick's work took and however often the loader woke this thread in between.
+    const auto         frequency = static_cast<int64_t>(g_logQpcFreq);
+    fl::watchdog::Grid grid;
+    fl::watchdog::StartGrid(grid, QpcNow(), frequency * kWatchdogIntervalMs / 1000);
+    bool latencyRequestIsNew = false;    // a request not yet handed to TickLatency, which runs on periodic ticks
     for (;;) {
-        // The 1 s tick, OR the LoadLibrary detour's wake -- whichever comes first.
-        // An event that failed to create degrades to the plain sleep.
+        // The periodic tick's deadline, OR the LoadLibrary detour's wake -- whichever comes first. An event that
+        // failed to create, or a wait that failed, degrades to the plain sleep.
+        const DWORD waitMs = fl::watchdog::WaitMs(grid, QpcNow(), frequency, kWatchdogIntervalMs);
+        bool        timedOut = true;
         if (g_watchdogWake != nullptr) {
-            WaitForSingleObject(g_watchdogWake, kWatchdogIntervalMs);
+            const DWORD waited = WaitForSingleObject(g_watchdogWake, waitMs);
+            if (waited == WAIT_FAILED) {
+                Sleep(waitMs);
+            }
+            timedOut = waited != WAIT_OBJECT_0;
         } else {
-            Sleep(kWatchdogIntervalMs);
+            Sleep(waitMs);
+        }
+        const int64_t tickQpc = QpcNow();
+        const bool    periodic = fl::watchdog::IsPeriodic(grid, tickQpc, timedOut);
+        if (periodic) {
+            fl::watchdog::Advance(grid, tickQpc);
         }
 
         if (g_observing.load(std::memory_order_acquire) == 0) {
@@ -3606,24 +3634,31 @@ DWORD WatchdogLoop() noexcept {
         // one writer. With the word at 0 nothing more is read in any hook and the region is never touched. A request
         // not seen before is a new session's: the summaries start afresh BEFORE the detours are let in, so a range or
         // a count never spans two sessions of a game that kept running.
+        //
+        // THE REQUEST IS FOLLOWED ON EVERY TICK, THE REGION IS WRITTEN ON THE PERIODIC ONE (0.1.0-beta.49, D150). The
+        // installers below put in the hooks a session asked for in the very tick that saw the request -- a tick the
+        // loader woke, when the game has just loaded Streamline -- so the word is read and the flag stored whatever
+        // the tick. The read of the driver and the publication are once a second: a tick woken early used to take the
+        // read, publish it and arm nothing, and the publication after it had no read in it.
         std::atomic_ref<uint32_t> advancedReq{g_control->advancedRequested};
         const uint32_t            advancedNow = advancedReq.load(std::memory_order_acquire);
-        const bool                advancedIsNew = advancedNow != 0u && advancedNow != g_advancedSeen;
-        if (advancedIsNew) {
+        if (advancedNow != 0u && advancedNow != g_advancedSeen) {
             fl::adv::Reset(g_adv);
             g_advancedSeen = advancedNow;
+            latencyRequestIsNew = true;
         }
         g_advancedRequested.store(advancedNow != 0u ? 1u : 0u, std::memory_order_relaxed);
-        if (advancedNow != 0u) {
-            // Initialised through QuadPart, the member read below, so that it is the active one (cpp:S6232).
-            LARGE_INTEGER advancedQpc{.QuadPart = 0};
-            QueryPerformanceCounter(&advancedQpc);
+        if (advancedNow == 0u) {
+            DisarmLatency();
+        } else if (periodic) {
+            ++g_latBook.batch.ticksOnTime;
             // The driver's latency report (train C): what the last read left is taken, and the next one armed,
             // BEFORE the publication -- so the publication carries the read, and carries it once.
-            TickLatency(advancedIsNew, advancedQpc.QuadPart);
-            fl::adv::Publish(g_adv, g_advanced, advancedNow, static_cast<uint64_t>(advancedQpc.QuadPart), &g_latOut);
+            TickLatency(latencyRequestIsNew, tickQpc);
+            latencyRequestIsNew = false;
+            fl::adv::Publish(g_adv, g_advanced, advancedNow, static_cast<uint64_t>(tickQpc), &g_latOut);
         } else {
-            DisarmLatency();
+            ++g_latBook.batch.ticksEarly;
         }
 
         // The in-process stop, for a title that is NOT presenting (menu, hung,

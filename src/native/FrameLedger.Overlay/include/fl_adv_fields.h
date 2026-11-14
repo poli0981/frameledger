@@ -892,6 +892,10 @@ inline uint32_t LatencyMultiplierBit(uint32_t value) noexcept {
 //
 // A batch is also closed after the request's tenth read, its thirtieth, and every sixtieth from there: a game that
 // exits takes the watchdog with it, and what was not written by then is lost -- under a minute of it.
+//
+// AND HOW EVENLY THE READS CAME (owner decision D150): the milliseconds the batch spans and the watchdog's ticks in
+// them, periodic and woken early. A read a second is a thousand milliseconds a read and as many periodic ticks as
+// reads; anything else says which side of it was uneven.
 // ---------------------------------------------------------------------------------------------------------------------
 inline constexpr uint32_t kLatBatchFirst = 10u;
 inline constexpr uint32_t kLatBatchSecond = 30u;
@@ -909,6 +913,10 @@ struct LatencyBatch {
     uint32_t         sleepOff = 0;                // ... and off
     uint32_t         multipliers = 0;             // LatencyMultiplierBit of every multiplier it gave
     uint32_t         state = kLatStateUnknown;    // LatencyStateOf its first read
+    // The watchdog's own, set by it: not a read's.
+    uint32_t spannedMs = 0;      // from the batch before -- or the request -- to this one's writing
+    uint32_t ticksOnTime = 0;    // its periodic ticks in that time
+    uint32_t ticksEarly = 0;     // ... and the ticks something woke early
 };
 
 struct LatencyBatchBook {
@@ -971,7 +979,7 @@ inline void LatencyBatchAdd(LatencyBatchBook& book, const LatencyTally& tally, b
 }
 
 // The batch as lines of the native log: a text, the line's `a` (printed in decimal) and its `b` (printed in hex).
-inline constexpr uint32_t kLatBatchLines = 6u;
+inline constexpr uint32_t kLatBatchLines = 7u;
 
 struct LatencyLogLine {
     const char* text;
@@ -997,9 +1005,12 @@ constexpr LatencyLogLine LatencyBatchLine(const LatencyBatch& batch, uint32_t li
     case 4u:
         return {"active longer than span: frames / span us<<32 | active us", batch.gpu.longerFrames,
                 LatencyPair(batch.gpu.longerSpanUs, batch.gpu.longerActiveUs)};
-    default:
+    case 5u:
         return {"active within span: frames / span us<<32 | active us", batch.gpu.withinFrames,
                 LatencyPair(batch.gpu.withinSpanUs, batch.gpu.withinActiveUs)};
+    default:
+        return {"ms spanned / watchdog ticks on time<<32 | woken early", batch.spannedMs,
+                LatencyPair(batch.ticksOnTime, batch.ticksEarly)};
     }
 }
 

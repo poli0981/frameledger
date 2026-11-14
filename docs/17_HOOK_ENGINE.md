@@ -228,6 +228,20 @@ counts to a batch and writes the batch to the log. **Measured** (the same instru
 twice): 424–435 ns before, 490–499 ns after — **+65 ns a read**, once a second, after the call's time has been
 taken. `fl_reflex_summary_test "[.bench]"` is that measurement in the tree. The present path is unchanged.
 
+**Since 0.1.0-beta.49 the read is on a grid of one second** (owner decision D150; `fl_watchdog_tick.h`). The
+watchdog used to wait a second *after* each tick's work, and a tick the LoadLibrary detour woke was a tick like
+any other: it took what the last read left, published it and — less than a second having passed since the last
+arm — armed nothing, so the next publication carried no read. The Agent samples on a period of exactly one second
+since 0.1.0-beta.48, and its sessions showed the holes: 0.4 to 16 % of a session's samples without a report
+(HANDOFF, item 46). Now the watchdog's **periodic** tick is due at a deadline by the performance counter, and the
+next deadline is one period after the one that was due, not after the moment the tick ran; a tick woken early
+does everything it did — the request is followed and the hooks a session asks for go in at once — **except take
+the driver read and publish region 5**, which are the periodic tick's. One read is armed at every periodic tick
+(`g_latArmedQpc` and its "a second since the last arm" are gone). A periodic tick that ran more than half a
+second late is not followed by another on the grid's next mark: the grid starts again from it, so **two reads are
+never less than half a second apart** — "about once a second" still, and no longer "at most". Nothing on a game
+thread changed: the presenting thread makes the read when it finds the gate armed, as before. **Measured** on `hook-harness` with the stand-in module, by the batches' own lines (`fl_guard_test "[.measure]"`): ten reads in 9 996 ms, the next twenty in 20 002, the next sixty in 59 997, each batch with as many periodic ticks as reads; and with a thread asking the loader for a module without pause — 18 240, 36 427 and 143 424 early wakes in the three batches — 9 997, 20 000 and 59 999 ms for the same reads. On the code before it the second case published 35 720 times in eight seconds, with nine reads. **Not measured in a game**, and not the whole of the holes: the Agent overwrote a reading that waited for a sample, which is its own change (`07_IPC` §Region 5).
+
 **The gate.** One word, four states — idle, armed, reading, off (`dllmain.cpp`, above `ReadLatencyOnce`). Only the
 watchdog arms; a presenting thread takes *armed* to *reading* by compare-exchange and owns the 15.4 KB report
 buffer (static storage, never a game thread's stack) and the read's result until it stores *idle* or *off*; the
@@ -950,7 +964,7 @@ No logging in hook bodies. A small fixed-size in-memory ring of structured event
 > own two numbers, the span between its two GPU marks and the driver's active render time: no start mark, a span
 > of no length, an active time with no span, a span with no active time, and — where a frame has both — *active
 > longer than the span* or *active within the span*, each with its count and both sums in microseconds. No
-> threshold: a span of one microsecond is a span. **A batch is six lines and belongs to one state of the driver's
+> threshold: a span of one microsecond is a span. **A batch is seven lines and belongs to one state of the driver's
 > sleep status** — its low-latency switch, its "the game sleeps" switch and its frame-generation multiplier —
 > because the counts mean nothing apart from it: a read in another state closes the batch first (thirty-two such
 > closings a request, after which a batch runs to its length and its first line says what it held). A batch is
@@ -958,8 +972,10 @@ No logging in hook bodies. A small fixed-size in-memory ring of structured event
 > a flush, at a new request and at a stop. `a` is printed in decimal and `b` in hex: *reads* and the switches
 > seen on, off (`<<8`) and the multipliers seen (`<<16`); *frames summed* and refused; *GPU span absent* and of no
 > length; *active time with no span* and span with no active time; then the two heaps, `a` their frames and `b`
-> their span sum (`<<32`) and active sum. **A game that exits by itself takes the batch in hand with it** — under
-> a minute of reads. About six lines a minute while a session with *Advanced metrics* reads the driver; none
+> their span sum (`<<32`) and active sum; and the watchdog's own line — the *milliseconds the batch spans* and its
+> ticks in them, on time (`<<32`) and woken early: a read a second is a thousand milliseconds a read and as many
+> periodic ticks as reads (D150). **A game that exits by itself takes the batch in hand with it** — under a
+> minute of reads. About seven lines a minute while a session with *Advanced metrics* reads the driver; none
 > otherwise.
 > **Three flush points — four since beta.42, the same note —, none on a present path:** the end of `InitThread` (so the
 > file exists from the start of the session and a crash mid-session still leaves it), the watchdog when

@@ -207,6 +207,16 @@ target_compile_definitions(fl_reflex_summary_test PRIVATE WIN32_LEAN_AND_MEAN NO
 add_test(NAME fl_reflex_summary COMMAND fl_reflex_summary_test)
 fl_catch2_test_completes(fl_reflex_summary)
 
+# fl_watchdog_tick.h (0.1.0-beta.49, D150): when the Overlay's watchdog makes its periodic tick -- a grid that does
+# not drift with a tick's work, a tick woken early that does not move it, a wait never rounded down, and two
+# periodic ticks never within half a period. Pure arithmetic: no thread, no clock, no Windows header.
+add_executable(fl_watchdog_tick_test watchdog_tick_test.cpp)
+target_include_directories(fl_watchdog_tick_test PRIVATE "${CMAKE_SOURCE_DIR}/FrameLedger.Overlay/include")
+target_link_libraries(fl_watchdog_tick_test PRIVATE fl_native_flags Catch2::Catch2WithMain)
+target_compile_options(fl_watchdog_tick_test PRIVATE /EHsc)
+add_test(NAME fl_watchdog_tick COMMAND fl_watchdog_tick_test)
+fl_catch2_test_completes(fl_watchdog_tick)
+
 # fl_ffx_types.h (0.1.0-beta.42, D121): the descriptor types an ffx-api module was handed, kept by the detours for
 # the native log. The header the Overlay compiles, driven without the Overlay -- including from eight threads.
 add_executable(fl_ffx_types_test ffx_types_test.cpp)

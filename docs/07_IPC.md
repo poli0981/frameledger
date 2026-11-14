@@ -117,8 +117,19 @@ What the region is, as a contract between the two sides:
   (`FlAdvancedState.request`, the word that was `reserved0`). The reader returns only a publication that names the
   value it wrote: what a second session of the same game finds in the region before the first tick is the first
   session's, and is not read. After an "off" the region keeps its last publication, untouched.
-- **One writer, once a second.** The detours keep process-local accumulators; the watchdog copies them here at its
-  tick. No game thread writes the region, so the seqlock has a single writer: `seq` odd, the fields, `seq` even.
+- **One writer, once a second — on a grid since 0.1.0-beta.49 (owner decision D150).** The detours keep
+  process-local accumulators; the watchdog copies them here at its **periodic** tick, one a second by the
+  performance counter (`fl_watchdog_tick.h`). Until then it published at *every* tick, and a tick was a second
+  and its own work after the one before — or at once, whenever the LoadLibrary detour woke the thread. So a
+  session's publications fell behind the Agent's samples a little with every tick, and a woken tick's publication
+  took the driver read with it and armed none: the publication after it was empty (0.4 to 16 % of a session's
+  samples carried no report, HANDOFF item 46; under a loader that never stops, 35 720 publications in eight
+  seconds and nine reads). A tick woken early still follows the request, installs and takes the census; it writes
+  nothing here. **A request first seen on a woken tick is published by the periodic tick that follows, however
+  soon that is**: a session's first publication may hold a moment's worth — one dispatch of a range that has two
+  ends — and every one after it a second's. A reader takes ranges and "seen" words as *since the request*, which
+  they are, and never reads a single publication as complete. No game thread writes the region, so the seqlock has a single writer: `seq` odd, the fields,
+  `seq` even.
 - **The reader keeps its last consistent copy** (`ShmRingReader.AdvancedState`): null until something was published
   for its request;
   the same copy while `seq` has not moved, without copying 1472 bytes again; and that copy still when the writer is

@@ -852,7 +852,7 @@ public enum FlLatencyState : uint
     /// <summary>A getter faulted: off until the game exits.</summary>
     Faulted = 8,
 
-    /// <summary>A call had not returned after a second: nothing can stop it.</summary>
+    /// <summary>A call had not returned after two seconds: nothing can stop it.</summary>
     Stalled = 9,
 }
 
