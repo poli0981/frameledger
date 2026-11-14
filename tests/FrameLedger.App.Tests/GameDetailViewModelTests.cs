@@ -787,7 +787,12 @@ public sealed class GameDetailViewModelTests
                 new GameDetailRow("Product version", "1.0.2"),
                 new GameDetailRow("Store", "Steam build 20374416"),
                 new GameDetailRow("Engine", "Unreal Engine 5.3"),
-                new GameDetailRow("Ships with", "DLSS: nvngx_dlss.dll 3.7.10.0" + Environment.NewLine + "XeSS: libxess.dll (no version)"));
+                new GameDetailRow("Ships with", "DLSS: nvngx_dlss.dll 3.7.10.0" + Environment.NewLine + "XeSS: libxess.dll (no version)"),
+                // 0.1.0-beta.50 (D163): the three pieces of evidence for "supports controllers" are always there, each
+                // saying what it knows - here, nothing yet.
+                new GameDetailRow("Controller support (store)", "N/A - no store file on this PC describes this game"),
+                new GameDetailRow("Input libraries loaded", "N/A - known only from a session measured from inside the game"),
+                new GameDetailRow("Usually played with", "N/A - no session has recorded it yet"));
             vm.HookToggleEnabled.Should().BeFalse("turning hooking on could only be refused");
             vm.NotX64Text.Should().Contain("32-bit (x86)");
 
@@ -797,7 +802,9 @@ public sealed class GameDetailViewModelTests
             vm.HookToggleEnabled.Should().BeTrue("a switch that is on can be turned off whatever the file is");
 
             (GameDetailViewModel unread, _, _, _, _) = await BuildAsync(s, fresh.Id);
-            unread.Details.Should().ContainSingle().Which.Should().Be(new GameDetailRow("Runs as", Strings.GameDetail_Details_NotRead));
+            // The file facts are one row; the three controller rows are there whether the files were read or not.
+            unread.Details.Should().HaveCount(4);
+            unread.Details[0].Should().Be(new GameDetailRow("Runs as", Strings.GameDetail_Details_NotRead));
             unread.NotX64Text.Should().BeNull("not read is not known 32-bit");
             unread.HookToggleEnabled.Should().BeTrue();
         }

@@ -43,6 +43,6 @@ public sealed class InputLibrariesTests
     public void TheNamesASnapshotLooksForAreLowerCaseAndEachIsAnInputLibrary()
     {
         InputLibraries.FileNames.Should().HaveCount(10).And.OnlyHaveUniqueItems();
-        InputLibraries.FileNames.Should().OnlyContain(static f => InputLibraries.Is(f) && string.Equals(f, f.ToLowerInvariant(), StringComparison.Ordinal));
+        InputLibraries.FileNames.Should().OnlyContain(static f => InputLibraries.Is(f) && !f.Any(char.IsUpper));
     }
 }
