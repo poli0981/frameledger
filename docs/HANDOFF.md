@@ -146,8 +146,8 @@ read is and what bounds it is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls t
 ### NEXT
 
 1. ~~**The owner runs item 46**~~ **Run and read 2026-11-14** (the item, below): the samples are a second apart,
-   both games gave both figures, the multipliers are listed, off means off. **The owner's word on how the games
-   felt is what is left of it**, and whether session 221 was the one with Reflex off.
+   both games gave both figures, the multipliers are listed, off means off. **The owner's word, the same day: no
+   hitch.** What is left of it is whether session 221 was the one with Reflex off.
 2. **Then the owner's to say**: more titles; D141 on a larger sample (the slowest call seen in a game is 65 µs);
    whether the processor update is worth timing on their PC and moving off the poll's thread (below).
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
@@ -203,8 +203,8 @@ read is and what bounds it is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls t
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** item 46 (g), how the games felt; one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41
-left unexercised; item 40 (d).
+**Owner-only:** one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41 left
+unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
 
@@ -881,13 +881,15 @@ left unexercised; item 40 (d).
    fall on one, 24 just after one). What the code says, not measured: the watchdog ticks once a second and arms a
    read when a second has passed since the last arm, so a tick that comes a moment early waits for the next one —
    the reads are a second apart or two, the samples exactly one. Nothing is lost by it; a sample shows a gap.
-   (g) **The owner has not said how the games felt.** What the frames say, in the sessions without frame
+   (g) **The owner's answer, asked whether a game hitched once a second with the option on (2026-11-14): no
+   hitch.** What the frames say, in the sessions without frame
    generation: a frame three times the median of the 120 before it and 8 ms longer comes 0.33 times a second
    with the option on (225) and 0.32 with it off (226), and such frames do not gather at a period of one second
    (vector strength 0.05–0.10 where chance gives 0.10–0.20; 217, 218 and 222 the same). Sessions with frame
    generation cannot be judged that way. **Not seen in the ledger**: what the page looked like, and the Agent's
    processor use now that a poll comes every second.
-   **Read, not passed**: (a)–(f) are answered; (g) and whether session 221 was (d) are the owner's to say.
+   **Read, and (g) answered**: (a)–(g) each have their answer; whether session 221 was (d) is inferred, and the
+   owner's to say. The owner has not said the item is passed.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
