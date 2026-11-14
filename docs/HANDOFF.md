@@ -159,12 +159,14 @@ and its release facts are [`handoff/history/0.1.0-beta.48.md`](handoff/history/0
    Reflex in its settings" — so that session lost nothing to the stop). (f) and (g) are said: the App's *Low
    Latency Mode* is off, and no hitch.
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
-4. **Train D** after it, the same way: a spike first — `sl.pcl.markers` waits for it, and §30 found its hook
-   would miss a game that fetched its functions before the attach. **Read 2026-11-14 against Streamline's own
-   guide (§30, *Added 2026-11-14*): the markers are the times the driver's report already gives**, so that entry
-   would add a count and nothing else. ~~Recommended to the owner: leave Reflex and PCL out of train D.~~
-   **Decided (D153): Reflex and PCL are not part of train D** — whether a game has Reflex is all that is wanted,
-   and the driver's report already says it.
+4. ~~**Train D**~~ **Advanced metrics is closed (D154, 2026-11-14): train D is not built.** The owner was shown
+   the catalog — 140 entries, 110 read — and what the ten entries of reach `Spike` hold (Streamline's own headers,
+   2.14.16: DLSS frame generation's options and state, the video-memory estimates, ray reconstruction's, Image
+   Scaling's and Dynamic Vibrance's options, the PCL markers), with what reading them takes: a function of ours
+   handed to the game in place of Streamline's (rule 4), which a game that fetched its functions before the
+   attach never calls. The owner: "Đóng luôn". The ten are `RefusedRoute` now, the guide no longer says a later
+   release reads more, and §M15 is decided. **What is next is the controller feature**, planned in a session of
+   its own.
 
 ### Left open by this session
 
@@ -1176,6 +1178,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D151 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Native logging | the owner's word: Reflex is checked together with frame generation — without it the owner's games do not switch Reflex on, and a low-latency switch that reads on and off is the NVIDIA App's override. A batch of counts belongs to one state of the sleep status |
 | D152 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §The inventory | the two GPU labels say what each figure is — *the driver's own figure*, *between the driver's start and end marks* — not "idle time excluded / included": item 47 counted the active time as the longer in Cyberpunk 2077. Strings only; numbers and means unchanged |
 | D153 | [`spike-notes/30-reflex-latency.md`](spike-notes/30-reflex-latency.md) *Added 2026-11-14* | the owner's word: of Reflex it is enough to tell whether a game has it. Reflex and PCL leave train D (`sl.pcl.markers` stays refused), and D141's stop is not changed for a game's first seconds. My reading of one sentence; nothing shipped is removed by it |
+| D154 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §The trains, [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M15 | Advanced metrics is closed: train D is not built, the ten Streamline entries that waited for a spike are not read (`RefusedRoute`), rule 4 is not amended for them. Nothing shipped is removed |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

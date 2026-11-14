@@ -724,7 +724,7 @@
     <value>Not read: it would make the sensor library search every USB device</value>
   </data>
   <data name="AdvReach_RefusedRoute" xml:space="preserve">
-    <value>Not read: it would take a patch at an address found while the game runs, or a call the vendor forbids from outside the game's own threads - both refused</value>
+    <value>Not read: it would take a patch at an address found while the game runs, a function of FrameLedger's handed to the game in place of the vendor's, or a call the vendor forbids from outside the game's own threads - all refused</value>
   </data>
   <data name="AdvReach_Spike" xml:space="preserve">
     <value>Being studied; not decided</value>

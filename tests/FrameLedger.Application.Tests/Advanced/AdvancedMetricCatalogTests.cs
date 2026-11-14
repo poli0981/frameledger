@@ -114,6 +114,20 @@ public sealed partial class AdvancedMetricCatalogTests
         AdvancedMetricCatalog.Find("nvapi.reflex.mode")!.Reach.Should().Be(AdvancedReach.RefusedRoute);
         AdvancedMetricCatalog.Find("sl.reflex.state")!.Reach.Should().Be(AdvancedReach.RefusedRoute);
         _all.Where(static m => m.Reach == AdvancedReach.RefusedRoute).Should().OnlyContain(static m => !m.IsRead);
+
+        // Advanced metrics is closed (D154): what a game sets and asks through Streamline's feature functions is not
+        // read - seeing those calls would take handing the game a function of ours. Nothing is left "being studied".
+        string[] closed =
+        [
+            "sl.dlss.optimal_settings", "sl.dlss.vram_estimate", "sl.dlssg.options", "sl.dlssg.state", "sl.dlssg.frames_presented",
+            "sl.dlssg.vram_estimate", "sl.dlssd.options", "sl.nis.options", "sl.deepdvc.options", "sl.pcl.markers",
+        ];
+        foreach (string id in closed)
+        {
+            AdvancedMetricCatalog.Find(id)!.Reach.Should().Be(AdvancedReach.RefusedRoute, id);
+        }
+
+        _all.Where(static m => m.Reach == AdvancedReach.Spike).Should().BeEmpty("no route is waiting for a spike");
     }
 
     [Fact]

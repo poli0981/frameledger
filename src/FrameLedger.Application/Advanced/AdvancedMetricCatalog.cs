@@ -193,20 +193,24 @@ public static class AdvancedMetricCatalog
         // its two GPU marks includes the card's idle time and was longer than a frame's whole in a real game.
         SampledFamily("nvapi.reflex.gpu_times", Nvapi, GameDriver, Microseconds, Latency, "The graphics card's time per frame, as the driver works it out: active render, frame to frame"),
 
-        // ---- Inside the game: routes a spike decides ------------------------------------------------------------
-        Session("sl.dlss.optimal_settings", Streamline, Spike, Text, Upscaling, "The render size and sharpness DLSS recommends"),
-        Sampled("sl.dlss.vram_estimate", Streamline, Spike, Mebibytes, Upscaling, "DLSS's own estimate of its video memory"),
-        Session("sl.dlssg.options", Streamline, Spike, Text, FrameGeneration, "DLSS frame generation: mode, frames to generate"),
-        Session("sl.dlssg.state", Streamline, Spike, Text, FrameGeneration, "DLSS frame generation: status, the most frames it can generate"),
-        Sampled("sl.dlssg.frames_presented", Streamline, Spike, Count, FrameGeneration, "Frames DLSS frame generation presented, by its own count"),
-        Sampled("sl.dlssg.vram_estimate", Streamline, Spike, Mebibytes, FrameGeneration, "DLSS frame generation's estimate of its video memory"),
-        Session("sl.dlssd.options", Streamline, Spike, Text, Upscaling, "Ray reconstruction's options"),
-        Session("sl.nis.options", Streamline, Spike, Text, Upscaling, "NVIDIA Image Scaling's options"),
-        Session("sl.deepdvc.options", Streamline, Spike, Text, Upscaling, "RTX Dynamic Vibrance's options"),
+        // ---- Inside the game: Streamline's feature functions - not read ---------------------------------------
+        // Advanced metrics is closed (owner decision D154, 2026-11-14). None of these is an export: a game gets each
+        // function through slGetFeatureFunction and keeps the pointer, so seeing its calls would take handing the game
+        // a function of ours in place of Streamline's - a write to what the game receives (rule 4) - and would still
+        // miss every game that fetched its functions before the attach. They stay listed, with the reason.
+        Session("sl.dlss.optimal_settings", Streamline, RefusedRoute, Text, Upscaling, "The render size and sharpness DLSS recommends"),
+        Sampled("sl.dlss.vram_estimate", Streamline, RefusedRoute, Mebibytes, Upscaling, "DLSS's own estimate of its video memory"),
+        Session("sl.dlssg.options", Streamline, RefusedRoute, Text, FrameGeneration, "DLSS frame generation: mode, frames to generate"),
+        Session("sl.dlssg.state", Streamline, RefusedRoute, Text, FrameGeneration, "DLSS frame generation: status, the most frames it can generate"),
+        Sampled("sl.dlssg.frames_presented", Streamline, RefusedRoute, Count, FrameGeneration, "Frames DLSS frame generation presented, by its own count"),
+        Sampled("sl.dlssg.vram_estimate", Streamline, RefusedRoute, Mebibytes, FrameGeneration, "DLSS frame generation's estimate of its video memory"),
+        Session("sl.dlssd.options", Streamline, RefusedRoute, Text, Upscaling, "Ray reconstruction's options"),
+        Session("sl.nis.options", Streamline, RefusedRoute, Text, Upscaling, "NVIDIA Image Scaling's options"),
+        Session("sl.deepdvc.options", Streamline, RefusedRoute, Text, Upscaling, "RTX Dynamic Vibrance's options"),
         // A refused route (owner decision D133): the Overlay calling slReflexGetState itself breaks the thread
         // contract the vendor's header states.
         Session("sl.reflex.state", Streamline, RefusedRoute, Table, Latency, "Reflex through Streamline: availability and its frame reports"),
-        Sampled("sl.pcl.markers", Streamline, Spike, Count, Latency, "PC-latency markers the game sets"),
+        Sampled("sl.pcl.markers", Streamline, RefusedRoute, Count, Latency, "PC-latency markers the game sets"),
 
         // ---- Closed by a licence --------------------------------------------------------------------------------
         Session("ngx.parameters", Ngx, Licence, Table, Upscaling, "NGX parameters: the quality value, the DLSS hints"),

@@ -155,10 +155,14 @@ comes from, and whether it is read. Where it is not, the reason is written out:
   administrator*);
 - **not present on this PC** — the driver's own figures exist on NVIDIA cards only;
 - **read inside a game FrameLedger measures, when the game makes the call** — what the game tells DLSS and FSR
-  (above). Some further readings inside the game **come with a later release**;
+  (above);
 - **read inside a game FrameLedger measures, from the graphics driver** — NVIDIA's latency report (above);
-- **not read: it would take a patch at an address found while the game runs, or a call the vendor forbids from
-  outside the game's own threads** — what the game asked of Reflex, and Reflex's state through Streamline;
+- **not read: it would take a patch at an address found while the game runs, a function of FrameLedger's handed
+  to the game in place of the vendor's, or a call the vendor forbids from outside the game's own threads** — what
+  the game asked of Reflex, Reflex's state through Streamline, and what a game sets and asks through Streamline's
+  own functions for a feature: DLSS frame generation's options and state, the video memory DLSS estimates for
+  itself, and the options of ray reconstruction, Image Scaling and Dynamic Vibrance. No later release will read
+  these;
 - **the game makes this call once, before FrameLedger is inside it** — what the game started Streamline with. It is
   not read, and no later release will read it;
 - **never read** — a serial number, a display's identification data, which other programs are encoding, the camera's
