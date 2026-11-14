@@ -35,56 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **Two more lines from NVIDIA's latency report: how long the graphics card was really at work** (owner decision
-  D142). In a real game the driver's *GPU render* stage turned out longer than the whole frame: it runs from the
-  card's start to its end and includes the time the card waited. With Advanced metrics on, a session now also
-  stores two figures the driver works out itself — **GPU active render**, the same stage without the waiting, and
-  **GPU frame time**, from the end of one frame's work to the end of the next — as a second chart under *Latency*.
-  They come from the report FrameLedger already asks the driver for; nothing more is asked. A driver may give
-  neither, and the chart is then not there. Sessions recorded before this release do not have them.
-
-- **For developers: the part inside a game reads two more figures of NVIDIA's latency report, and keeps every
-  frame-generation multiplier a session saw** (owner decisions D142, D144; nothing a user sees until the Agent and
-  the App read them). In a real game the driver's span between its two GPU marks was longer than the frame's whole
-  — it includes the card's waiting. The driver's own *active* render time and its GPU frame time are members of
-  the report FrameLedger already fetches; they are read from it, with **no further call into the driver**. Four
-  reserved words of the shared memory carry them and the multipliers seen (layout 5 as it was). `fl_reflex_summary`
-  and the injected `[latency]` cases hold it. Measured: +36 ns a read, once a second.
-
-### Changed
-
-- **The *GPU render* line says what it includes** (owner decision D143): *GPU render, start to end (idle time
-  included)*, in the three languages. The numbers are the same.
-- **The driver's frame-generation multiplier is every value the session saw** (owner decision D144). The table of
-  the driver's low-latency state kept only the last one: a session that generated frames at ×2 and ended in a menu
-  showed 1. It now shows *1, 2*. Sessions already recorded keep what they stored.
-- **The texts say what was read** (owner decision D145). The accuracy statement, the README and the guide said no
-  real game had been read; two have been, on one driver. They also say now that the stages overlap and do not add
-  up to the total. **Privacy Policy 2.21** names the two new averages; **Disclaimer 2.17** changes only with the
-  accuracy statement it carries. The terms window shows once.
-
-### Fixed
-
-- **Sensors were read less often than the setting says** (owner decision D146). With the sensor interval at
-  1000 ms, nearly every session on the owner's PC got a sample every 1.3 seconds: the Agent waited the whole
-  interval *after* each reading, and a reading there takes about a third of a second (what in it does is not
-  established; on a PC where the Agent is not run as administrator it takes a millisecond, and the samples were
-  already a second apart). It now keeps the period. No chart was wrong — every sample is stored with its own time — but a session
-  has about a third more samples now, and about a quarter of the readings of NVIDIA's latency report no longer
-  fall between two samples. For developers: `sensor_blobs.hz` was the constant 1 and is now the rate the
-  session's samples had.
-- **A session could start with the last read of the session before it.** In a game that kept running between two
-  sessions, a read of the driver's latency report that ended after the first session's last tick was taken as the
-  second session's first point. A new session now drops it.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.48` | 2026-11-14 | [`docs/changelog/0.1.0-beta.48.md`](docs/changelog/0.1.0-beta.48.md) |
 | `0.1.0-beta.47` | 2026-11-14 | [`docs/changelog/0.1.0-beta.47.md`](docs/changelog/0.1.0-beta.47.md) |
 | `0.1.0-beta.46` | 2026-11-13 | [`docs/changelog/0.1.0-beta.46.md`](docs/changelog/0.1.0-beta.46.md) |
 | `0.1.0-beta.45` | 2026-11-12 | [`docs/changelog/0.1.0-beta.45.md`](docs/changelog/0.1.0-beta.45.md) |
