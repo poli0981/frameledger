@@ -158,11 +158,11 @@ public sealed class FgMixPresentationTests
     public void TheBarDrawsEachShareInProportionWithAGapBetweenTwoSegments()
     {
         FgMixSegment[] segments = [new(FgMixKind.Generated, 2.0, 0.25), new(FgMixKind.None, null, 0), new(FgMixKind.Generated, 4.0, 0.75)];
-        IReadOnlyList<Rect> rects = FgMixBar.Layout(segments, 400 + FgMixBar.Gap, 14);
+        IReadOnlyList<Rect> rects = FgMixBar.Layout(segments, 400 + ShareBar.Gap, 14);
 
         rects[0].Should().Be(new Rect(0, 0, 100, 14));
         rects[1].Width.Should().Be(0, "a share of nothing draws nothing and takes no gap");
-        rects[2].Should().Be(new Rect(100 + FgMixBar.Gap, 0, 300, 14));
+        rects[2].Should().Be(new Rect(100 + ShareBar.Gap, 0, 300, 14));
         FgMixBar.Layout([new(FgMixKind.None, null, 1)], 12, 12).Should().Equal(new Rect(0, 0, 12, 12));
         FgMixBar.Layout([new(FgMixKind.None, null, 0)], 100, 14).Should().OnlyContain(static r => r.Width == 0);
         FgMixBar.Layout(segments, 0, 14).Should().OnlyContain(static r => r.Width == 0, "a bar not yet laid out");

@@ -92,8 +92,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
         new SensorBlob { Series = "gpu_power", Hz = 1, Codec = Infrastructure.Blobs.SeriesCodec.Tag, Data = Infrastructure.Blobs.SeriesCodec.EncodeFloat32([150, 160, 170]) },
     ]);
 
-    /// <summary>A hooked session WITH blobs: <paramref name="frames"/> presents at 60 fps, a 4× spike every <paramref name="spikeEvery"/> frames, one segment, a gpu_temp series.</summary>
-    /// <param name="sensors">The session's sensor blobs instead of the three ticks of <c>gpu_temp</c> - its own <c>t_ms</c> included.</param>
+    /// <summary>A hooked session WITH blobs: <paramref name="frames"/> presents at 60 fps, a 4× spike every <paramref name="spikeEvery"/> frames, one segment, a gpu_temp series - or <paramref name="sensors"/>, the session's own sensor blobs with their own <c>t_ms</c>, in place of those three ticks.</summary>
     public async Task<long> SessionWithFramesAsync(long gameId, DateTimeOffset startedAt, int frames, int spikeEvery, Func<SessionRow, SessionRow>? shape = null,
         IReadOnlyList<SensorBlob>? sensors = null)
     {
