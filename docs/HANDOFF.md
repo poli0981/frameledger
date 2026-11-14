@@ -86,6 +86,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.44`, what the owner's eight sessions on beta.44 showed, session by session (item 42), this release's facts, the traps of that train | [`handoff/history/0.1.0-beta.44.md`](handoff/history/0.1.0-beta.44.md) |
 | `§beta.45`, what the owner's seven sessions on beta.45 showed, session by session (item 43), that release's facts and SonarCloud's gate on its commit, the traps of that train | [`handoff/history/0.1.0-beta.45.md`](handoff/history/0.1.0-beta.45.md) |
 | `§beta.46`, what the owner's five sessions on beta.46 showed (item 44), the design of the train that followed as the plan's review left it (`§The train after 0.1.0-beta.46`), that release's facts, the traps of that train | [`handoff/history/0.1.0-beta.46.md`](handoff/history/0.1.0-beta.46.md) |
+| `§beta.47`, what that release decided beyond D136–D141, what item 44's last part showed, that release's facts, the traps of that train, its NEXT as the owner's sessions of 2026-11-14 changed it | [`handoff/history/0.1.0-beta.47.md`](handoff/history/0.1.0-beta.47.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19, 38, 39) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -93,134 +94,86 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-14, 0.1.0-beta.47: the part inside a game asks NVIDIA's driver for its latency report; the batch log says how a batch ended
+## **START HERE** — 2026-11-14, 0.1.0-beta.48: two real games read; the driver's own GPU times beside a span that includes idle; every multiplier seen; samples a second apart
 
-*Status is `docs/changelog/0.1.0-beta.47.md`; this is what no other file carries.* The owner ran five sessions on
-beta.46 the evening it was released and said: check and go on. They were read (#439), the owner took six decisions
-(D136–D141) and approved the plan of the train the same evening, and the five pull requests of it were merged
-overnight: #440 (the decisions; the probe's leg with a sleep mode), #441 (D137), #442 (the latency words of region
-5), #443 (the Overlay makes the read; the gates; the fixtures), #444 (the Agent, the App, the legal texts,
-owner-only item 45). The release was held for item 44 (d), which the owner ran on 2026-11-14 (#445, and below).
-**What the five sessions showed, the design of the train as the plan's review left it, and the traps of beta.46
-are [`handoff/history/0.1.0-beta.46.md`](handoff/history/0.1.0-beta.46.md)**; what the read is and what bounds it
-is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a driver; what was measured is
-[`spike-notes/31-reflex-route-d-harness.md`](spike-notes/31-reflex-route-d-harness.md).
+*Status is `docs/changelog/0.1.0-beta.48.md`; this is what no other file carries.* The owner ran eight sessions on
+beta.47 the morning it was released and said, twice: check. They were read (#448, #449): Phantom Blade Zero three
+times, Cyberpunk 2077 twice, two Direct3D 11 games and a Direct3D 12 game with no NVIDIA library — **the read
+works in real games**, and four things came out of it that the owner ruled on the same morning (D142–D147) and
+approved as one train: #450 (the Overlay reads two more members of the report and keeps the multipliers seen),
+#451 (the Agent, the App, the texts — Privacy Policy 2.21, Disclaimer 2.17), #452 (the poller's period), and this
+release. **What the eight sessions showed is item 45's last paragraphs, below; beta.47's own section, its traps
+and its release facts are [`handoff/history/0.1.0-beta.47.md`](handoff/history/0.1.0-beta.47.md)**; what the
+read is and what bounds it is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a driver.
 
-### What this release decided, beyond D136–D141
+### What this release decided, beyond D142–D147
 
-- **It is the first thing the Overlay does in a game that is not reading a hooked call's arguments**, and it is
-  listed as that — its own table in `17_HOOK_ENGINE`, its own reach in the catalog (`GameDriver`, not a stretched
-  `Game`), its own paragraph in the Disclaimer. A second call of this kind needs a ruling of the same kind (D132).
-- **Resolve on the watchdog, once for the process; call on the presenting thread, after the record is published,
-  behind one gate of four states** — idle, armed, reading, off. The plan's first draft had a busy flag beside
-  accumulators: two presenting threads could have read back to back, and the watchdog could have published half a
-  read. The whole design as reviewed is in the history file, §The train after 0.1.0-beta.46.
-- **`nvapi64.dll` is a shim.** The check that the two addresses lie inside the module it asked refused the real
-  driver: the getters are in `nvapi64_impl.dll`, in the driver's store. An address is accepted when it is executable
-  code of a loaded image, and a reference is kept on that image too. Only the run against the installed driver
-  could find it — the stand-in answers with addresses of its own.
-- **The code that is called is a Control Flow Guard image**; the plan's review had reasoned from the shim, which is
-  not. The probe enforces CFG and makes the calls from the header that ships, so this driver's getters are valid
-  targets. A CFG-enforcing game on another driver is not covered, and a refusal there is a fast-fail.
-- **The layout stayed 5**: ten reserved words of region 5 took the read. `FL_HOOK_REFLEX`, `FL_MEASURED_LATENCY`
-  and `reflexLatencyUs` stay unset — there is no hook, and the numbers are series beside the frames.
-- **D141 was asked twice.** A run on a busy PC showed the 2 ms latch can fire on a pause that was Windows'; the
-  owner kept one call. Do not re-ask without a real game's numbers.
-- **What the game asked of Reflex, and Reflex through Streamline, are `RefusedRoute`** — a patch at a run-time
-  address, and a call the vendor forbids from another thread (D133). `sl.pcl.markers` waits for train D's spike.
-
-### What item 44's last part showed (2026-11-14)
-
-- **A first try did not exercise it** (sessions 203–205, #445): *Disable all hooking* was on before the games were
-  started, so two sessions were `RefusedKillSwitch` with nothing injected, and the hooked one ran to its exit.
-- **The second try did, twice, in Phantom Blade Zero** (sessions 206 and 207): the game started with the switch
-  off, was recorded for a minute and a half, and the switch was turned on while it ran. Each log has `STOP` at the
-  next safety scan, **an `UNHOOK_RESTORED` line for every one of the twenty-nine patches, all at one time**, one
-  `PATCH_BATCH restore` — **83 309 µs and 85 578 µs for twenty-nine** — and `STOP_FLUSHED … a=1`. Nothing was
-  declined. Both sessions ended `KillSwitchEngaged`, tier 1, no fault, no record dropped, writer status
-  *unhooked*; the game ran on for three and four minutes and closed with nothing in Windows' application log.
-  Restoring twenty-nine one by one would have cost about 2.4 s at this game's 84 ms a stop.
-- **Not said by the logs**: whether the owner felt a hitch at the stop. Not exercised: (e) a game with no
-  Streamline and (g) off means off — both are parts of item 45 now.
+- **Two more members of a report already fetched are not a new call.** Rule 4's note stands as written: the same
+  two getters, the Overlay's own buffer, the two names on `tools/overlay-allowed-fields.txt`. The owner ruled on
+  them by name (D142); a third member is asked the same way.
+- **The driver's own times have a count each, and zero means not given.** An older driver leaves both zero, and
+  so did the probe's frames. They are added after the frame is accepted, so which frames the seven spans are made
+  of did not move — a session's old series mean what they meant.
+- **An entry of their own in the catalog** (`nvapi.reflex.gpu_times`), not an eighth and ninth line of the frame
+  report: `AdvancedPresenter.MaxLines` is 8, and nine series of one entry are drawn as a band.
+- **The layout stayed 5 again**: line 0 of region 5 was full, so the four words came out of the seven reserved
+  words that ended the `sl::DLSSOptions` line. Three remain there, two on the `sl::Constants` line, two on the
+  FidelityFX line.
+- **The fact's key no longer holds the last multiplier.** It held it since beta.47, so every menu rewrote the
+  session's context.
+- **`hz` is measured from the samples, not taken from the setting**: the finalizer cannot see the setting, and a
+  session recovered from a `.partial` file never knew it.
+- **The plan named `tools/agent-cost` for the poller's change and it was not run**: it runs the Agent unelevated,
+  where a poll takes a millisecond and the period was already a second. Said in #452 rather than run for show.
 
 ### Traps this train left
 
-- **A bash here-document ate backslashes again** and wrote a NUL byte into a `.cpp`. Edit scripts are files.
-- **A file made by the Write tool is LF**; `dotnet format --verify-no-changes` fails a new `.cs` for it. Convert.
-- **`NvAPI_Status(__cdecl*)(…)` is a call by name to `nvapi-readonly-check`**: the status type has an alias in
-  `fl_reflex.h`. And a member of the Overlay's own named like a vendor's (`fgMultiplier`) fails
-  `overlay-fields-check` outside the header.
-- **A copy of the harness in `%TEMP%` leaves an overlay log the run's sweep does not own** (it matches this
-  build's harness by path): the test that makes the copy sweeps it.
-- **Stacked pull requests, with a dirty tree**: once the lower one is squash-merged GitHub retargets the next to
-  `main`; `gh pr update-branch` works while the upper branch only adds, and conflicts once it edited lines the
-  lower one added — then `git rebase -S --onto origin/main <lower tip> <branch>` and a forced push with lease.
-- **Advisory checks found real things after the local gate was green**: SonarCloud a `wcslen`, Qodana's native
-  report a `switch` that did not name two enumerators, its managed report two redundant qualifiers and a
-  redundant `!`. Hold a merge until both have reported.
-- **The probe's numbers depend on what else the PC does**: a run beside a build read 3.4 µs where three alone read
-  2.6, and saw reads of 2 ms. Say which kind a number is.
+- **A cause I wrote down before checking it.** "The third of a second is the processor's temperature" went into
+  five files on two facts — unelevated a poll takes a millisecond; the sessions without a `cpu_temp` series are a
+  second apart — and then four sessions *with* the series turned out to be a second apart too. The texts were
+  taken back to what is established before the commit. **Count the exceptions before naming a cause.**
+- **A bash here-document ate a backslash again** (a Python one-liner with `'\\'`). Edit scripts are files — the
+  rule already existed.
+- **`FETCH_HEAD` belongs to the worktree that fetched.** A merge in a second worktree needs the commit's id.
+- **A squash-merge of the lower pull request conflicts the upper one in `CHANGELOG.md` every time** both added to
+  `[Unreleased]`. With Auto-fix on, the app asks for a merge of `main`, not a rebase: do it in a worktree of its
+  own when a gate is running in the main one, keep the upper branch's file (it is the superset), and check that
+  the merged tree equals the branch's tip — then the gate already run still stands.
+- **The gate script's last lines do not reach a background task's output**: read the log's last line and hash the
+  `rules` folder by hand.
+- **An analyzer wants a `<summary>` once any `<param>` is written** (RCS1139).
 
 ### NEXT
 
-1. ~~**The owner runs item 45**~~ **Run on 2026-11-14 in Phantom Blade Zero, three sessions: the read works in a
-   real game** (item 45's last paragraphs) — the driver was found, read every second, and no call took more than
-   45 µs. **Cyberpunk 2077 followed the same morning, twice, and three games the read must leave alone** (sessions
-   211–215): read, 65 µs at the slowest, and *not read* where it should be. **Still to run of it**: Reflex off in
-   a game's menu, off means off; and the owner's word on whether the games felt different.
-2. **The owner answered on the *GPU render* line (2026-11-14): read the driver's active time.** Two more members
-   of the report FrameLedger already fetches — no further call into the driver. ~~**Plan first**~~ **Planned and
-   approved the same day as the train of 0.1.0-beta.48 (D142–D147)**: the native half first, then the Agent, the
-   App and the texts, then the sampling period, then the release and owner-only item 46 — one batch of tests for
-   the owner, with what is left of item 45 in it. What the plan gathered: the multiplier row that keeps only the last value, the pages that still say no real game
-   was read, the Agent's 1.32 s between samples beside `hz` 1.0. The owner tests what is left once, on that
-   release. Still the owner's to say: more titles; the session summary's latency fields; D141 (the slowest call
-   seen in a game is 65 µs, thirty times under it).
+1. **The owner runs item 46** — one batch on beta.48, with what is left of item 45 in it. Every outcome's meaning
+   is written there.
+2. **Then the owner's to say**: more titles; D141 on a larger sample (the slowest call seen in a game is 65 µs);
+   whether the processor update is worth timing on their PC and moving off the poll's thread (below).
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
-4. **Train D** after train C, the same way: a spike first — `sl.pcl.markers` waits for it, and §30 found its hook
+4. **Train D** after it, the same way: a spike first — `sl.pcl.markers` waits for it, and §30 found its hook
    would miss a game that fetched its functions before the attach.
 
 ### Left open by this session
 
-- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.~~ **Recorded
-  2026-11-14: 0.1.0-beta.47 was released 2026-11-14T01:11:19Z** (08:11 in the owner's time zone) from the signed
-  tag on `3d7c273` (#446), by run 43537436561 — green at the first attempt, one run for the one tag push. Eight
-  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the four shipped natives carry
-  `FL_BUILD_ID v0.1.0-beta.47`. The delta from beta.46 is 1 820 144 bytes beside a full package of 110 795 507 —
-  "Delta processed 0452 files. 0024 patched, 0428 unchanged". The wiki was published by run 43539059710. The
-  rehearsal on the release branch (run 43534606602, at `43426fe`, the released tree) had made a delta of 1 838 295
-  bytes with the same file counts. **SonarCloud answered on `3d7c273`: the quality gate passed and no issue is open
-  on `main`. Qodana's two reports, CodeQL and `check` are green on that commit.** On the way the advisory checks
-  found three things after local gates were green (§Traps), and no required check failed.
-- **The release branch's local gate was red once, for a reason outside the code** (2026-11-14 07:20): the freshly
-  linked `fl_guard_test.exe` was gone from the build tree seconds after the gate began — Windows Defender's log has
-  three configuration changes at 07:20:53–56 and no detection; which security program removed the file is not
-  known, and nothing of its settings was looked at further or touched. `fl_guard` ended after 0.72 s **and was
-  counted as failed, not passed**: the rule of #438 (a native test names the line it ends on) did what it was
-  written for. Run again, the gate was green.
-- ~~**No real game has run the read.**~~ Two have (Phantom Blade Zero and Cyberpunk 2077, 2026-11-14). **The accuracy
-  statement, `LIMITATIONS.md` and the guide still say no real game had been read**: true when written, to be
-  brought up to date with the next release, as beta.46's pages were.
-- **In Phantom Blade Zero the driver's *GPU render* span is longer than its total** (item 45): shown as reported,
-  not explained. In Cyberpunk 2077 it is not. The owner's answer: read the driver's active time (NEXT 2).
-- ~~**The Agent's samples are 1.32 s apart while `sensor_blobs.hz` says 1.0**~~ (seen 2026-11-14 in the `t_ms`
-  series). **Looked into the same day (D146)**: the poller waited its whole interval after a poll's work; only
-  the App's series loader reads `hz`, and only where a row has no `t_ms`, so no chart was wrong. The poller now
-  keeps a fixed period and `hz` is measured from the samples (`06_DATA_MODEL` §sensor_blobs) — in no release yet.
-- **Where the third of a second goes is not established.** Unelevated, a poll takes about a millisecond (the
-  layers composed as the Agent composes them, each read under a stopwatch). In the owner's ledger 180 of 186
+- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.
+- **No real game has given the two new figures yet.** In the probe `gpuActiveRenderTimeUs` read 0; whether
+  Phantom Blade Zero's is the short number the reading of 2026-11-14 expects is item 46's to say.
+- **Where the third of a second of a poll goes is not established.** Unelevated, a poll takes about a millisecond
+  (the layers composed as the Agent composes them, each read under a stopwatch). In the owner's ledger 180 of 186
   sessions are 1.32 s apart and six are 1.0 s: the two with no `cpu_temp` series (an Agent not elevated) are among
   the six — which points at the sensor library's processor update, run on the poll's thread as administrator
   with PawnIO — **but four sessions that have the series kept one second** (22, 72, 73, 136). **Not measured**:
-  that call itself (it needs elevation), and whether it is processor time or waiting. Not changed; the period no
-  longer depends on it. The owner's to say whether it is worth timing on their PC and moving off the poll's thread.
+  that call itself (it needs elevation), and whether it is processor time or waiting. The period no longer
+  depends on it; a poll that takes a third of every second is still a poll that takes a third of every second.
+- **With the sensor interval above one second, some readings of the driver's report are not stored**: the newest
+  stands until a sample carries it (`SessionRecorder`). Said in the guide; not changed.
 - **No test runs the whole path through the real Agent**: the injected tests stop at the shared memory and the
   sampler's start from it; no end-to-end case loads the stand-in module under an Agent session.
-- **Two install batches of beta.46 took 0.61 s and 1.26 s and nothing explains them** (Hogwarts Legacy, Cyberpunk
-  2077). Since this release the log says whether a batch went singly; the next long one can be read.
+- **Two install batches of beta.46 took 0.61 s and 1.26 s and nothing explains them.** Cyberpunk 2077's eight
+  batches on beta.47 took 85–221 ms, each in one apply; Hogwarts Legacy has not been run since.
 - **The Japanese strings are new and unreviewed**, as every `ja` string is.
-- **Off means off has never been exercised on a real game** (item 43 (f), item 44 (g), now item 45 (g)); nor (c)
+- **Off means off has never been exercised on a real game** (item 43 (f), 44 (g), 45 (g), now 46 (e)); nor (c)
   and (h) of item 43, which only the owner sees.
 - **Valor Mortis's crash at 51 s** (twice, beta.40 and beta.44) **and Black Myth: Wukong's fault in Steam's crash
   handler at every exit** are not explained. One session of each with hooking off is the comparison that is missing.
@@ -232,9 +185,8 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** what is left of item 45 (Reflex off in a game's menu; off means off; how it felt); one session
-each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41 left unexercised;
-item 40 (d).
+**Owner-only:** item 46; one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41
+left unexercised; item 40 (d).
 
 ## Owner-only — no PR can close these
 
@@ -832,6 +784,43 @@ item 40 (d).
    **The owner's answer on the *GPU render* line (2026-11-14): read the driver's active time** — planned as one
    train with what else is open. **Left of this item**: (d) Reflex off in the game's menu, (g) off means off, and
    the owner's word on how the games felt; the owner runs what is left once, with that train's release.
+   **They are (d), (e) and (g) of item 46.**
+46. **beta.48 — the driver's own GPU times, the multipliers seen, samples a second apart; and what item 45 left**
+   (D142–D146). **One batch**, as the owner asked: any Direct3D 12 games that use Reflex, as many as wanted, with
+   *Advanced metrics* on — **not first on a game under the user-mode exception's trial** (D38). Then say *check*;
+   the sessions are read from a copy of the ledger and the logs.
+   (a) **The update** shows the terms window once, with **Privacy Policy 2.21 and Disclaimer 2.17**.
+   (b) **Phantom Blade Zero and Cyberpunk 2077 again**, a few minutes of play each: on the Advanced page, under
+   **Latency**, a second chart — *the graphics card's time per frame, as the driver works it out* — with two lines,
+   *GPU active render* and *GPU frame time*; and the old line reads *GPU render, start to end (idle time included)*.
+   (c) **A session with both a menu and frame generation**: the table's `fgMultiplier` row lists both — *1, 2*, or
+   *1, 3* — not the last one.
+   (d) **Reflex switched off in a game's menu**, if a game lets you (item 45 (d)): say what the session's line reads.
+   (e) **Off means off** (item 45 (g)): switch *Advanced metrics* off, start a game afresh, play a minute, close
+   it; switch it back on afterwards.
+   (f) **Any other games of the batch** — Clair Obscur, Black Myth: Wukong, Hogwarts Legacy, Dread Fields, a
+   Direct3D 11 game: nothing to do but play and close them.
+   (g) **How the games felt** with the option on — a hitch once a second is the thing to look for; nobody but the
+   player can say it.
+   **Read from the ledger, nothing for the owner to do**: the samples of every session are one second apart, not
+   1.32 s, and `hz` says what they were.
+   **What each outcome means, written before the run.** *The two lines are there, and active render is shorter
+   than GPU render*: D142 did what it was for; in Phantom Blade Zero the reading of 2026-11-14 expects *GPU frame
+   time* near the 16 ms the old line showed, and *active render* well under it — **if active render is as long as
+   the old line there, that reading was wrong**, and the span is long for another reason: say the numbers. *The
+   second chart is not there, and the seven lines are*: the driver gave zero for both figures in every frame —
+   nothing is wrong with the read, and the texts already say a driver may give neither; say which game. *One line
+   and not the other*: the same, for one figure. *Active render longer than GPU render, start to end*: they are the
+   driver's numbers and are shown as reported — say which game and by how much. *`fgMultiplier` shows one value in
+   a session that had both*: the driver's status did not change with the menu in that game, or the mask is wrong —
+   say the game; the log's `LATENCY` lines and the frame-generation mix of the session tell the two apart. *Samples
+   still 1.3 s apart*: the period is not kept — the poll takes longer than the interval, or the change is not in
+   the build: stop and say so. *Samples a second apart and the Agent's processor use visibly higher*: a poll that
+   took a third of 1.32 s now takes a third of a second — say so; where that time goes is not established
+   (§Left open). *(d) reads "read"*: the driver reports frames with the game's Reflex off — both that and *asked,
+   and the driver reported no frame* are possible and neither is wrong. *(e) the log has a `LATENCY` line*: off
+   does not mean off — say so at once, with the log. **A fault, a freeze, a game closing by itself, a hitch every
+   second, or a session that says *stopped***: as item 45 says for each — say so at once.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI

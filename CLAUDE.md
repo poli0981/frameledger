@@ -139,6 +139,9 @@ src/
                                #   a frame's stages - NOT an argument of a hooked call: the Overlay calls two
                                #   read-only getters of the driver itself (reach GameDriver); seven adv.* series
                                #   and one table, and AdvancedDriverRead says what became of the read.
+                               #   Since 0.1.0-beta.48 (D142-D144) also two figures the driver works out itself, of
+                               #   the same report - no further call: an entry of their own, nvapi.reflex.gpu_times,
+                               #   two adv.* series; and the table lists every frame-generation multiplier seen.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,
