@@ -165,12 +165,15 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
 
 1. ~~**The owner runs item 45**~~ **Run on 2026-11-14 in Phantom Blade Zero, three sessions: the read works in a
    real game** (item 45's last paragraphs) — the driver was found, read every second, and no call took more than
-   45 µs. **Still to run of it**: Cyberpunk 2077 (the title D136 named), a game that is not Direct3D 12, off means
-   off; and the owner's word on whether the game felt different.
-2. **A real game has been read, so these are the owner's to say now**: what to do with the *GPU render* line,
-   which in this game is longer than the total — rename it, or read the driver's active time instead (two more
-   members of the report: a ruling like the list's others); more titles; whether the session summary's latency
-   fields are filled from it; whether D141 stands (the slowest call seen in a game is 45 µs, forty times under it).
+   45 µs. **Cyberpunk 2077 followed the same morning, twice, and three games the read must leave alone** (sessions
+   211–215): read, 65 µs at the slowest, and *not read* where it should be. **Still to run of it**: Reflex off in
+   a game's menu, off means off; and the owner's word on whether the games felt different.
+2. **The owner answered on the *GPU render* line (2026-11-14): read the driver's active time.** Two more members
+   of the report FrameLedger already fetches — no further call into the driver. **Plan first**, as one train with
+   what else is open: the multiplier row that keeps only the last value, the pages that still say no real game
+   was read, the Agent's 1.32 s between samples beside `hz` 1.0. The owner tests what is left once, on that
+   release. Still the owner's to say: more titles; the session summary's latency fields; D141 (the slowest call
+   seen in a game is 65 µs, thirty times under it).
 3. **`slAllocateResources`** keeps its patch (D135); looked at again when there are more sessions.
 4. **Train D** after train C, the same way: a spike first — `sl.pcl.markers` waits for it, and §30 found its hook
    would miss a game that fetched its functions before the attach.
@@ -194,11 +197,13 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
   known, and nothing of its settings was looked at further or touched. `fl_guard` ended after 0.72 s **and was
   counted as failed, not passed**: the rule of #438 (a native test names the line it ends on) did what it was
   written for. Run again, the gate was green.
-- ~~**No real game has run the read.**~~ One has, three times (Phantom Blade Zero, 2026-11-14). **The accuracy
+- ~~**No real game has run the read.**~~ Two have (Phantom Blade Zero and Cyberpunk 2077, 2026-11-14). **The accuracy
   statement, `LIMITATIONS.md` and the guide still say no real game had been read**: true when written, to be
   brought up to date with the next release, as beta.46's pages were.
 - **In Phantom Blade Zero the driver's *GPU render* span is longer than its total** (item 45): shown as reported,
-  not explained.
+  not explained. In Cyberpunk 2077 it is not. The owner's answer: read the driver's active time (NEXT 2).
+- **The Agent's samples are 1.32 s apart while `sensor_blobs.hz` says 1.0** (seen 2026-11-14 in the `t_ms` series,
+  in sessions back to beta.42). Not looked into: whether anything reads `hz` as the spacing.
 - **No test runs the whole path through the real Agent**: the injected tests stop at the shared memory and the
   sampler's start from it; no end-to-end case loads the stand-in module under an Agent session.
 - **Two install batches of beta.46 took 0.61 s and 1.26 s and nothing explains them** (Hogwarts Legacy, Cyberpunk
@@ -216,8 +221,8 @@ is [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Calls the Overlay makes into a dri
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware"** — the owner's to reword. The alpha line still rests (D98).
 
-**Owner-only:** what is left of item 45 (Cyberpunk 2077; a game that is not Direct3D 12; off means off; how it
-felt); one session each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41 left unexercised;
+**Owner-only:** what is left of item 45 (Reflex off in a game's menu; off means off; how it felt); one session
+each of Valor Mortis and Black Myth: Wukong with hooking off; what item 41 left unexercised;
 item 40 (d).
 
 ## Owner-only — no PR can close these
@@ -794,6 +799,28 @@ item 40 (d).
    **Not run**: Cyberpunk 2077, which (b) and (c) name; (d) Reflex off in the game's menu; (f) a game that is not
    Direct3D 12 or has no NVIDIA library; (g) off means off. **Not said**: whether the game felt any different with
    the option on. Not passed as written; what the three sessions were run for is answered.
+   **Five more sessions the same morning (211–215), read at 09:15: Cyberpunk 2077 twice, and three games the
+   read must leave alone.** (b), (c) **Cyberpunk 2077** (Streamline 2.14.1, DLSS): session 211 with frame
+   generation ×2.0 for 42 % of it (166 → 330) and menus for the rest, session 212 without, at 238 FPS. The module
+   was found 4.8 s and 2.6 s after the attach, in the same two files; each session's line reads *read*; **the
+   slowest call took 34 and 65 µs**; no later `LATENCY` line. 190 of 195 and 429 of 438 samples carry a report.
+   The total: 13.5 ms while frames were generated, 4.1 ms in the menus, 11.7 ms at 238 FPS without generation.
+   **GPU render is 2.7 ms there and never longer than the total** (0 of 429 samples; 1 of 190) — so what the
+   three sessions above showed is Phantom Blade Zero's, not the route's. `bLowLatencyMode` *on* throughout. The
+   table's `fgMultiplier` reads **1 in the session that held ×2 for 105 seconds**: the row keeps the last value
+   read, and that session ended in a menu — a row that lists what was seen would not mislead. D137's first
+   Cyberpunk batches: eight of them, 85–221 ms, every one `install` in one apply; beta.46's 0.61 s did not recur.
+   (f) **Not Direct3D 12**: Crown & Coin (213) and Psycho-Sleuth (214), both Direct3D 11 — one `LATENCY no
+   Direct3D 12 device` line each, nothing after it, the session's line reads *not read — not Direct3D 12*.
+   **Direct3D 12 with no NVIDIA library**: Dread Fields (215) — `the game has not loaded nvapi64.dll`, said once,
+   *not read*. The three ran at the same time and were recorded apart. (h) held in all five: no fault counted,
+   nothing dropped, normal exits, nothing in Windows' application log.
+   **A correction to the paragraph above**: the Agent's samples are **1.32 s apart, not one second** (the `t_ms`
+   series; so in every session looked at back to beta.42, while `sensor_blobs.hz` says 1.0 — not looked into),
+   so the shares are 227 of 258, 24 of 39 and 823 of 846 samples, and the gaps are the first seconds of a session.
+   **The owner's answer on the *GPU render* line (2026-11-14): read the driver's active time** — planned as one
+   train with what else is open. **Left of this item**: (d) Reflex off in the game's menu, (g) off means off, and
+   the owner's word on how the games felt; the owner runs what is left once, with that train's release.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
