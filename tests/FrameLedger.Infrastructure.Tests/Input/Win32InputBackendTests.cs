@@ -100,10 +100,9 @@ public sealed class Win32InputBackendTests
         }
 
         view.Dispose();
-        hub.Dispose();
 
         reading.Should().NotBeNull("the reader's thread made a slice");
-        reading!.SpanMs.Should().BeGreaterThanOrEqualTo(0);
+        reading.SpanMs.Should().BeGreaterThanOrEqualTo(0);
         reading.ForegroundMs.Should().Be(0, "this view followed no process");
         lock (notes)
         {

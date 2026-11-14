@@ -66,7 +66,7 @@ public sealed class InputReaderTests
 
     [Fact]
     public void TheOnlyDevicesRawInputIsRegisteredForAreJoysticksAndGamepads() =>
-        InputReader.RegisteredUsages.Should().Equal([((ushort)1, (ushort)4), ((ushort)1, (ushort)5)], "usage 2 is a mouse and 6 a keyboard: neither is ever registered for (D158)");
+        InputReader.RegisteredUsages.Should().Equal([(1, 4), (1, 5)], "usage 2 is a mouse and 6 a keyboard: neither is ever registered for (D158)");
 
     /// <summary>XInput looks for a device each time it is asked about an empty slot, so an empty slot is asked about rarely.</summary>
     [Fact]

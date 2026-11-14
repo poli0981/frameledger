@@ -61,9 +61,9 @@ public sealed class RawInputBufferTests
         RawInputBuffer.Walk(buffer, 2, sink).Should().Be(2);
 
         sink.Reports.Should().HaveCount(3);
-        sink.Reports[0].Should().Be(((nint)0x10, "010203"));
-        sink.Reports[1].Should().Be(((nint)0x10, "040506"));
-        sink.Reports[2].Should().Be(((nint)0x20, "0909090909"));
+        sink.Reports[0].Should().Be((0x10, "010203"));
+        sink.Reports[1].Should().Be((0x10, "040506"));
+        sink.Reports[2].Should().Be((0x20, "0909090909"));
     }
 
     [Fact]

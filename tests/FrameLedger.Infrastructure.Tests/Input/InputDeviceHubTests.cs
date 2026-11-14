@@ -84,6 +84,7 @@ public sealed class InputDeviceHubTests
     {
         using var backend = new FakeInputBackend { Foreground = 500 };
         backend.Pads[0] = new XInputReading(1, Buttons: 0x1000, 0, 0, 0, 0, 0, 0);
+        backend.Details[0] = new XInputDetails(Wireless: false, BatteryType: 1, BatteryLevel: 0);
         using var hub = new InputDeviceHub(() => backend, interval: _slice);
         using IInputActivitySource mine = hub.Open();
         using IInputActivitySource other = hub.Open();
