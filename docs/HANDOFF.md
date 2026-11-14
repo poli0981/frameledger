@@ -205,9 +205,10 @@ and the logs, and from Windows' application log. None of the five is under the u
 ### The train after 0.1.0-beta.46: Reflex route D in a game, and D137 (plan approved 2026-11-13)
 
 *Nothing of this is in a release. The release pull request is not opened before the owner has run item 44 (d).*
-**Where it stands (2026-11-13, night):** PR-0 #440 merged; PR-1 #441 (D137), PR-2 #442 (the words), PR-3 #443 (the
-Overlay) and PR-4 (the Agent, the App, the legal texts, owner-only item 45) are written and stacked. What is left
-is the release, which waits for the owner. **Not verified by any test: the whole path through the real Agent** —
+**Where it stands (2026-11-14):** all five are merged — #440 (PR-0), #441 (D137), #442 (the words), #443 (the
+Overlay), #444 (the Agent, the App, the legal texts, owner-only item 45); `main` is `cd4f69a`. What is left is the
+release, which waits for the owner: **item 44 (d) was tried on 2026-11-14 and not exercised** (the switch was on
+before the games started — item 44's last paragraph). **Not verified by any test: the whole path through the real Agent** —
 the injected tests stop at the shared memory, the sampler's tests start from it; no end-to-end case loads the
 stand-in module under an Agent session. The Japanese strings are new and unreviewed, as every `ja` string is.
 The owner approved the plan the evening item 44 was read. Its order: **PR-0** the decisions and the probe's leg
@@ -826,6 +827,16 @@ Black Myth: Wukong with hooking off; what item 41 left unexercised; item 40 (d).
    same hooks as on beta.45, rates and factor as before, the two known faults on the way out at their old offsets.
    **(d), (e) and (g) were not exercised; (c) is the owner's to say.** Not passed: (d) is the half of this release
    that no real game has run.
+   **2026-11-14, three more sessions (203–205), read the same morning — (d) is still not exercised.** *Disable all
+   hooking* was switched on **before** the games were started, not while one was being recorded: Cyberpunk 2077
+   (06:34) and Phantom Blade Zero (06:38) were each recorded as `RefusedKillSwitch` — tier 2, nothing injected, no
+   overlay log for either process, which is FR-2.4 doing what it says and not what (d) asks. With the switch off
+   again, Phantom Blade Zero (06:46, 518 s) was hooked from its start to its exit: twenty-two patches under one
+   batch of 84 ms and ray tracing's two under one of 81 ms, ×3.0 at 89 → 268, no fault, a clean exit — and **no
+   `STOP`, no `UNHOOK_RESTORED`, no `PATCH_BATCH restore` line**, because nothing stopped it while it ran. Windows'
+   application log has no fault since 06:30. **How (d) is run**: start the game with the switch **off** and wait
+   until FrameLedger shows it recording; **then**, with the game still running, switch *Disable all hooking* on;
+   play on for half a minute; switch it off; close the game.
 45. **The release after beta.46 — NVIDIA's latency report, read inside a game** (D132, D136, D138–D141; **the
    release does not exist yet**: it is cut after item 44 (d) has been run). **Cyberpunk 2077 first** (D136), **and
    not first on a game under the user-mode exception's trial** (D38): a crash there ends the exception for good.
