@@ -25,7 +25,10 @@ public enum AdvancedReach
     /// <summary>Needs a hook on a function its module exports; the hook is not built. No entry carries it since 0.1.0-beta.45.</summary>
     NewHook = 4,
 
-    /// <summary>A route nobody has proven safe: a spike decides, and the owner says go or no.</summary>
+    /// <summary>
+    /// A route nobody has proven safe: a spike decides, and the owner says go or no. No entry carries it since the
+    /// owner closed Advanced metrics (D154, 2026-11-14): the ten that did are <see cref="RefusedRoute"/>.
+    /// </summary>
     Spike = 5,
 
     /// <summary>A source the project decided not to open (D103).</summary>
@@ -70,7 +73,8 @@ public enum AdvancedReach
     /// <summary>
     /// Reading it needs a route the project refused, whatever the source: a patch at an address learned at run time
     /// (what a game asks of Reflex is an argument of a function no module exports), or a call the vendor's own header
-    /// forbids from a thread that is not the game's (owner decision D133). Never read.
+    /// forbids from a thread that is not the game's (owner decision D133), or a function of ours handed to the game in
+    /// place of the vendor's (what a game sets and asks through Streamline's feature functions - D154). Never read.
     /// </summary>
     RefusedRoute = 15,
 }

@@ -958,7 +958,7 @@
     <comment>review</comment>
   </data>
   <data name="AdvReach_RefusedRoute" xml:space="preserve">
-    <value>読み取りません: ゲーム実行中にしか分からないアドレスへのパッチ、またはゲーム自身のスレッド以外からの呼び出しをベンダーが禁じている関数が必要になるためです - どちらも行いません</value>
+    <value>読み取りません: ゲーム実行中にしか分からないアドレスへのパッチ、ベンダーの関数の代わりに FrameLedger の関数をゲームに渡すこと、またはゲーム自身のスレッド以外からの呼び出しをベンダーが禁じている関数が必要になるためです - いずれも行いません</value>
     <comment>review</comment>
   </data>
   <data name="AdvReach_Spike" xml:space="preserve">

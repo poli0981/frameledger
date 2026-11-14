@@ -724,7 +724,7 @@ Rules 4 and 5, the hook inventory, the measured overhead and the anti-cheat guar
 every hook. `sl::Constants` is read without its camera position, axes and matrices: where the camera is, is where the
 player is (rule 4). NGX stays closed by its licence (`17_HOOK_ENGINE` §NGX).
 
-**Train D re-examines a refusal; it does not lift it.** `handoff/history/p0-queue-1-6.md` refused, on five grounds,
+**Closed 2026-11-14 (owner decision D154): train D is not built, and the refusal stands.** The ten entries it would have read — what a game sets and asks through Streamline's feature functions — have reach `RefusedRoute`: seeing those calls takes handing the game a function of FrameLedger's in place of Streamline's, and a game that fetched its functions before the attach would never call it. What follows is the plan as it stood. **Train D re-examines a refusal; it does not lift it.** `handoff/history/p0-queue-1-6.md` refused, on five grounds,
 hooking `slGetFeatureFunction` and patching the function it returns. The route to try is a different one:
 `slGetFeatureFunction` is itself an export (`vendor-exports.json`), so its hook is an ordinary inventory row, and
 what it hands back could be a wrapper for a fixed list of names instead of a patch at an address learned at run time
@@ -910,7 +910,7 @@ the catalog differ in either direction. **Reach** is where a value can be read f
 FrameLedger measures, from the arguments of a call the Overlay hooks, while the session records Advanced metrics —
 since 0.1.0-beta.40), `HookedCall` (an argument of a call the Overlay already hooks, not read yet), `NewHook` (a hook
 that is not built — Train B; no entry carries it since 0.1.0-beta.45), `BeforeAttach` (a call the game makes once,
-before FrameLedger is inside it, so no hook could read it — D129), `Spike` (Trains C and D), `Refused`, `Deferred`, `Identifier` (D104), `PlayerState`
+before FrameLedger is inside it, so no hook could read it — D129), `Spike` (Trains C and D; no entry since D154), `Refused`, `Deferred`, `Identifier` (D104), `PlayerState`
 (rule 4), `Licence`, `NotInHeaders`. ~~Only the first two are read by a build of Train A.~~ The first three are read
 (`AdvancedMetric.IsRead`).
 
@@ -1114,21 +1114,21 @@ reading it takes a patch at an address learned at run time, which is refused.
 | `nvapi.reflex.frame_report` | Latency per frame: simulation, render submit, present, driver, OS queue, GPU render | Series, one per device | Nvapi | GameDriver | Microseconds |
 | `nvapi.reflex.gpu_times` | The graphics card's time per frame, as the driver works it out: active render, frame to frame | Series, one per device | Nvapi | GameDriver | Microseconds |
 
-**Inside the game: routes a spike decides**
+**Inside the game: Streamline's feature functions — not read (D154, 2026-11-14)**
 
 | Id | What it is | Scope | Source | Reach | Unit |
 |---|---|---|---|---|---|
-| `sl.dlss.optimal_settings` | The render size and sharpness DLSS recommends | SessionFact | Streamline | Spike | Text |
-| `sl.dlss.vram_estimate` | DLSS's own estimate of its video memory | Series | Streamline | Spike | Mebibytes |
-| `sl.dlssg.options` | DLSS frame generation: mode, frames to generate | SessionFact | Streamline | Spike | Text |
-| `sl.dlssg.state` | DLSS frame generation: status, the most frames it can generate | SessionFact | Streamline | Spike | Text |
-| `sl.dlssg.frames_presented` | Frames DLSS frame generation presented, by its own count | Series | Streamline | Spike | Count |
-| `sl.dlssg.vram_estimate` | DLSS frame generation's estimate of its video memory | Series | Streamline | Spike | Mebibytes |
-| `sl.dlssd.options` | Ray reconstruction's options | SessionFact | Streamline | Spike | Text |
-| `sl.nis.options` | NVIDIA Image Scaling's options | SessionFact | Streamline | Spike | Text |
-| `sl.deepdvc.options` | RTX Dynamic Vibrance's options | SessionFact | Streamline | Spike | Text |
+| `sl.dlss.optimal_settings` | The render size and sharpness DLSS recommends | SessionFact | Streamline | RefusedRoute | Text |
+| `sl.dlss.vram_estimate` | DLSS's own estimate of its video memory | Series | Streamline | RefusedRoute | Mebibytes |
+| `sl.dlssg.options` | DLSS frame generation: mode, frames to generate | SessionFact | Streamline | RefusedRoute | Text |
+| `sl.dlssg.state` | DLSS frame generation: status, the most frames it can generate | SessionFact | Streamline | RefusedRoute | Text |
+| `sl.dlssg.frames_presented` | Frames DLSS frame generation presented, by its own count | Series | Streamline | RefusedRoute | Count |
+| `sl.dlssg.vram_estimate` | DLSS frame generation's estimate of its video memory | Series | Streamline | RefusedRoute | Mebibytes |
+| `sl.dlssd.options` | Ray reconstruction's options | SessionFact | Streamline | RefusedRoute | Text |
+| `sl.nis.options` | NVIDIA Image Scaling's options | SessionFact | Streamline | RefusedRoute | Text |
+| `sl.deepdvc.options` | RTX Dynamic Vibrance's options | SessionFact | Streamline | RefusedRoute | Text |
 | `sl.reflex.state` | Reflex through Streamline: availability and its frame reports | SessionFact | Streamline | RefusedRoute | Table |
-| `sl.pcl.markers` | PC-latency markers the game sets | Series | Streamline | Spike | Count |
+| `sl.pcl.markers` | PC-latency markers the game sets | Series | Streamline | RefusedRoute | Count |
 
 **Closed by a licence**
 

@@ -37,6 +37,14 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Changed
 
+- **Advanced metrics is closed: the ten readings that were "being studied" are now "not read", with the reason**
+  (D154, the owner's decision). What a game sets and asks through Streamline's own functions for a feature — DLSS
+  frame generation's options and state, the video memory DLSS estimates for itself, the options of ray
+  reconstruction, Image Scaling and Dynamic Vibrance, the PC-latency markers — is reached only by handing the game
+  a function of FrameLedger's in place of Streamline's, which is refused. The *Sources* list says so, in English,
+  Vietnamese and Japanese, and the guide no longer says a later release reads more. Nothing that was read stops
+  being read.
+
 - **The two lines of the graphics card's time say what each is, not which holds the other** (D152, the owner's
   decision). *GPU active render (idle time excluded)* and *GPU render, start to end (idle time included)* are now
   *GPU active render (the driver's own figure)* and *GPU render (between the driver's start and end marks)*, in

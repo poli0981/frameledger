@@ -719,7 +719,7 @@
     <value>Không đọc: việc này khiến thư viện cảm biến dò mọi thiết bị USB</value>
   </data>
   <data name="AdvReach_RefusedRoute" xml:space="preserve">
-    <value>Không đọc: việc đó cần vá mã tại một địa chỉ chỉ tìm được khi game đang chạy, hoặc một lời gọi mà nhà cung cấp cấm thực hiện từ ngoài luồng của game - cả hai đều bị từ chối</value>
+    <value>Không đọc: việc đó cần vá mã tại một địa chỉ chỉ tìm được khi game đang chạy, hoặc đưa cho game một hàm của FrameLedger thay cho hàm của nhà cung cấp, hoặc một lời gọi mà nhà cung cấp cấm thực hiện từ ngoài luồng của game - tất cả đều bị từ chối</value>
   </data>
   <data name="AdvReach_Spike" xml:space="preserve">
     <value>Đang nghiên cứu; chưa quyết định</value>
