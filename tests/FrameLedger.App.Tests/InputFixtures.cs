@@ -21,16 +21,16 @@ namespace FrameLedger.App.Tests;
 /// </remarks>
 internal static class InputFixtures
 {
-    private const float N = float.NaN;
+    private const float _n = float.NaN;
 
     public static SensorBlob[] Blobs() =>
     [
         Blob("t_ms", SeriesCodec.EncodeFloat32([0f, 1000f, 2000f, 3000f, 4000f, 5000f, 6000f, 7000f])),
-        Blob(InputSessionBuilder.ClassSeries, SeriesCodec.EncodeSparseFloat32([1f, 1f, 3f, 2f, 2f, 0f, N, 1f])),
+        Blob(InputSessionBuilder.ClassSeries, SeriesCodec.EncodeSparseFloat32([1f, 1f, 3f, 2f, 2f, 0f, _n, 1f])),
         Blob(InputSessionBuilder.ActiveSeries(1), SeriesCodec.EncodeSparseFloat32([1f, 1f, 1f, 0f, 0f, 0f, 0f, 1f])),
         Blob(InputSessionBuilder.BatterySeries(1), SeriesCodec.EncodeSparseFloat32([40f, 40f, 40f, 30f, 20f, 10f, 10f, 10f])),
-        Blob(InputSessionBuilder.ActiveSeries(2), SeriesCodec.EncodeSparseFloat32([N, N, 0.5f, 0f, N, N, 0f, 0f])),
-        Blob(InputSessionBuilder.BatterySeries(2), SeriesCodec.EncodeSparseFloat32([N, N, 2f, 2f, N, N, 1f, 1f])),
+        Blob(InputSessionBuilder.ActiveSeries(2), SeriesCodec.EncodeSparseFloat32([_n, _n, 0.5f, 0f, _n, _n, 0f, 0f])),
+        Blob(InputSessionBuilder.BatterySeries(2), SeriesCodec.EncodeSparseFloat32([_n, _n, 2f, 2f, _n, _n, 1f, 1f])),
     ];
 
     /// <summary>The same with eight ticks of <c>gpu_temp</c>, for a session that has frames to draw them over.</summary>
