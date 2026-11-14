@@ -58,6 +58,10 @@ public sealed class AdvancedSessionBuilderTests
 
         blobs.Select(static b => b.Series).Should().Equal("adv.nvapi.pstate", "adv.lhm.board.voltage.lpc_0_7");
         blobs.Should().OnlyContain(static b => b.Hz == 1 && string.Equals(b.Codec, "raw-le-test", StringComparison.Ordinal));
+
+        // The rate the session's samples had is the caller's to say (D146); 1 is only what is assumed without it.
+        AdvancedSessionBuilder.Build(Samples(), _data, new RawSeriesCodec(), hz: 0.758).Blobs
+            .Should().OnlyContain(static b => b.Hz == 0.758);
         float[] pstate = Decode(blobs[0]);
         float[] rail = Decode(blobs[1]);
         pstate.Should().HaveCount(5);

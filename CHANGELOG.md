@@ -67,6 +67,14 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **Sensors were read less often than the setting says** (owner decision D146). With the sensor interval at
+  1000 ms, nearly every session on the owner's PC got a sample every 1.3 seconds: the Agent waited the whole
+  interval *after* each reading, and a reading there takes about a third of a second (what in it does is not
+  established; on a PC where the Agent is not run as administrator it takes a millisecond, and the samples were
+  already a second apart). It now keeps the period. No chart was wrong — every sample is stored with its own time — but a session
+  has about a third more samples now, and about a quarter of the readings of NVIDIA's latency report no longer
+  fall between two samples. For developers: `sensor_blobs.hz` was the constant 1 and is now the rate the
+  session's samples had.
 - **A session could start with the last read of the session before it.** In a game that kept running between two
   sessions, a read of the driver's latency report that ended after the first session's last tick was taken as the
   second session's first point. A new session now drops it.

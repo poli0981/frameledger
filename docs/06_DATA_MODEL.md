@@ -496,6 +496,22 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 > Sensor series are aligned to `t_ms` (milliseconds from `qpc_epoch`) and a tick with no reading is stored as
 > **−1** — never 0, which would be a reading — because temperatures, loads, power and memory are never negative.
 >
+> **`t_ms` is the time axis; `hz` is the fallback** (written here 2026-11-14, owner decision D146 — the code cited
+> this rule before the page had it). Every series of a session is stored beside `t_ms`, which carries each
+> sample's own time, and the App draws against it; `hz` is read only for a row that has no `t_ms`
+> (`SessionSeriesLoader`). **Until 0.1.0-beta.48 `hz` was the constant 1**, whatever the samples did — and they
+> were not one second apart: the poller waited its whole interval *after* a poll's work. In the owner's ledger of
+> 2026-11-14, under a setting of 1000 ms, 180 of the 186 sessions long enough to tell have a median of 1.32 s
+> between samples; six have 1.0 s. **What takes the third of a second is not established.** Unelevated — the layers
+> composed as the Agent composes them, each read under a stopwatch — a poll takes about a millisecond. The two
+> sessions with no `cpu_temp` series (an Agent that was not elevated) are among the six, which points at the
+> sensor library's processor update, run on the poll's thread as administrator with PawnIO; but four sessions
+> that have the series kept one second, and the call itself was not timed (it needs elevation). Since 0.1.0-beta.48 the poller keeps a fixed period
+> (`TelemetryPoller.UntilNextTick`) and `hz` is the rate the session's samples had, measured from the samples
+> (`SessionFinalizer.SampleRate`: the gaps between the first and the last over the time between them, to a
+> thousandth; 1 for fewer than two) — so it is right for a session recovered from a `.partial` file as well.
+> Rows written before keep their 1.
+>
 > **The advanced series are the exception, and say so by their name (schema 0023, owner decision D102).** A series
 > whose name starts with `adv.` stores **NaN** for a tick with no reading: a motherboard's −12 V rail is negative, so
 > −1 cannot mark a gap, and most of its ticks are gaps — the sensor library is read every fifth. They go through a
